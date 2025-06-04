@@ -15,6 +15,12 @@ allprojects {
 }
 
 subprojects {
+	apply(plugin = "java")
+	apply(plugin = "kotlin")
+	apply(plugin = "kotlin-allopen")
+	apply(plugin = "org.springframework.boot")
+	apply(plugin = "io.spring.dependency-management")
+
 	java {
 		toolchain {
 			languageVersion = JavaLanguageVersion.of(21)
@@ -31,11 +37,12 @@ subprojects {
 		useJUnitPlatform()
 	}
 
-	dependencies {
-		implementation("org.springframework.boot:spring-boot-starter")
-		implementation("org.jetbrains.kotlin:kotlin-reflect")
-		testImplementation("org.springframework.boot:spring-boot-starter-test")
-		testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
-		testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+	allOpen {
+		annotation("jakarta.persistence.Entity")
+		annotation("jakarta.persistence.MappedSuperclass")
+		annotation("jakarta.persistence.Embeddable")
 	}
 }
+
+project(":core")
+project(":auth-service")
