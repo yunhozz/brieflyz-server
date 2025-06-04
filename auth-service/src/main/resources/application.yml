@@ -1,0 +1,43 @@
+server:
+  port: 8000
+spring:
+  application:
+    name: auth-service
+  profiles:
+    active: ${APPLICATION_PROFILE:local}
+---
+spring:
+  config:
+    activate:
+      on-profile: local
+  cloud:
+    config:
+      enabled: false
+  jpa:
+    hibernate:
+      ddl-auto: create
+    open-in-view: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        default_batch_fetch_size: 100
+        show_sql: true
+        format_sql: true
+  datasource:
+    url: jdbc:mysql://localhost:3306/brieflyz?createDatabaseIfNotExist=true
+    username: ${MYSQL_USERNAME}
+    password: ${MYSQL_ROOT_PASSWORD}
+  data:
+    redis:
+      connect-timeout: 3000
+      timeout: 3000
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: auth-service-kafka-consumer
+logging:
+  level:
+    root: info
+    io.brieflyz: debug
+    org.springframework: info
+    org.springframework.boot.autoconfigure: warn
