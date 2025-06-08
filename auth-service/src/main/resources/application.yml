@@ -5,7 +5,7 @@ spring:
     name: auth-service
   profiles:
     active: ${APPLICATION_PROFILE:local}
-#    include: oauth
+    include: jwt
 ---
 spring:
   config:
