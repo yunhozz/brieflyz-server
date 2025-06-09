@@ -8,12 +8,12 @@ data class AppProperties(
     val oauth: OAuthProperties?
 ) {
     data class JwtProperties(
-        var tokenType: String?,
-        var accessTokenValidTime: Long?,
-        var refreshTokenValidTime: Long?
+        var tokenType: String = "",
+        var accessTokenValidTime: Long = 0L,
+        var refreshTokenValidTime: Long = 0L
     )
 
     data class OAuthProperties(
-        var authorizedRedirectUris: List<String>?
+        var authorizedRedirectUris: List<String> = emptyList()
     )
 }
