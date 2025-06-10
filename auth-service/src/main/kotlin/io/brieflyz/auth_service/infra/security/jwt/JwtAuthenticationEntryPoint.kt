@@ -7,7 +7,7 @@ import org.springframework.security.web.AuthenticationEntryPoint
 import org.springframework.stereotype.Component
 
 @Component
-class JwtAuthenticationEntryPoint: AuthenticationEntryPoint {
+class JwtAuthenticationEntryPoint : AuthenticationEntryPoint {
 
     override fun commence(
         request: HttpServletRequest,

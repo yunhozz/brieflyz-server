@@ -9,5 +9,5 @@ import org.springframework.boot.runApplication
 class AuthServiceApplication
 
 fun main(args: Array<String>) {
-	runApplication<AuthServiceApplication>(*args)
+    runApplication<AuthServiceApplication>(*args)
 }
