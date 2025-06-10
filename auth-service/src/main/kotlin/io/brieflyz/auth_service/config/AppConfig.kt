@@ -5,15 +5,21 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 @ConfigurationProperties(prefix = "app")
 data class AppConfig(
     val jwt: JwtProperties,
-    val oauth: OAuthProperties?
+    val oauth: OAuthProperties,
+    val kafka: KafkaProperties
 ) {
     data class JwtProperties(
-        var tokenType: String = "",
-        var accessTokenValidTime: Long = 0L,
-        var refreshTokenValidTime: Long = 0L
+        val tokenType: String = "",
+        val accessTokenValidTime: Long = 0L,
+        val refreshTokenValidTime: Long = 0L
     )
 
     data class OAuthProperties(
-        var authorizedRedirectUris: List<String> = emptyList()
+        val authorizedRedirectUris: List<String> = emptyList()
+    )
+
+    data class KafkaProperties(
+        val numOfPartitions: Int = 0,
+        val replicationFactor: Short = 0
     )
 }
