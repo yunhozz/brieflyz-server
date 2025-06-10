@@ -14,10 +14,9 @@ import org.springframework.web.filter.OncePerRequestFilter
 @Component
 class JwtFilter(
     private val jwtProvider: JwtProvider,
-    private val appProperties: AppConfig
+    private val appConfig: AppConfig
 ) : OncePerRequestFilter() {
 
-    private val tokenType = appProperties.jwt.tokenType
     private val log = logger()
 
     override fun doFilterInternal(
@@ -45,11 +44,9 @@ class JwtFilter(
         filterChain.doFilter(request, response)
     }
 
-    private fun resolveToken(token: String?): String? =
-        token.takeIf { Strings.hasText(it) }?.let { resolveTokenParts(it) }
-
-    private fun resolveTokenParts(token: String): String? {
-        val parts = token.split(" ")
-        return if (parts.size == 2 && parts[0] == tokenType) parts[1] else null
+    private fun resolveToken(token: String?): String? = token.takeIf { Strings.hasText(it) }?.let {
+        val parts = it.split(" ")
+        val tokenType = appConfig.jwt.tokenType
+        return if (parts.size == 2 && parts[0] == tokenType.trim()) parts[1] else null
     }
 }
