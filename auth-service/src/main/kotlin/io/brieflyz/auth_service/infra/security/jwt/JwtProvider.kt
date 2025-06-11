@@ -11,7 +11,7 @@ import io.jsonwebtoken.security.Keys
 import jakarta.annotation.PostConstruct
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.Authentication
-import org.springframework.security.core.authority.SimpleGrantedAuthority
+import org.springframework.security.core.authority.AuthorityUtils
 import org.springframework.stereotype.Component
 import java.util.Date
 import javax.crypto.SecretKey
@@ -29,17 +29,16 @@ class JwtProvider(
         secretKey = Keys.secretKeyFor(SignatureAlgorithm.HS256)
     }
 
-    fun generateToken(username: String): JwtTokens {
+    fun generateToken(authentication: Authentication): JwtTokens {
         val now = Date()
         val tokenType = appConfig.jwt.tokenType
         val accessTokenValidTime: Long = appConfig.jwt.accessTokenValidTime
         val refreshTokenValidTime: Long = appConfig.jwt.refreshTokenValidTime
 
+        val accessToken = createToken(now, authentication, accessTokenValidTime)
+        val refreshToken = createToken(now, authentication, refreshTokenValidTime)
+
         log.debug("secret key: ${Encoders.BASE64URL.encode(secretKey.encoded)}")
-
-        val accessToken = createToken(now, username, accessTokenValidTime)
-        val refreshToken = createToken(now, username, refreshTokenValidTime)
-
         log.debug("access token: $accessToken")
         log.debug("refresh token: $refreshToken")
 
@@ -58,16 +57,22 @@ class JwtProvider(
     fun getAuthentication(token: String): Authentication {
         val claims = createClaimsJws(token).body
         val username = claims.subject
-        val authorities = listOf(SimpleGrantedAuthority("ROLE_USER")) // TODO: 권한 설정
+        val roles = claims["roles"] as? List<String>
 
-        return UsernamePasswordAuthenticationToken(username, token, authorities)
+        log.debug("username: $username")
+        log.debug("roles: {}", roles)
+        log.debug("authorities: {}", AuthorityUtils.createAuthorityList(roles))
+
+        return UsernamePasswordAuthenticationToken(username, "", AuthorityUtils.createAuthorityList(roles))
     }
 
-    private fun createToken(now: Date, username: String, tokenValidTime: Long): String =
+    private fun createToken(iat: Date, authentication: Authentication, tokenValidTime: Long): String =
         Jwts.builder()
-            .setSubject(username)
-            .setIssuedAt(now)
-            .setExpiration(Date(now.time + tokenValidTime))
+            .setHeaderParam("typ", "JWT")
+            .setSubject(authentication.name)
+            .claim("roles", authentication.authorities.map { it.authority })
+            .setIssuedAt(iat)
+            .setExpiration(Date(iat.time + tokenValidTime))
             .signWith(secretKey, SignatureAlgorithm.HS256)
             .compact()
 
