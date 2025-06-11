@@ -1,5 +1,5 @@
 app:
   jwt:
     token-type: ${TOKEN_TYPE}
-    access-token-valid-time: ${ACCESS_TOKEN__VALID_TIME}
+    access-token-valid-time: ${ACCESS_TOKEN_VALID_TIME}
     refresh-token-valid-time: ${REFRESH_TOKEN_VALID_TIME}
