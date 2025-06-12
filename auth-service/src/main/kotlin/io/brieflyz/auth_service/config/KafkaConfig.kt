@@ -1,7 +1,7 @@
 package io.brieflyz.auth_service.config
 
 import io.brieflyz.core.constants.KafkaTopic
-import io.brieflyz.core.dto.message.KafkaMessage
+import io.brieflyz.core.dto.kafka.KafkaMessage
 import org.apache.kafka.clients.admin.NewTopic
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.clients.producer.ProducerConfig
@@ -81,9 +81,11 @@ class KafkaConfig(
 
     @Bean
     fun kafkaTopics(): NewTopics {
-        val kafka = appConfig.kafka
+        val np = appConfig.kafka.numOfPartitions
+        val rf = appConfig.kafka.replicationFactor
+
         return NewTopics(
-            NewTopic(KafkaTopic.TEST, kafka.numOfPartitions, kafka.replicationFactor)
+            NewTopic(KafkaTopic.LOGIN_RESPONSE_TOPIC, np, rf)
         )
     }
 }
