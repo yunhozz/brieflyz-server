@@ -65,3 +65,4 @@ subprojects {
 
 project(":core")
 project(":auth-service")
+project(":user-service")

@@ -1,5 +1,6 @@
 rootProject.name = "brieflyz"
 include(
     ":core",
-    ":auth-service"
+    ":auth-service",
+    ":user-service"
 )
