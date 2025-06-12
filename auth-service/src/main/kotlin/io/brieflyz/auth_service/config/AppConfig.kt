@@ -15,6 +15,8 @@ data class AppConfig(
     )
 
     data class OAuthProperties(
+        val authorizationUri: String = "",
+        val redirectUri: String = "",
         val authorizedRedirectUris: List<String> = emptyList()
     )
 

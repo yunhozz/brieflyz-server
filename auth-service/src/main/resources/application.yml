@@ -1,5 +1,5 @@
 server:
-  port: 8000
+  port: 8999
 spring:
   application:
     name: auth-service
@@ -34,8 +34,6 @@ spring:
       timeout: 3000
   kafka:
     bootstrap-servers: localhost:9092
-    consumer:
-      group-id: auth-service-kafka-consumer
 app:
   kafka:
     num-of-partitions: 1
@@ -86,8 +84,6 @@ spring:
       timeout: 3000
   kafka:
     bootstrap-servers: kafka-0:9092,kafka-1:19092,kafka-2:29092
-    consumer:
-      group-id: auth-service-kafka-consumer
 app:
   kafka:
     num-of-partitions: 3
