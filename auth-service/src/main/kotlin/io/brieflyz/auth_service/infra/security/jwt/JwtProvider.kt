@@ -29,20 +29,26 @@ class JwtProvider(
         secretKey = Keys.secretKeyFor(SignatureAlgorithm.HS256)
     }
 
-    fun generateToken(authentication: Authentication): JwtTokens {
+    fun generateToken(username: String, roles: List<String>): JwtTokens {
         val now = Date()
         val tokenType = appConfig.jwt.tokenType
-        val accessTokenValidTime: Long = appConfig.jwt.accessTokenValidTime
-        val refreshTokenValidTime: Long = appConfig.jwt.refreshTokenValidTime
+        val accessTokenValidTime = appConfig.jwt.accessTokenValidTime
+        val refreshTokenValidTime = appConfig.jwt.refreshTokenValidTime
 
-        val accessToken = createToken(now, authentication, accessTokenValidTime)
-        val refreshToken = createToken(now, authentication, refreshTokenValidTime)
+        val accessToken = createToken(username, roles, now, accessTokenValidTime)
+        val refreshToken = createToken(username, roles, now, refreshTokenValidTime)
 
         log.debug("secret key: ${Encoders.BASE64URL.encode(secretKey.encoded)}")
         log.debug("access token: $accessToken")
         log.debug("refresh token: $refreshToken")
 
         return JwtTokens(tokenType, accessToken, refreshToken, accessTokenValidTime, refreshTokenValidTime)
+    }
+
+    fun generateToken(authentication: Authentication): JwtTokens {
+        val username = authentication.name
+        val roles = authentication.authorities.map { it.authority }
+        return generateToken(username, roles)
     }
 
     fun isTokenValid(token: String): Boolean =
@@ -66,11 +72,11 @@ class JwtProvider(
         return UsernamePasswordAuthenticationToken(username, "", AuthorityUtils.createAuthorityList(roles))
     }
 
-    private fun createToken(iat: Date, authentication: Authentication, tokenValidTime: Long): String =
+    private fun createToken(username: String, roles: List<String>, iat: Date, tokenValidTime: Long): String =
         Jwts.builder()
             .setHeaderParam("typ", "JWT")
-            .setSubject(authentication.name)
-            .claim("roles", authentication.authorities.map { it.authority })
+            .setSubject(username)
+            .claim("roles", roles)
             .setIssuedAt(iat)
             .setExpiration(Date(iat.time + tokenValidTime))
             .signWith(secretKey, SignatureAlgorithm.HS256)
