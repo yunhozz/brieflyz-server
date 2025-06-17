@@ -1,7 +1,7 @@
 package io.brieflyz.auth_service.infra.security.oauth
 
-import io.brieflyz.auth_service.config.AppConfig
 import io.brieflyz.auth_service.infra.security.jwt.JwtProvider
+import io.brieflyz.core.config.AuthServiceProperties
 import io.brieflyz.core.utils.logger
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
@@ -13,7 +13,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder
 @Component
 class OAuthAuthenticationSuccessHandler(
     private val jwtProvider: JwtProvider,
-    private val appConfig: AppConfig
+    private val authServiceProperties: AuthServiceProperties
 ) : SimpleUrlAuthenticationSuccessHandler() {
 
     private val log = logger()
@@ -23,7 +23,7 @@ class OAuthAuthenticationSuccessHandler(
         response: HttpServletResponse,
         authentication: Authentication
     ) {
-        val authorizedRedirectUris = appConfig.oauth.authorizedRedirectUris
+        val authorizedRedirectUris = authServiceProperties.oauth?.authorizedRedirectUris!!
         val requestedRedirectUri = request.getParameter("redirect_uri")
         log.debug("Redirect URI: $requestedRedirectUri")
 
@@ -43,10 +43,7 @@ class OAuthAuthenticationSuccessHandler(
         redirectStrategy.sendRedirect(request, response, targetUrl)
     }
 
-    private fun isNotRedirectUri(
-        requestedRedirectUri: String?,
-        authorizedRedirectUris: List<String>
-    ): Boolean =
+    private fun isNotRedirectUri(requestedRedirectUri: String?, authorizedRedirectUris: List<String>): Boolean =
         if (requestedRedirectUri == null
             || authorizedRedirectUris.none { requestedRedirectUri.startsWith(it) }
         ) {

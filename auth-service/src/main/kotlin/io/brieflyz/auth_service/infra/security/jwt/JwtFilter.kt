@@ -1,6 +1,6 @@
 package io.brieflyz.auth_service.infra.security.jwt
 
-import io.brieflyz.auth_service.config.AppConfig
+import io.brieflyz.core.config.AuthServiceProperties
 import io.brieflyz.core.utils.logger
 import io.jsonwebtoken.lang.Strings
 import jakarta.servlet.FilterChain
@@ -14,7 +14,7 @@ import org.springframework.web.filter.OncePerRequestFilter
 @Component
 class JwtFilter(
     private val jwtProvider: JwtProvider,
-    private val appConfig: AppConfig
+    private val authServiceProperties: AuthServiceProperties
 ) : OncePerRequestFilter() {
 
     private val log = logger()
@@ -46,7 +46,7 @@ class JwtFilter(
 
     private fun resolveToken(token: String?): String? = token.takeIf { Strings.hasText(it) }?.let {
         val parts = it.split(" ")
-        val tokenType = appConfig.jwt.tokenType
+        val tokenType = authServiceProperties.jwt?.tokenType!!
         return if (parts.size == 2 && parts[0] == tokenType.trim()) parts[1] else null
     }
 }

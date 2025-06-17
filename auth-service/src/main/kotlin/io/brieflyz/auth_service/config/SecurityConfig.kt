@@ -3,10 +3,10 @@ package io.brieflyz.auth_service.config
 import io.brieflyz.auth_service.infra.security.jwt.JwtAccessDeniedHandler
 import io.brieflyz.auth_service.infra.security.jwt.JwtAuthenticationEntryPoint
 import io.brieflyz.auth_service.infra.security.jwt.JwtFilter
-import io.brieflyz.auth_service.infra.security.jwt.Role
 import io.brieflyz.auth_service.infra.security.oauth.OAuthAuthenticationFailureHandler
 import io.brieflyz.auth_service.infra.security.oauth.OAuthAuthenticationSuccessHandler
 import io.brieflyz.auth_service.infra.security.oauth.OAuthUserCustomService
+import io.brieflyz.core.config.AuthServiceProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
@@ -28,7 +28,7 @@ class SecurityConfig(
     private val oAuthAuthenticationSuccessHandler: OAuthAuthenticationSuccessHandler,
     private val oAuthAuthenticationFailureHandler: OAuthAuthenticationFailureHandler,
     private val oAuthUserCustomService: OAuthUserCustomService,
-    private val appConfig: AppConfig
+    private val authServiceProperties: AuthServiceProperties
 ) {
     @Bean
     fun passwordEncoder(): BCryptPasswordEncoder = BCryptPasswordEncoder()
@@ -38,8 +38,8 @@ class SecurityConfig(
         .cors { it.configurationSource(corsConfigurationSource()) }
         .csrf { it.disable() } // TODO: CSRF 설정
         .authorizeHttpRequests {
-            it.requestMatchers("/api/auth/**", "/h2-console/**").permitAll()
-            it.anyRequest().hasAuthority(Role.ADMIN.authority)
+            it.requestMatchers("/actuator/health", "/h2-console/**", "/api/auth/login").permitAll()
+            it.anyRequest().authenticated()
         }
         .headers { it.frameOptions { cfg -> cfg.sameOrigin() } }
         .formLogin { it.disable() }
@@ -47,11 +47,11 @@ class SecurityConfig(
         .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
         .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter::class.java)
         .oauth2Login {
-            val oauth = appConfig.oauth
+            val oauth = authServiceProperties.oauth
             it.successHandler(oAuthAuthenticationSuccessHandler)
             it.failureHandler(oAuthAuthenticationFailureHandler)
-            it.authorizationEndpoint { cfg -> cfg.baseUri(oauth.authorizationUri) }
-            it.redirectionEndpoint { cfg -> cfg.baseUri(oauth.redirectUri) }
+            it.authorizationEndpoint { cfg -> cfg.baseUri(oauth?.authorizationUri) }
+            it.redirectionEndpoint { cfg -> cfg.baseUri(oauth?.redirectUri) }
             it.userInfoEndpoint { cfg -> cfg.userService(oAuthUserCustomService) }
         }
         .exceptionHandling {
