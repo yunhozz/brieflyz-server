@@ -20,6 +20,7 @@ spring:
   kafka:
     bootstrap-servers: localhost:9092
 app:
-  kafka:
-    num-of-partitions: 1
-    replication-factor: 1
+  user:
+    kafka:
+      num-of-partitions: 1
+      replication-factor: 1

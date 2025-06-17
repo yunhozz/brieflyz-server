@@ -34,10 +34,13 @@ spring:
       timeout: 3000
   kafka:
     bootstrap-servers: localhost:9092
+    consumer:
+      group-id: auth-service-group
 app:
-  kafka:
-    num-of-partitions: 1
-    replication-factor: 1
+  auth:
+    kafka:
+      num-of-partitions: 1
+      replication-factor: 1
 ---
 spring:
   config:
@@ -84,10 +87,13 @@ spring:
       timeout: 3000
   kafka:
     bootstrap-servers: kafka-0:9092,kafka-1:19092,kafka-2:29092
+    consumer:
+      group-id: auth-service-group
 app:
-  kafka:
-    num-of-partitions: 3
-    replication-factor: 3
+  auth:
+    kafka:
+      num-of-partitions: 3
+      replication-factor: 3
 ---
 spring:
   config:
