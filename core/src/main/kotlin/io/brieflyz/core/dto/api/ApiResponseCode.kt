@@ -5,7 +5,7 @@ import io.brieflyz.core.constants.ApiStatus
 sealed interface ApiResponseCode
 
 enum class SuccessCode(
-    val statusCode: Int,
+    val status: Int,
     val message: String
 ) : ApiResponseCode {
     // 200 OK
@@ -21,7 +21,7 @@ enum class SuccessCode(
 }
 
 enum class ErrorCode(
-    val statusCode: Int,
+    val status: Int,
     val message: String
 ) : ApiResponseCode {
     // 400 Bad Request
