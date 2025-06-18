@@ -15,9 +15,6 @@ import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
-import org.springframework.web.cors.CorsConfiguration
-import org.springframework.web.cors.CorsConfigurationSource
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource
 
 @Configuration
 @EnableWebSecurity
@@ -35,8 +32,8 @@ class SecurityConfig(
 
     @Bean
     fun securityFilterChain(http: HttpSecurity): SecurityFilterChain = http
-        .cors { it.configurationSource(corsConfigurationSource()) }
-        .csrf { it.disable() } // TODO: CSRF 설정
+        .cors { it.disable() }
+        .csrf { it.disable() }
         .authorizeHttpRequests {
             it.requestMatchers("/actuator/health", "/h2-console/**", "/api/auth/login").permitAll()
             it.anyRequest().authenticated()
@@ -59,18 +56,4 @@ class SecurityConfig(
             it.authenticationEntryPoint(jwtAuthenticationEntryPoint)
         }
         .build()
-
-    @Bean
-    fun corsConfigurationSource(): CorsConfigurationSource {
-        val corsConfiguration = CorsConfiguration().apply {
-            allowedOriginPatterns = listOf("*")
-            allowedMethods = listOf("GET", "POST", "PUT", "DELETE", "OPTIONS")
-            allowedHeaders = listOf("*")
-            allowCredentials = true
-        }
-
-        return UrlBasedCorsConfigurationSource().apply {
-            registerCorsConfiguration("/**", corsConfiguration)
-        }
-    }
 }
