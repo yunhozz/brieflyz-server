@@ -9,9 +9,6 @@ import org.springframework.context.annotation.Configuration
 class AppConfig {
     @Bean
     fun authServiceProperties() = AuthServiceProperties()
-
-    @Bean
-    fun userServiceProperties() = UserServiceProperties()
 }
 
 @ConfigurationProperties(prefix = "app.auth")
@@ -33,17 +30,6 @@ data class AuthServiceProperties(
         val authorizedRedirectUris: List<String> = emptyList()
     )
 
-    data class KafkaProperties(
-        val numOfPartitions: Int = 0,
-        val replicationFactor: Short = 0
-    )
-}
-
-@ConfigurationProperties(prefix = "app.user")
-@EnableConfigurationProperties(UserServiceProperties::class)
-data class UserServiceProperties(
-    val kafka: KafkaProperties? = null
-) {
     data class KafkaProperties(
         val numOfPartitions: Int = 0,
         val replicationFactor: Short = 0
