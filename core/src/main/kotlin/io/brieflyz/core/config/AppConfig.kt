@@ -19,6 +19,7 @@ data class AuthServiceProperties(
     val kafka: KafkaProperties? = null,
 ) {
     data class JwtProperties(
+        val secretKey: String = "",
         val tokenType: String = "",
         val accessTokenValidTime: Long = 0L,
         val refreshTokenValidTime: Long = 0L
