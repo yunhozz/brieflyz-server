@@ -1,27 +1,33 @@
 package io.brieflyz.core.dto.api
 
+import com.fasterxml.jackson.annotation.JsonInclude
 import org.springframework.validation.BindingResult
 import java.time.LocalDateTime
 
 data class ApiResponse<T> private constructor(
     val header: ApiHeader,
-    val message: String,
-    val data: T?
+    val body: ApiBody<T>
 ) {
     companion object {
         fun <T> success(successCode: SuccessCode, data: T? = null): ApiResponse<T> {
             val header = ApiHeader(successCode, true)
-            return ApiResponse(header, successCode.message, data)
+            val body = ApiBody(successCode.message, data)
+            return ApiResponse(header, body)
         }
 
         fun fail(errorCode: ErrorCode, errorData: ErrorData): ApiResponse<ErrorData> {
             val header = ApiHeader(errorCode, false)
-            return ApiResponse(header, errorCode.message, errorData)
+            val body = ApiBody(errorCode.message, errorData)
+            return ApiResponse(header, body)
         }
     }
 
     data class ApiHeader(val code: ApiResponseCode, val success: Boolean)
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    data class ApiBody<T>(val message: String, val data: T?)
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     data class ErrorData private constructor(
         val timestamp: LocalDateTime,
         val exception: String,
