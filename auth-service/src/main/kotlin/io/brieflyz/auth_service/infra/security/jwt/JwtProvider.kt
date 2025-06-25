@@ -26,13 +26,14 @@ class JwtProvider(
 
     @PostConstruct
     fun initSecretKey() {
-        secretKey = Keys.secretKeyFor(SignatureAlgorithm.HS256)
+        secretKey = Keys.hmacShaKeyFor(authServiceProperties.jwt?.secretKey?.toByteArray())
     }
 
-    fun generateToken(username: String, roles: List<String>): JwtTokens {
+    fun generateToken(username: String, rolesStr: String): JwtTokens {
         val now = Date()
         val jwtProperties = authServiceProperties.jwt!!
 
+        val roles = rolesStr.split("|")
         val tokenType = jwtProperties.tokenType
         val accessTokenValidTime = jwtProperties.accessTokenValidTime
         val refreshTokenValidTime = jwtProperties.refreshTokenValidTime
@@ -49,7 +50,7 @@ class JwtProvider(
 
     fun generateToken(authentication: Authentication): JwtTokens {
         val username = authentication.name
-        val roles = authentication.authorities.map { it.authority }
+        val roles = authentication.authorities.joinToString("|") { it.authority }
         return generateToken(username, roles)
     }
 

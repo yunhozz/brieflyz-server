@@ -1,0 +1,72 @@
+package io.brieflyz.auth_service.controller
+
+import io.brieflyz.auth_service.infra.security.jwt.JwtTokens
+import io.brieflyz.auth_service.model.dto.SignInRequestDTO
+import io.brieflyz.auth_service.model.dto.SignUpRequestDTO
+import io.brieflyz.auth_service.model.entity.Member
+import io.brieflyz.auth_service.service.AuthService
+import io.brieflyz.core.dto.api.ApiResponse
+import io.brieflyz.core.dto.api.SuccessCode
+import jakarta.validation.Valid
+import org.springframework.http.HttpHeaders
+import org.springframework.http.HttpStatus
+import org.springframework.web.bind.annotation.DeleteMapping
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestHeader
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.ResponseStatus
+import org.springframework.web.bind.annotation.RestController
+
+@RestController
+@RequestMapping("/api/auth")
+class AuthController(
+    private val authService: AuthService
+) {
+    @PostMapping("/sign-up")
+    @ResponseStatus(HttpStatus.CREATED)
+    fun signUp(@Valid @RequestBody body: SignUpRequestDTO): ApiResponse<Long> {
+        val memberId = authService.join(body)
+        return ApiResponse.success(SuccessCode.SIGN_UP_SUCCESS, memberId)
+    }
+
+    @PostMapping("/sign-in")
+    @ResponseStatus(HttpStatus.CREATED)
+    fun signIn(@Valid @RequestBody body: SignInRequestDTO): ApiResponse<JwtTokens> {
+        val tokens = authService.login(body)
+        return ApiResponse.success(SuccessCode.SIGN_IN_SUCCESS, tokens)
+    }
+
+    @GetMapping("/members")
+    @ResponseStatus(HttpStatus.OK)
+    fun lookupAllMembers(): ApiResponse<List<Member>> {
+        val members = authService.findAllMembers()
+        return ApiResponse.success(SuccessCode.USER_INFORMATION_READ_SUCCESS, members)
+    }
+
+    @GetMapping("/members/{id}")
+    @ResponseStatus(HttpStatus.OK)
+    fun lookupMember(@PathVariable id: Long): ApiResponse<Member> {
+        val member = authService.findMemberById(id)
+        return ApiResponse.success(SuccessCode.USER_INFORMATION_READ_SUCCESS, member)
+    }
+
+    @PostMapping("/refresh")
+    @ResponseStatus(HttpStatus.CREATED)
+    fun refreshToken(@RequestHeader(HttpHeaders.AUTHORIZATION) refreshToken: String): ApiResponse<JwtTokens> {
+        val tokens = authService.refreshToken(refreshToken)
+        return ApiResponse.success(SuccessCode.TOKEN_REFRESH_SUCCESS, tokens)
+    }
+
+    @PostMapping("/logout")
+    fun signOut(@RequestHeader(HttpHeaders.AUTHORIZATION) token: String): ApiResponse<Any> {
+        TODO()
+    }
+
+    @DeleteMapping("/withdraw")
+    fun withdraw(@RequestHeader(HttpHeaders.AUTHORIZATION) token: String): ApiResponse<Any> {
+        TODO()
+    }
+}

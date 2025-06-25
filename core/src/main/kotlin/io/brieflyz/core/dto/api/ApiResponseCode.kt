@@ -14,6 +14,7 @@ enum class SuccessCode(
     // 201 Created
     SIGN_UP_SUCCESS(ApiStatus.CREATED, "회원가입 성공"),
     SIGN_IN_SUCCESS(ApiStatus.CREATED, "로그인 성공"),
+    TOKEN_REFRESH_SUCCESS(ApiStatus.CREATED, "토큰 재발급 성공"),
 
     // 204 No Content
     LOGOUT_SUCCESS(ApiStatus.NO_CONTENT, "로그아웃 성공"),
@@ -26,6 +27,7 @@ enum class ErrorCode(
 ) : ApiResponseCode {
     // 400 Bad Request
     BAD_REQUEST(ApiStatus.BAD_REQUEST, "잘못된 요청입니다."),
+    PASSWORD_NOT_MATCH(ApiStatus.BAD_REQUEST, "비밀번호가 일치하지 않습니다."),
 
     // 401 Unauthorized
     UNAUTHORIZED(ApiStatus.UNAUTHORIZED, "인증되지 않은 사용자입니다."),
@@ -34,6 +36,7 @@ enum class ErrorCode(
     FORBIDDEN(ApiStatus.FORBIDDEN, "권한이 없습니다."),
 
     // 404 Not Found
+    USER_NOT_FOUND(ApiStatus.NOT_FOUND, "해당 유저를 찾을 수 없습니다."),
     USER_INFORMATION_NOT_FOUND(ApiStatus.NOT_FOUND, "해당 유저에 대한 상세 정보를 조회할 수 없습니다."),
 
     // 405 Method Not Allowed

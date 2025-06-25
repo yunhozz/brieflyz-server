@@ -6,6 +6,7 @@ import io.brieflyz.auth_service.infra.security.jwt.JwtFilter
 import io.brieflyz.auth_service.infra.security.oauth.OAuthAuthenticationFailureHandler
 import io.brieflyz.auth_service.infra.security.oauth.OAuthAuthenticationSuccessHandler
 import io.brieflyz.auth_service.infra.security.oauth.OAuthUserCustomService
+import io.brieflyz.auth_service.infra.security.user.Role
 import io.brieflyz.core.config.AuthServiceProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -35,7 +36,14 @@ class SecurityConfig(
         .cors { it.disable() }
         .csrf { it.disable() }
         .authorizeHttpRequests {
-            it.requestMatchers("/actuator/health", "/h2-console/**", "/api/auth/login").permitAll()
+            it.requestMatchers(
+                "/actuator/health",
+                "/h2-console/**",
+                "/api/auth/sign-up",
+                "/api/auth/sign-in"
+            ).permitAll()
+            it.requestMatchers("/api/auth/members/**")
+                .hasAuthority(Role.ADMIN.authority)
             it.anyRequest().authenticated()
         }
         .headers { it.frameOptions { cfg -> cfg.sameOrigin() } }

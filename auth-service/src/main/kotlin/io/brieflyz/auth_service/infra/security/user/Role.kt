@@ -1,4 +1,4 @@
-package io.brieflyz.auth_service.infra.security.jwt
+package io.brieflyz.auth_service.infra.security.user
 
 import org.springframework.security.core.GrantedAuthority
 
