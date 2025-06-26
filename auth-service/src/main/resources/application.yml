@@ -6,6 +6,15 @@ spring:
   profiles:
     active: ${APPLICATION_PROFILE:local}
     include: jwt, oauth
+  jpa:
+    open-in-view: false
+  kafka:
+    consumer:
+      group-id: auth-service-group
+  data:
+    redis:
+      connect-timeout: 3000
+      timeout: 3000
 ---
 spring:
   config:
@@ -17,7 +26,6 @@ spring:
   jpa:
     hibernate:
       ddl-auto: create
-    open-in-view: false
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQLDialect
@@ -28,14 +36,8 @@ spring:
     url: jdbc:mysql://localhost:3306/brieflyz?createDatabaseIfNotExist=true
     username: ${MYSQL_USERNAME}
     password: ${MYSQL_ROOT_PASSWORD}
-  data:
-    redis:
-      connect-timeout: 3000
-      timeout: 3000
   kafka:
     bootstrap-servers: localhost:9092
-    consumer:
-      group-id: auth-service-group
 app:
   auth:
     kafka:
@@ -52,7 +54,6 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
-    open-in-view: false
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQLDialect
@@ -83,12 +84,8 @@ spring:
           - redis-0:6379
           - redis-1:16379
           - redis-2:26379
-      connect-timeout: 3000
-      timeout: 3000
   kafka:
     bootstrap-servers: kafka-0:9092,kafka-1:19092,kafka-2:29092
-    consumer:
-      group-id: auth-service-group
 app:
   auth:
     kafka:
