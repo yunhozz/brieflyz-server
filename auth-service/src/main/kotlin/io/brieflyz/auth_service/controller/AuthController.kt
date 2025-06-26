@@ -99,7 +99,7 @@ class AuthController(
         request: HttpServletRequest,
         response: HttpServletResponse
     ): ApiResponse<Any> {
-        authService.deleteRefreshToken(principal)
+        authService.withdraw(principal)
         CookieUtils.deleteAllCookies(request, response)
         return ApiResponse.success(SuccessCode.USER_WITHDRAW_SUCCESS)
     }

@@ -68,6 +68,14 @@ class AuthService(
         redisHandler.delete(username)
     }
 
+    @Transactional
+    fun withdraw(username: String) {
+        val member = memberRepository.findByEmail(username)
+            ?: throw UserNotFoundException("Email: $username")
+        deleteRefreshToken(member.email)
+        memberRepository.delete(member)
+    }
+
     @Transactional(readOnly = true)
     fun findAllMembers(): List<Member> = memberRepository.findAll()
 
