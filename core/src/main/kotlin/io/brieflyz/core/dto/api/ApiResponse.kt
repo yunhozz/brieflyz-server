@@ -5,8 +5,8 @@ import org.springframework.validation.BindingResult
 import java.time.LocalDateTime
 
 data class ApiResponse<T> private constructor(
-    private val header: ApiHeader,
-    private val body: ApiBody<T>
+    val header: ApiHeader,
+    val body: ApiBody<T>
 ) {
     companion object {
         fun <T : Any> success(successCode: SuccessCode, data: T? = null): ApiResponse<T> {
@@ -23,8 +23,8 @@ data class ApiResponse<T> private constructor(
     }
 
     data class ApiHeader private constructor(
-        private val code: ApiResponseCode,
-        private val success: Boolean
+        val code: ApiResponseCode,
+        val success: Boolean
     ) {
         companion object {
             internal fun of(code: ApiResponseCode, success: Boolean) = ApiHeader(code, success)
@@ -33,8 +33,8 @@ data class ApiResponse<T> private constructor(
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     data class ApiBody<T> private constructor(
-        private val message: String,
-        private val data: T?
+        val message: String,
+        val data: T?
     ) {
         companion object {
             internal fun <T> of(message: String, data: T? = null) = ApiBody(message, data)
@@ -43,18 +43,18 @@ data class ApiResponse<T> private constructor(
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     data class ErrorData private constructor(
-        private val timestamp: LocalDateTime,
-        private val exception: String,
-        private val fieldErrors: List<FieldError>?
+        val timestamp: LocalDateTime,
+        val exception: String,
+        val fieldErrors: List<FieldError>?
     ) {
         companion object {
             fun of(ex: String, fieldErrors: List<FieldError>? = null) = ErrorData(LocalDateTime.now(), ex, fieldErrors)
         }
 
         data class FieldError private constructor(
-            private val field: String,
-            private val value: String?,
-            private val reason: String?
+            val field: String,
+            val value: String?,
+            val reason: String?
         ) {
             companion object {
                 fun of(result: BindingResult): List<FieldError> =

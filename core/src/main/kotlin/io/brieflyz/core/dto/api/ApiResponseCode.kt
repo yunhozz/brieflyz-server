@@ -38,6 +38,8 @@ enum class ErrorCode(
     // 404 Not Found
     USER_NOT_FOUND(ApiStatus.NOT_FOUND, "해당 유저를 찾을 수 없습니다."),
     USER_INFORMATION_NOT_FOUND(ApiStatus.NOT_FOUND, "해당 유저에 대한 상세 정보를 조회할 수 없습니다."),
+    REDIS_KEY_NOT_FOUND(ApiStatus.NOT_FOUND, "Redis에 해당 key가 존재하지 않습니다."),
+    REFRESH_TOKEN_NOT_FOUND(ApiStatus.NOT_FOUND, "로그인을 다시 진행해주세요."),
 
     // 405 Method Not Allowed
     METHOD_NOT_ALLOWED(ApiStatus.METHOD_NOT_ALLOWED, "허용되지 않은 메소드입니다."),

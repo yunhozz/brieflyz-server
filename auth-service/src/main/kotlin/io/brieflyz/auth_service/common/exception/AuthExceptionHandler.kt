@@ -16,14 +16,23 @@ class AuthExceptionHandler {
 
     @ExceptionHandler(CustomException::class)
     fun handleCustomException(e: CustomException): ResponseEntity<ApiResponse.ErrorData> {
-        log.warn(e.message)
-        return ResponseEntity.status(e.errorCode.status)
-            .body(ApiResponse.ErrorData.of(e.localizedMessage))
+        val message = e.localizedMessage
+        log.warn("[인증 서비스 예외] $message")
+        return ResponseEntity.status(e.errorCode.status).body(ApiResponse.ErrorData.of(message))
     }
 
     @ExceptionHandler(NullPointerException::class, IndexOutOfBoundsException::class)
     fun handleRuntimeException(e: RuntimeException) {
-        log.error(e.message)
+        when (e) {
+            is NullPointerException ->
+                log.error("[런타임 오류] NullPointerException 발생: ${e.message}", e)
+
+            is IndexOutOfBoundsException ->
+                log.error("[런타임 오류] IndexOutOfBoundsException 발생: ${e.message}", e)
+
+            else ->
+                log.error("[런타임 오류] 처리되지 않은 RuntimeException 발생: ${e.message}", e)
+        }
         throw e
     }
 
@@ -41,7 +50,7 @@ class AuthExceptionHandler {
 
     @ExceptionHandler(OutOfMemoryError::class)
     fun handleOutOfMemory(e: OutOfMemoryError) {
-        log.error("[심각] OutOfMemoryError 발생: ${e.message}", e)
+        log.error("[메모리 오류] OutOfMemoryError 발생: ${e.message}", e)
         throw e
     }
 
