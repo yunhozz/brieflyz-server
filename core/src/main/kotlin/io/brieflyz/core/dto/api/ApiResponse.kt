@@ -48,8 +48,7 @@ data class ApiResponse<T> private constructor(
         private val fieldErrors: List<FieldError>?
     ) {
         companion object {
-            internal fun of(ex: String, fieldErrors: List<FieldError>? = null) =
-                ErrorData(LocalDateTime.now(), ex, fieldErrors)
+            fun of(ex: String, fieldErrors: List<FieldError>? = null) = ErrorData(LocalDateTime.now(), ex, fieldErrors)
         }
 
         data class FieldError private constructor(
@@ -58,7 +57,7 @@ data class ApiResponse<T> private constructor(
             private val reason: String?
         ) {
             companion object {
-                internal fun of(result: BindingResult): List<FieldError> =
+                fun of(result: BindingResult): List<FieldError> =
                     result.fieldErrors.map { err ->
                         FieldError(err.field, err.rejectedValue?.toString(), err.defaultMessage)
                     }
