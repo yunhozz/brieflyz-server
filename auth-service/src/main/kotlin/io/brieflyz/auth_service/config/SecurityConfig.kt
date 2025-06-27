@@ -40,7 +40,8 @@ class SecurityConfig(
                 "/actuator/health",
                 "/h2-console/**",
                 "/api/auth/sign-up",
-                "/api/auth/sign-in"
+                "/api/auth/sign-in",
+                "/error"
             ).permitAll()
             it.requestMatchers("/api/auth/members/**")
                 .hasAuthority(Role.ADMIN.authority)

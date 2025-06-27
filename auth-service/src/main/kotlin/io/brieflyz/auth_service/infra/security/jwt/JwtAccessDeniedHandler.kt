@@ -24,7 +24,6 @@ class JwtAccessDeniedHandler : AccessDeniedHandler {
             request.remoteAddr,
             accessDeniedException.message
         )
-        log.debug("Exception: ", accessDeniedException)
         response.sendError(HttpServletResponse.SC_FORBIDDEN, accessDeniedException.message)
     }
 }

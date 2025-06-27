@@ -58,8 +58,15 @@ class JwtProvider(
         try {
             createClaimsJws(token)
             true
+
         } catch (e: Exception) {
-            log.warn("Invalid JWT token: ${e.message}")
+            log.warn(
+                """
+                [Invalid JWT Token]
+                Exception Class: ${e.javaClass.simpleName}
+                Message: ${e.message}
+            """.trimIndent()
+            )
             false
         }
 

@@ -24,7 +24,6 @@ class JwtAuthenticationEntryPoint : AuthenticationEntryPoint {
             request.remoteAddr,
             authException.message
         )
-        log.debug("Exception: ", authException)
         response.sendError(HttpServletResponse.SC_UNAUTHORIZED, authException.message)
     }
 }
