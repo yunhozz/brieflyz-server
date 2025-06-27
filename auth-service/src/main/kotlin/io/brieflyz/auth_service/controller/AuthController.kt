@@ -1,10 +1,10 @@
 package io.brieflyz.auth_service.controller
 
 import io.brieflyz.auth_service.common.utils.CookieUtils
+import io.brieflyz.auth_service.model.dto.MemberResponseDTO
 import io.brieflyz.auth_service.model.dto.SignInRequestDTO
 import io.brieflyz.auth_service.model.dto.SignUpRequestDTO
 import io.brieflyz.auth_service.model.dto.TokenResponseDTO
-import io.brieflyz.auth_service.model.entity.Member
 import io.brieflyz.auth_service.service.AuthService
 import io.brieflyz.core.dto.api.ApiResponse
 import io.brieflyz.core.dto.api.SuccessCode
@@ -52,14 +52,14 @@ class AuthController(
 
     @GetMapping("/members")
     @ResponseStatus(HttpStatus.OK)
-    fun lookupAllMembers(): ApiResponse<List<Member>> {
+    fun lookupAllMembers(): ApiResponse<List<MemberResponseDTO>> {
         val members = authService.findAllMembers()
         return ApiResponse.success(SuccessCode.USER_INFORMATION_READ_SUCCESS, members)
     }
 
     @GetMapping("/members/{id}")
     @ResponseStatus(HttpStatus.OK)
-    fun lookupMember(@PathVariable id: Long): ApiResponse<Member> {
+    fun lookupMember(@PathVariable id: Long): ApiResponse<MemberResponseDTO> {
         val member = authService.findMemberById(id)
         return ApiResponse.success(SuccessCode.USER_INFORMATION_READ_SUCCESS, member)
     }

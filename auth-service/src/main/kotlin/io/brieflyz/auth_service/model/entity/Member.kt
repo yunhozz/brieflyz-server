@@ -10,7 +10,7 @@ import jakarta.persistence.Id
 class Member(
     val email: String,
     val password: String,
-    roles: String = Role.GUEST.authority // | 로 구분한 문자열
+    roles: String = Role.GUEST.authority
 ) : BaseEntity() {
 
     @Id
@@ -19,6 +19,10 @@ class Member(
 
     var roles: String = roles
         protected set
+
+    fun getRoles(): List<String> = roles.split("|").map { role ->
+        role.replace("ROLE_", "")
+    }
 
     fun addRoles(vararg newRoles: Role) {
         newRoles.forEach { role ->

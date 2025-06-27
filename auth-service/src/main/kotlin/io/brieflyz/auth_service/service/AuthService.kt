@@ -8,6 +8,7 @@ import io.brieflyz.auth_service.infra.db.MemberRepository
 import io.brieflyz.auth_service.infra.redis.RedisHandler
 import io.brieflyz.auth_service.infra.security.jwt.JwtProvider
 import io.brieflyz.auth_service.infra.security.user.Role
+import io.brieflyz.auth_service.model.dto.MemberResponseDTO
 import io.brieflyz.auth_service.model.dto.SignInRequestDTO
 import io.brieflyz.auth_service.model.dto.SignUpRequestDTO
 import io.brieflyz.auth_service.model.dto.TokenResponseDTO
@@ -40,17 +41,15 @@ class AuthService(
     @Transactional(readOnly = true)
     fun login(dto: SignInRequestDTO): TokenResponseDTO {
         val (email, password) = dto
+        val member = findMemberByEmail(email)
 
-        memberRepository.findByEmail(email)?.let { member ->
-            if (!passwordEncoder.matches(password, member.password)) throw PasswordNotMatchException()
+        if (!passwordEncoder.matches(password, member.password)) throw PasswordNotMatchException()
 
-            val username = member.email
-            val tokens = jwtProvider.generateToken(username, member.roles)
-            redisHandler.save(username, tokens.refreshToken, tokens.refreshTokenValidTime)
+        val username = member.email
+        val tokens = jwtProvider.generateToken(username, member.roles)
+        redisHandler.save(username, tokens.refreshToken, tokens.refreshTokenValidTime)
 
-            return TokenResponseDTO(tokens.tokenType + tokens.accessToken, tokens.accessTokenValidTime)
-
-        } ?: throw UserNotFoundException("Email: $email")
+        return TokenResponseDTO(tokens.tokenType + tokens.accessToken, tokens.accessTokenValidTime)
     }
 
     fun refreshToken(username: String): TokenResponseDTO {
@@ -70,16 +69,22 @@ class AuthService(
 
     @Transactional
     fun withdraw(username: String) {
-        val member = memberRepository.findByEmail(username)
-            ?: throw UserNotFoundException("Email: $username")
+        val member = findMemberByEmail(username)
         deleteRefreshToken(member.email)
         memberRepository.delete(member)
     }
 
     @Transactional(readOnly = true)
-    fun findAllMembers(): List<Member> = memberRepository.findAll()
+    fun findAllMembers(): List<MemberResponseDTO> = memberRepository.findAll()
+        .map { member -> MemberResponseDTO.of(member) }
 
     @Transactional(readOnly = true)
-    fun findMemberById(memberId: Long): Member? = memberRepository.findByIdOrNull(memberId)
-        ?: throw UserNotFoundException("Member ID: $memberId")
+    fun findMemberById(memberId: Long): MemberResponseDTO {
+        val member = (memberRepository.findByIdOrNull(memberId)
+            ?: throw UserNotFoundException("Member ID: $memberId"))
+        return MemberResponseDTO.of(member)
+    }
+
+    private fun findMemberByEmail(email: String): Member = memberRepository.findByEmail(email)
+        ?: throw UserNotFoundException("Email: $email")
 }
