@@ -1,12 +1,12 @@
 package io.brieflyz.auth_service.config
 
+import io.brieflyz.auth_service.common.enums.Role
 import io.brieflyz.auth_service.infra.security.jwt.JwtAccessDeniedHandler
 import io.brieflyz.auth_service.infra.security.jwt.JwtAuthenticationEntryPoint
 import io.brieflyz.auth_service.infra.security.jwt.JwtFilter
 import io.brieflyz.auth_service.infra.security.oauth.OAuthAuthenticationFailureHandler
 import io.brieflyz.auth_service.infra.security.oauth.OAuthAuthenticationSuccessHandler
 import io.brieflyz.auth_service.infra.security.oauth.OAuthUserCustomService
-import io.brieflyz.auth_service.infra.security.user.Role
 import io.brieflyz.core.config.AuthServiceProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -52,17 +52,17 @@ class SecurityConfig(
         .httpBasic { it.disable() }
         .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
         .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter::class.java)
-        .oauth2Login {
-            val oauth = authServiceProperties.oauth
-            it.successHandler(oAuthAuthenticationSuccessHandler)
-            it.failureHandler(oAuthAuthenticationFailureHandler)
-            it.authorizationEndpoint { cfg -> cfg.baseUri(oauth?.authorizationUri) }
-            it.redirectionEndpoint { cfg -> cfg.baseUri(oauth?.redirectUri) }
-            it.userInfoEndpoint { cfg -> cfg.userService(oAuthUserCustomService) }
-        }
         .exceptionHandling {
             it.accessDeniedHandler(jwtAccessDeniedHandler)
             it.authenticationEntryPoint(jwtAuthenticationEntryPoint)
+        }
+        .oauth2Login {
+            val oauth = authServiceProperties.oauth
+            it.authorizationEndpoint { cfg -> cfg.baseUri(oauth?.authorizationUri) }
+            it.redirectionEndpoint { cfg -> cfg.baseUri(oauth?.redirectUri) }
+            it.userInfoEndpoint { cfg -> cfg.userService(oAuthUserCustomService) }
+            it.successHandler(oAuthAuthenticationSuccessHandler)
+            it.failureHandler(oAuthAuthenticationFailureHandler)
         }
         .build()
 }

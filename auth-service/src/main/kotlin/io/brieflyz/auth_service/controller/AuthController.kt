@@ -7,12 +7,13 @@ import io.brieflyz.auth_service.model.dto.SignUpRequestDTO
 import io.brieflyz.auth_service.model.dto.TokenResponseDTO
 import io.brieflyz.auth_service.service.AuthService
 import io.brieflyz.core.dto.api.ApiResponse
-import io.brieflyz.core.dto.api.SuccessCode
+import io.brieflyz.core.enums.SuccessCode
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.security.core.annotation.AuthenticationPrincipal
+import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -67,10 +68,10 @@ class AuthController(
     @PostMapping("/refresh")
     @ResponseStatus(HttpStatus.CREATED)
     fun refreshToken(
-        @AuthenticationPrincipal principal: String,
+        @AuthenticationPrincipal userDetails: UserDetails,
         response: HttpServletResponse
     ): ApiResponse<TokenResponseDTO> {
-        val token = authService.refreshToken(principal)
+        val token = authService.refreshToken(userDetails.username)
         CookieUtils.addCookie(
             response,
             CookieUtils.ACCESS_TOKEN_COOKIE_NAME,
@@ -83,11 +84,11 @@ class AuthController(
     @PostMapping("/logout")
     @ResponseStatus(HttpStatus.CREATED)
     fun signOut(
-        @AuthenticationPrincipal principal: String,
+        @AuthenticationPrincipal userDetails: UserDetails,
         request: HttpServletRequest,
         response: HttpServletResponse
     ): ApiResponse<Any> {
-        authService.deleteRefreshToken(principal)
+        authService.deleteRefreshToken(userDetails.username)
         CookieUtils.deleteCookie(request, response, CookieUtils.ACCESS_TOKEN_COOKIE_NAME)
         return ApiResponse.success(SuccessCode.LOGOUT_SUCCESS)
     }
@@ -95,11 +96,11 @@ class AuthController(
     @DeleteMapping("/withdraw")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     fun withdraw(
-        @AuthenticationPrincipal principal: String,
+        @AuthenticationPrincipal userDetails: UserDetails,
         request: HttpServletRequest,
         response: HttpServletResponse
     ): ApiResponse<Any> {
-        authService.withdraw(principal)
+        authService.withdraw(userDetails.username)
         CookieUtils.deleteAllCookies(request, response)
         return ApiResponse.success(SuccessCode.USER_WITHDRAW_SUCCESS)
     }

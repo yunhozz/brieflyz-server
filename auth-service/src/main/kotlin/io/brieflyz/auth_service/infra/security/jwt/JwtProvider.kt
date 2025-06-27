@@ -1,5 +1,6 @@
 package io.brieflyz.auth_service.infra.security.jwt
 
+import io.brieflyz.auth_service.infra.security.user.CustomUserDetailsService
 import io.brieflyz.core.config.AuthServiceProperties
 import io.brieflyz.core.utils.logger
 import io.jsonwebtoken.Claims
@@ -11,14 +12,14 @@ import io.jsonwebtoken.security.Keys
 import jakarta.annotation.PostConstruct
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.Authentication
-import org.springframework.security.core.authority.AuthorityUtils
 import org.springframework.stereotype.Component
 import java.util.Date
 import javax.crypto.SecretKey
 
 @Component
 class JwtProvider(
-    private val authServiceProperties: AuthServiceProperties
+    private val authServiceProperties: AuthServiceProperties,
+    private val userDetailsService: CustomUserDetailsService
 ) {
     private val log = logger()
 
@@ -72,14 +73,17 @@ class JwtProvider(
 
     fun getAuthentication(token: String): Authentication {
         val claims = createClaimsJws(token).body
-        val username = claims.subject
-        val roles = claims["roles"] as? List<String>
+        val userDetails = userDetailsService.loadUserByUsername(claims.subject)
 
-        log.debug("username: $username")
-        log.debug("roles: {}", roles)
-        log.debug("authorities: {}", AuthorityUtils.createAuthorityList(roles))
+        log.debug(
+            """
+            [User Details]
+            username: ${userDetails.username}
+            authorities: ${userDetails.authorities}
+        """.trimIndent()
+        )
 
-        return UsernamePasswordAuthenticationToken(username, "", AuthorityUtils.createAuthorityList(roles))
+        return UsernamePasswordAuthenticationToken(userDetails, "", userDetails.authorities)
     }
 
     private fun createToken(username: String, roles: List<String>, iat: Date, tokenValidTime: Long): String =
