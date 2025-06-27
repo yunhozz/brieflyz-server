@@ -1,7 +1,7 @@
 package io.brieflyz.auth_service.common.exception
 
 import io.brieflyz.core.dto.api.ApiResponse
-import io.brieflyz.core.dto.api.ErrorCode
+import io.brieflyz.core.enums.ErrorCode
 import io.brieflyz.core.utils.logger
 import org.springframework.beans.BeansException
 import org.springframework.http.ResponseEntity
@@ -26,9 +26,9 @@ class AuthExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException::class)
     fun handleMethodArgumentNotValidException(e: MethodArgumentNotValidException): ResponseEntity<ApiResponse.ErrorData> {
         val message = e.localizedMessage
-        val errorData = ApiResponse.ErrorData.of(message, ApiResponse.ErrorData.FieldError.of(e.bindingResult))
+        val fieldErrors = ApiResponse.ErrorData.FieldError.of(e.bindingResult)
         log.warn("[Validation 오류] $message")
-        return ResponseEntity.status(ErrorCode.BAD_REQUEST.status).body(errorData)
+        return ResponseEntity.status(ErrorCode.BAD_REQUEST.status).body(ApiResponse.ErrorData.of(message, fieldErrors))
     }
 
     @ExceptionHandler(NullPointerException::class, IndexOutOfBoundsException::class)

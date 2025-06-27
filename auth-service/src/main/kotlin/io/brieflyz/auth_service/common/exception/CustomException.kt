@@ -1,6 +1,6 @@
 package io.brieflyz.auth_service.common.exception
 
-import io.brieflyz.core.dto.api.ErrorCode
+import io.brieflyz.core.enums.ErrorCode
 
 sealed class CustomException(val errorCode: ErrorCode, msg: String) :
     RuntimeException("${errorCode.message} $msg".trim())

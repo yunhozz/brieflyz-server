@@ -1,6 +1,9 @@
 package io.brieflyz.core.dto.api
 
 import com.fasterxml.jackson.annotation.JsonInclude
+import io.brieflyz.core.enums.ApiResponseCode
+import io.brieflyz.core.enums.ErrorCode
+import io.brieflyz.core.enums.SuccessCode
 import org.springframework.validation.BindingResult
 import java.time.LocalDateTime
 

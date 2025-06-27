@@ -1,4 +1,4 @@
-package io.brieflyz.core.dto.api
+package io.brieflyz.core.enums
 
 import io.brieflyz.core.constants.ApiStatus
 
