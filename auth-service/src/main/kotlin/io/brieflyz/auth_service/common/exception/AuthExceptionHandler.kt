@@ -1,6 +1,6 @@
 package io.brieflyz.auth_service.common.exception
 
-import io.brieflyz.core.dto.api.ApiResponse
+import io.brieflyz.core.dto.api.ErrorData
 import io.brieflyz.core.enums.ErrorCode
 import io.brieflyz.core.utils.logger
 import org.springframework.beans.BeansException
@@ -17,18 +17,20 @@ class AuthExceptionHandler {
     private val log = logger()
 
     @ExceptionHandler(CustomException::class)
-    fun handleCustomException(e: CustomException): ResponseEntity<ApiResponse.ErrorData> {
+    fun handleCustomException(e: CustomException): ResponseEntity<ErrorData> {
         val message = e.localizedMessage
         log.warn("[인증 서비스 예외] $message")
-        return ResponseEntity.status(e.errorCode.status).body(ApiResponse.ErrorData.of(message))
+        return ResponseEntity.status(e.errorCode.status)
+            .body(ErrorData.of(message))
     }
 
     @ExceptionHandler(MethodArgumentNotValidException::class)
-    fun handleMethodArgumentNotValidException(e: MethodArgumentNotValidException): ResponseEntity<ApiResponse.ErrorData> {
+    fun handleMethodArgumentNotValidException(e: MethodArgumentNotValidException): ResponseEntity<ErrorData> {
         val message = e.localizedMessage
-        val fieldErrors = ApiResponse.ErrorData.FieldError.of(e.bindingResult)
+        val fieldErrors = ErrorData.FieldError.fromBindingResult(e.bindingResult)
         log.warn("[Validation 오류] $message")
-        return ResponseEntity.status(ErrorCode.BAD_REQUEST.status).body(ApiResponse.ErrorData.of(message, fieldErrors))
+        return ResponseEntity.status(ErrorCode.BAD_REQUEST.status)
+            .body(ErrorData.of(message, fieldErrors))
     }
 
     @ExceptionHandler(NullPointerException::class, IndexOutOfBoundsException::class)

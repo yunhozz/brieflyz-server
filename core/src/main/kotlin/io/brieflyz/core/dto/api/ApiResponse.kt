@@ -43,28 +43,28 @@ data class ApiResponse<T> private constructor(
             internal fun <T> of(message: String, data: T? = null) = ApiBody(message, data)
         }
     }
+}
 
-    @JsonInclude(JsonInclude.Include.NON_NULL)
-    data class ErrorData private constructor(
-        val timestamp: LocalDateTime,
-        val exception: String,
-        val fieldErrors: List<FieldError>?
+@JsonInclude(JsonInclude.Include.NON_NULL)
+data class ErrorData private constructor(
+    val timestamp: LocalDateTime,
+    val exception: String,
+    val fieldErrors: List<FieldError>?
+) {
+    companion object {
+        fun of(ex: String, fieldErrors: List<FieldError>? = null) = ErrorData(LocalDateTime.now(), ex, fieldErrors)
+    }
+
+    data class FieldError private constructor(
+        val field: String,
+        val value: String?,
+        val reason: String?
     ) {
         companion object {
-            fun of(ex: String, fieldErrors: List<FieldError>? = null) = ErrorData(LocalDateTime.now(), ex, fieldErrors)
-        }
-
-        data class FieldError private constructor(
-            val field: String,
-            val value: String?,
-            val reason: String?
-        ) {
-            companion object {
-                fun of(result: BindingResult): List<FieldError> =
-                    result.fieldErrors.map { err ->
-                        FieldError(err.field, err.rejectedValue?.toString(), err.defaultMessage)
-                    }
-            }
+            fun fromBindingResult(result: BindingResult): List<FieldError> =
+                result.fieldErrors.map { err ->
+                    FieldError(err.field, err.rejectedValue?.toString(), err.defaultMessage)
+                }
         }
     }
 }
