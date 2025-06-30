@@ -3,6 +3,7 @@ package io.brieflyz.auth_service.infra.security.oauth
 import io.brieflyz.auth_service.common.constants.CookieName
 import io.brieflyz.auth_service.common.exception.NotAuthorizedRedirectionException
 import io.brieflyz.auth_service.common.utils.CookieUtils
+import io.brieflyz.auth_service.infra.redis.RedisHandler
 import io.brieflyz.auth_service.infra.security.jwt.JwtProvider
 import io.brieflyz.core.config.AuthServiceProperties
 import io.brieflyz.core.utils.logger
@@ -11,11 +12,11 @@ import jakarta.servlet.http.HttpServletResponse
 import org.springframework.security.core.Authentication
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler
 import org.springframework.stereotype.Component
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder
 
 @Component
 class OAuthAuthenticationSuccessHandler(
     private val jwtProvider: JwtProvider,
+    private val redisHandler: RedisHandler,
     private val oAuth2AuthorizationRequestCookieRepository: OAuth2AuthorizationRequestCookieRepository,
     private val authServiceProperties: AuthServiceProperties
 ) : SimpleUrlAuthenticationSuccessHandler() {
@@ -38,16 +39,25 @@ class OAuthAuthenticationSuccessHandler(
 
         val targetUri = requestedRedirectUri ?: defaultTargetUrl
         val tokens = jwtProvider.generateToken(authentication)
-        val targetUrl = ServletUriComponentsBuilder.fromUriString(targetUri)
-            .queryParam("token", tokens.tokenType + tokens.accessToken)
-            .toUriString()
+
+        CookieUtils.addCookie(
+            response,
+            name = CookieName.ACCESS_TOKEN_COOKIE_NAME,
+            value = CookieUtils.serialize(tokens.accessToken),
+            maxAge = tokens.accessTokenValidTime
+        )
+        redisHandler.save(authentication.name, tokens.refreshToken, tokens.refreshTokenValidTime)
+
+//        val targetUrl = ServletUriComponentsBuilder.fromUriString(targetUri)
+//            .queryParam("token", tokens.tokenType + tokens.accessToken)
+//            .toUriString()
 
         log.debug("Token Info: {}", tokens)
-        log.info("OAuth2 Authentication Success, redirecting to: $targetUrl")
+        log.info("OAuth2 Authentication Success, redirecting to: $targetUri")
 
         clearAuthenticationAttributes(request)
         oAuth2AuthorizationRequestCookieRepository.removeAuthorizationRequestCookies(request, response)
-        redirectStrategy.sendRedirect(request, response, targetUrl)
+        redirectStrategy.sendRedirect(request, response, targetUri)
     }
 
     private fun isNotAuthorizedRedirectUri(
