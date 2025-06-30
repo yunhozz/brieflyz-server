@@ -11,7 +11,9 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder
 import java.net.URLEncoder
 
 @Component
-class OAuthAuthenticationFailureHandler : SimpleUrlAuthenticationFailureHandler() {
+class OAuthAuthenticationFailureHandler(
+    private val oAuth2AuthorizationRequestCookieRepository: OAuth2AuthorizationRequestCookieRepository
+) : SimpleUrlAuthenticationFailureHandler() {
 
     private val log = logger()
 
@@ -25,12 +27,17 @@ class OAuthAuthenticationFailureHandler : SimpleUrlAuthenticationFailureHandler(
         val redirectUri = request.getParameter("redirect_uri")
         val errorMsg = exception?.localizedMessage ?: "Authentication failed"
 
+        log.debug("Redirect URI: $redirectUri")
+        log.debug("Error Message: $errorMsg")
+
         if (redirectUri != null) {
             val targetUrl = ServletUriComponentsBuilder.fromUriString(redirectUri)
                 .queryParam("error", URLEncoder.encode(errorMsg, StandardCharset.UTF_8))
                 .toUriString()
 
             log.error("OAuth2 Authentication Fail: $errorMsg, Redirect URL: $targetUrl")
+
+            oAuth2AuthorizationRequestCookieRepository.removeAuthorizationRequestCookies(request, response)
             redirectStrategy.sendRedirect(request, response, targetUrl)
 
         } else {

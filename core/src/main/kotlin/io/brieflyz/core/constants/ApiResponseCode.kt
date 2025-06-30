@@ -1,6 +1,4 @@
-package io.brieflyz.core.enums
-
-import io.brieflyz.core.constants.ApiStatus
+package io.brieflyz.core.constants
 
 sealed interface ApiResponseCode
 

@@ -1,4 +1,4 @@
-package io.brieflyz.auth_service.common.enums
+package io.brieflyz.auth_service.common.constants
 
 import org.springframework.security.core.GrantedAuthority
 

@@ -1,7 +1,7 @@
 package io.brieflyz.auth_service.common.exception
 
+import io.brieflyz.core.constants.ErrorCode
 import io.brieflyz.core.dto.api.ErrorData
-import io.brieflyz.core.enums.ErrorCode
 import io.brieflyz.core.utils.logger
 import org.springframework.beans.BeansException
 import org.springframework.http.ResponseEntity

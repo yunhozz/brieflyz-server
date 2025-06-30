@@ -7,7 +7,6 @@ import io.brieflyz.auth_service.common.exception.UserNotFoundException
 import io.brieflyz.auth_service.infra.db.MemberRepository
 import io.brieflyz.auth_service.infra.redis.RedisHandler
 import io.brieflyz.auth_service.infra.security.jwt.JwtProvider
-import io.brieflyz.auth_service.infra.security.user.Role
 import io.brieflyz.auth_service.model.dto.MemberResponseDTO
 import io.brieflyz.auth_service.model.dto.SignInRequestDTO
 import io.brieflyz.auth_service.model.dto.SignUpRequestDTO
@@ -27,12 +26,11 @@ class AuthService(
 ) {
     @Transactional
     fun join(dto: SignUpRequestDTO): Long {
-        val (email, password) = dto
+        val (email, password, nickname) = dto
 
         if (memberRepository.existsByEmail(email)) throw UserAlreadyExistsException("Email: $email")
 
-        val guest = Member(email, passwordEncoder.encode(password))
-        guest.addRoles(Role.USER, Role.ADMIN) // for test
+        val guest = Member.forLocal(email, passwordEncoder.encode(password), nickname)
         memberRepository.save(guest)
 
         return guest.id
@@ -76,13 +74,13 @@ class AuthService(
 
     @Transactional(readOnly = true)
     fun findAllMembers(): List<MemberResponseDTO> = memberRepository.findAll()
-        .map { member -> MemberResponseDTO.of(member) }
+        .map { member -> MemberResponseDTO.fromMember(member) }
 
     @Transactional(readOnly = true)
     fun findMemberById(memberId: Long): MemberResponseDTO {
         val member = (memberRepository.findByIdOrNull(memberId)
             ?: throw UserNotFoundException("Member ID: $memberId"))
-        return MemberResponseDTO.of(member)
+        return MemberResponseDTO.fromMember(member)
     }
 
     private fun findMemberByEmail(email: String): Member = memberRepository.findByEmail(email)

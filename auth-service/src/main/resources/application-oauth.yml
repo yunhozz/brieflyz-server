@@ -9,29 +9,29 @@ spring:
           google:
             client-id: ${GOOGLE_CLIENT_ID}
             client-secret: ${GOOGLE_CLIENT_SECRET}
+            redirect-uri: ${OAUTH_REDIRECT_URI}
             scope:
               - email
               - profile
-            redirect-uri: ${OAUTH_REDIRECT_URI}
             authorization-grant-type: authorization_code
           kakao:
             client-name: kakao
             client-id: ${KAKAO_CLIENT_ID}
+            redirect-uri: ${OAUTH_REDIRECT_URI}
             scope:
               - account_email
               - profile_nickname
               - profile_image
-            redirect-uri: ${OAUTH_REDIRECT_URI}
             authorization-grant-type: authorization_code
           naver:
             client-name: naver
             client-id: ${NAVER_CLIENT_ID}
             client-secret: ${NAVER_CLIENT_SECRET}
+            redirect-uri: ${OAUTH_REDIRECT_URI}
             scope:
               - email
               - name
               - profile_image
-            redirect-uri: ${OAUTH_REDIRECT_URI}
             authorization-grant-type: authorization_code
         provider:
           kakao:

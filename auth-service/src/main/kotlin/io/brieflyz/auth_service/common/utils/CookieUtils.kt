@@ -1,5 +1,6 @@
 package io.brieflyz.auth_service.common.utils
 
+import io.brieflyz.auth_service.common.constants.CookieName
 import jakarta.servlet.http.Cookie
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
@@ -13,45 +14,32 @@ import java.time.Duration
 import java.util.Base64
 
 object CookieUtils {
-    const val ACCESS_TOKEN_COOKIE_NAME = "atk"
-    const val OAUTH2_AUTHORIZATION_REQUEST_COOKIE_NAME = "oauth2_auth_request"
-    const val REDIRECT_URI_PARAM_COOKIE_NAME = "redirect_uri"
-    const val COOKIE_EXPIRE_SECONDS = 180L
-
     fun getCookie(request: HttpServletRequest, name: String): Cookie? =
         request.cookies?.find { it.name == name }
 
     fun addCookie(response: HttpServletResponse, name: String, value: String, maxAge: Long?) {
-        val cookieBuilder = ResponseCookie.from(name, serialize(value))
+        val cookieBuilder = ResponseCookie.from(name, value)
             .path("/")
             .httpOnly(true)
             .secure(false)
             .sameSite(SameSite.LAX.attributeValue())
-
-        maxAge?.let { cookieBuilder.maxAge(Duration.ofMillis(it)) }
-            ?: run { cookieBuilder.maxAge(60 * 60 * 24) } // default: 1 day
+            .maxAge(maxAge?.let { Duration.ofMillis(it) } ?: Duration.ofDays(1))
 
         response.addHeader(HttpHeaders.SET_COOKIE, cookieBuilder.build().toString())
     }
 
     fun deleteCookie(request: HttpServletRequest, response: HttpServletResponse, name: String) =
-        request.cookies?.find { it.name == name }
-            ?.apply {
-                value = null
-                path = "/"
-                maxAge = 0
-                response.addCookie(this)
-            } ?: throw IllegalArgumentException("Cookie with name $name not found")
+        request.cookies?.find { it.name == name }?.apply {
+            value = null
+            path = "/"
+            maxAge = 0
+            response.addCookie(this)
+        }
 
     fun deleteAllCookies(request: HttpServletRequest, response: HttpServletResponse) {
-        val cookieNameSet = setOf(
-            ACCESS_TOKEN_COOKIE_NAME,
-            OAUTH2_AUTHORIZATION_REQUEST_COOKIE_NAME,
-            REDIRECT_URI_PARAM_COOKIE_NAME
-        )
         request.cookies.forEach { cookie ->
             val cookieName = cookie.name
-            if (cookieName in cookieNameSet) {
+            if (cookieName in CookieName.members) {
                 Cookie(cookieName, null).apply {
                     path = "/"
                     maxAge = 0
@@ -61,12 +49,12 @@ object CookieUtils {
         }
     }
 
-    private fun serialize(obj: Any): String {
+    fun serialize(obj: Any): String {
         val bytes = SerializationUtils.serialize(obj)
         return Base64.getUrlEncoder().encodeToString(bytes)
     }
 
-    private fun <T> deserialize(cookie: Cookie, clazz: Class<T>): T {
+    fun <T> deserialize(cookie: Cookie, clazz: Class<T>): T {
         val bytes = Base64.getUrlDecoder().decode(cookie.value)
         ByteArrayInputStream(bytes).use { bais ->
             ObjectInputStream(bais).use { ois ->
