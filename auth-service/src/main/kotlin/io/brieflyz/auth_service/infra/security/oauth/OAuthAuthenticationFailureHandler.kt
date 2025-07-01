@@ -12,7 +12,7 @@ import java.net.URLEncoder
 
 @Component
 class OAuthAuthenticationFailureHandler(
-    private val oAuth2AuthorizationRequestCookieRepository: OAuth2AuthorizationRequestCookieRepository
+    private val oAuthAuthorizationRequestCookieRepository: OAuthAuthorizationRequestCookieRepository
 ) : SimpleUrlAuthenticationFailureHandler() {
 
     private val log = logger()
@@ -37,7 +37,7 @@ class OAuthAuthenticationFailureHandler(
 
             log.error("OAuth2 Authentication Fail: $errorMsg, Redirect URL: $targetUrl")
 
-            oAuth2AuthorizationRequestCookieRepository.removeAuthorizationRequestCookies(request, response)
+            oAuthAuthorizationRequestCookieRepository.removeAuthorizationRequestCookies(request, response)
             redirectStrategy.sendRedirect(request, response, targetUrl)
 
         } else {

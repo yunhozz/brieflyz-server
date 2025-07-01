@@ -4,9 +4,9 @@ import io.brieflyz.auth_service.common.constants.Role
 import io.brieflyz.auth_service.infra.security.jwt.JwtAccessDeniedHandler
 import io.brieflyz.auth_service.infra.security.jwt.JwtAuthenticationEntryPoint
 import io.brieflyz.auth_service.infra.security.jwt.JwtFilter
-import io.brieflyz.auth_service.infra.security.oauth.OAuth2AuthorizationRequestCookieRepository
 import io.brieflyz.auth_service.infra.security.oauth.OAuthAuthenticationFailureHandler
 import io.brieflyz.auth_service.infra.security.oauth.OAuthAuthenticationSuccessHandler
+import io.brieflyz.auth_service.infra.security.oauth.OAuthAuthorizationRequestCookieRepository
 import io.brieflyz.auth_service.infra.security.oauth.OAuthUserCustomService
 import io.brieflyz.core.config.AuthServiceProperties
 import org.springframework.context.annotation.Bean
@@ -30,7 +30,7 @@ class SecurityConfig(
     private val oAuthAuthenticationSuccessHandler: OAuthAuthenticationSuccessHandler,
     private val oAuthAuthenticationFailureHandler: OAuthAuthenticationFailureHandler,
     private val oAuthUserCustomService: OAuthUserCustomService,
-    private val oAuth2AuthorizationRequestCookieRepository: OAuth2AuthorizationRequestCookieRepository,
+    private val oAuthAuthorizationRequestCookieRepository: OAuthAuthorizationRequestCookieRepository,
     private val authServiceProperties: AuthServiceProperties
 ) {
     @Bean
@@ -56,7 +56,7 @@ class SecurityConfig(
         .oauth2Login {
             it.authorizationEndpoint { cfg ->
                 cfg.baseUri(authServiceProperties.oauth?.authorizationUri)
-                cfg.authorizationRequestRepository(oAuth2AuthorizationRequestCookieRepository)
+                cfg.authorizationRequestRepository(oAuthAuthorizationRequestCookieRepository)
             }
             it.userInfoEndpoint { cfg -> cfg.userService(oAuthUserCustomService) }
             it.successHandler(oAuthAuthenticationSuccessHandler)

@@ -17,7 +17,7 @@ import org.springframework.stereotype.Component
 class OAuthAuthenticationSuccessHandler(
     private val jwtProvider: JwtProvider,
     private val redisHandler: RedisHandler,
-    private val oAuth2AuthorizationRequestCookieRepository: OAuth2AuthorizationRequestCookieRepository,
+    private val oAuthAuthorizationRequestCookieRepository: OAuthAuthorizationRequestCookieRepository,
     private val authServiceProperties: AuthServiceProperties
 ) : SimpleUrlAuthenticationSuccessHandler() {
 
@@ -56,7 +56,7 @@ class OAuthAuthenticationSuccessHandler(
         log.info("OAuth2 Authentication Success, redirecting to: $targetUri")
 
         clearAuthenticationAttributes(request)
-        oAuth2AuthorizationRequestCookieRepository.removeAuthorizationRequestCookies(request, response)
+        oAuthAuthorizationRequestCookieRepository.removeAuthorizationRequestCookies(request, response)
         redirectStrategy.sendRedirect(request, response, targetUri)
     }
 

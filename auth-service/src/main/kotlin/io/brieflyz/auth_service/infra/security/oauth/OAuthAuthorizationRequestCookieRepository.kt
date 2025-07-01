@@ -10,7 +10,7 @@ import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequ
 import org.springframework.stereotype.Component
 
 @Component
-class OAuth2AuthorizationRequestCookieRepository : AuthorizationRequestRepository<OAuth2AuthorizationRequest> {
+class OAuthAuthorizationRequestCookieRepository : AuthorizationRequestRepository<OAuth2AuthorizationRequest> {
     private val log = logger()
 
     override fun loadAuthorizationRequest(request: HttpServletRequest): OAuth2AuthorizationRequest? =
