@@ -1,0 +1,7 @@
+app:
+  auth:
+    jwt:
+      secret-key: ${SECRET_KEY}
+      token-type: ${TOKEN_TYPE}
+      access-token-valid-time: ${ACCESS_TOKEN_VALID_TIME}
+      refresh-token-valid-time: ${REFRESH_TOKEN_VALID_TIME}

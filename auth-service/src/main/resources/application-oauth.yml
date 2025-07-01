@@ -1,0 +1,53 @@
+spring:
+  config:
+    activate:
+      on-profile: oauth
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
+            redirect-uri: ${OAUTH_REDIRECT_URI}
+            scope:
+              - email
+              - profile
+            authorization-grant-type: authorization_code
+          kakao:
+            client-name: kakao
+            client-id: ${KAKAO_CLIENT_ID}
+            redirect-uri: ${OAUTH_REDIRECT_URI}
+            scope:
+              - account_email
+              - profile_nickname
+              - profile_image
+            authorization-grant-type: authorization_code
+          naver:
+            client-name: naver
+            client-id: ${NAVER_CLIENT_ID}
+            client-secret: ${NAVER_CLIENT_SECRET}
+            redirect-uri: ${OAUTH_REDIRECT_URI}
+            scope:
+              - email
+              - name
+              - profile_image
+            authorization-grant-type: authorization_code
+        provider:
+          kakao:
+            authorization-uri: ${KAKAO_AUTHORIZATION_URI}
+            token-uri: ${KAKAO_TOKEN_URI}
+            user-info-uri: ${KAKAO_USER_INFO_URI}
+            user-name-attribute: ${KAKAO_NAME_ATTRIBUTE}
+          naver:
+            authorization-uri: ${NAVER_AUTHORIZATION_URI}
+            token-uri: ${NAVER_TOKEN_URI}
+            user-info-uri: ${NAVER_USER_INFO_URI}
+            user-name-attribute: ${NAVER_NAME_ATTRIBUTE}
+
+app:
+  auth:
+    oauth:
+      authorization-uri: ${OAUTH_AUTHORIZATION_URI}
+      redirect-uri: ${OAUTH_REDIRECT_URI}
+      authorized-redirect-uris: ${AUTHORIZED_REDIRECT_URIS}

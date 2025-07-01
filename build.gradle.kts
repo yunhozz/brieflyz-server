@@ -1,41 +1,67 @@
 plugins {
-	kotlin("jvm") version "1.9.25"
-	kotlin("plugin.spring") version "1.9.25"
-	id("org.springframework.boot") version "3.5.0"
-	id("io.spring.dependency-management") version "1.1.7"
+    kotlin("jvm") version "1.9.25"
+    kotlin("plugin.spring") version "1.9.25"
+    kotlin("plugin.jpa") version "1.9.25"
+    kotlin("plugin.allopen") version "1.9.25"
+    kotlin("plugin.noarg") version "1.9.25"
+    id("org.springframework.boot") version "3.5.0"
+    id("io.spring.dependency-management") version "1.1.7"
 }
 
 allprojects {
-	group = "io.brieflyz"
-	version = "0.0.1-SNAPSHOT"
+    group = "io.brieflyz"
+    version = "0.0.1-SNAPSHOT"
 
-	repositories {
-		mavenCentral()
-	}
+    repositories {
+        mavenCentral()
+    }
 }
 
 subprojects {
-	java {
-		toolchain {
-			languageVersion = JavaLanguageVersion.of(21)
-		}
-	}
+    apply(plugin = "java")
+    apply(plugin = "kotlin")
+    apply(plugin = "kotlin-allopen")
+    apply(plugin = "kotlin-noarg")
+    apply(plugin = "org.jetbrains.kotlin.plugin.spring")
+    apply(plugin = "org.springframework.boot")
+    apply(plugin = "io.spring.dependency-management")
 
-	kotlin {
-		compilerOptions {
-			freeCompilerArgs.addAll("-Xjsr305=strict")
-		}
-	}
+    extra["springCloudVersion"] = "2025.0.0"
 
-	tasks.withType<Test> {
-		useJUnitPlatform()
-	}
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(21)
+        }
+    }
 
-	dependencies {
-		implementation("org.springframework.boot:spring-boot-starter")
-		implementation("org.jetbrains.kotlin:kotlin-reflect")
-		testImplementation("org.springframework.boot:spring-boot-starter-test")
-		testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
-		testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-	}
+    kotlin {
+        compilerOptions {
+            freeCompilerArgs.addAll("-Xjsr305=strict")
+        }
+    }
+
+    tasks.withType<Test> {
+        useJUnitPlatform()
+    }
+
+    configurations.testImplementation {
+        exclude(group = "org.springframework.boot", module = "spring-boot-starter-logging")
+        exclude(group = "org.apache.logging.log4j", module = "log4j-to-slf4j")
+        exclude(group = "ch.qos.logback", module = "logback-classic")
+    }
+
+    allOpen {
+        annotation("jakarta.persistence.Entity")
+        annotation("jakarta.persistence.MappedSuperclass")
+        annotation("jakarta.persistence.Embeddable")
+    }
+
+    noArg {
+        annotation("jakarta.persistence.Entity")
+        annotation("jakarta.persistence.MappedSuperclass")
+        annotation("jakarta.persistence.Embeddable")
+    }
 }
+
+project(":core")
+project(":auth-service")

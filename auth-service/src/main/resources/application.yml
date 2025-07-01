@@ -1,0 +1,103 @@
+server:
+  port: 8090
+spring:
+  application:
+    name: auth-service
+  profiles:
+    active: ${APPLICATION_PROFILE:local}
+    include: jwt, oauth
+  jpa:
+    open-in-view: false
+  kafka:
+    consumer:
+      group-id: auth-service-group
+  data:
+    redis:
+      connect-timeout: 3000
+      timeout: 3000
+---
+spring:
+  config:
+    activate:
+      on-profile: local
+  cloud:
+    config:
+      enabled: false
+  jpa:
+    hibernate:
+      ddl-auto: create
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        default_batch_fetch_size: 100
+        show_sql: true
+        format_sql: true
+  datasource:
+    url: jdbc:mysql://localhost:3306/brieflyz?createDatabaseIfNotExist=true
+    username: ${MYSQL_USERNAME}
+    password: ${MYSQL_ROOT_PASSWORD}
+  kafka:
+    bootstrap-servers: localhost:9092
+app:
+  auth:
+    kafka:
+      num-of-partitions: 1
+      replication-factor: 1
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+  cloud:
+    config:
+      enabled: false
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        default_batch_fetch_size: 100
+        show_sql: true
+        format_sql: true
+  datasource:
+    hikari:
+      source:
+        jdbc-url: jdbc:mysql://mysql-source:3306/brieflyz_auth?createDatabaseIfNotExist=true
+        username: ${MYSQL_USERNAME}
+        password: ${MYSQL_ROOT_PASSWORD}
+        pool-name: auth-service-source-pool
+        maximum-pool-size: 3
+        minimum-idle: 1
+      replica:
+        jdbc-url: jdbc:mysql://mysql-replica:13306/brieflyz_auth?createDatabaseIfNotExist=true
+        username: ${MYSQL_USERNAME}
+        password: ${MYSQL_ROOT_PASSWORD}
+        pool-name: auth-service-replica-pool
+        maximum-pool-size: 5
+        minimum-idle: 3
+        read-only: true
+  data:
+    redis:
+      cluster:
+        nodes:
+          - redis-0:6379
+          - redis-1:16379
+          - redis-2:26379
+  kafka:
+    bootstrap-servers: kafka-0:9092,kafka-1:19092,kafka-2:29092
+app:
+  auth:
+    kafka:
+      num-of-partitions: 3
+      replication-factor: 3
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+    import: configserver:http://config-server:8888/
+  cloud:
+    config:
+      name: auth-service
+      profile: prod
