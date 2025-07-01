@@ -8,7 +8,21 @@ import org.springframework.context.annotation.Configuration
 @Configuration
 class AppConfig {
     @Bean
+    fun gatewayProperties() = GatewayProperties()
+
+    @Bean
     fun authServiceProperties() = AuthServiceProperties()
+}
+
+@ConfigurationProperties(prefix = "app.gateway")
+@EnableConfigurationProperties(GatewayProperties::class)
+data class GatewayProperties(
+    val jwt: JwtProperties? = null,
+) {
+    data class JwtProperties(
+        val secretKey: String = "",
+        val tokenType: String = ""
+    )
 }
 
 @ConfigurationProperties(prefix = "app.auth")

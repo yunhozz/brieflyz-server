@@ -5,3 +5,33 @@ spring:
     name: api-gateway
   profiles:
     active: ${APPLICATION_PROFILE:local}
+app:
+  gateway:
+    jwt:
+      secret-key: ${SECRET_KEY}
+      token-type: ${TOKEN_TYPE}
+---
+spring:
+  config:
+    activate:
+      on-profile: local
+  cloud:
+    config:
+      enabled: false
+    gateway:
+      server:
+        webflux:
+          discovery:
+            locator:
+              enabled: true
+          routes:
+            - id: auth-service
+              uri: http://localhost:8090
+              predicates:
+                - Path=/api/auth/**
+            - id: auth-service
+              uri: http://localhost:8090
+              filters:
+                - AuthorizationHeaderFilter
+              predicates:
+                - Path=/api/members/**

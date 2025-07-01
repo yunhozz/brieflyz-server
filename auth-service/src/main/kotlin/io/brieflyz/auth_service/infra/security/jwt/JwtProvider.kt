@@ -18,8 +18,8 @@ import javax.crypto.SecretKey
 
 @Component
 class JwtProvider(
-    private val authServiceProperties: AuthServiceProperties,
-    private val userDetailsService: CustomUserDetailsService
+    private val userDetailsService: CustomUserDetailsService,
+    private val authServiceProperties: AuthServiceProperties
 ) {
     private val log = logger()
 
@@ -54,22 +54,6 @@ class JwtProvider(
         val roles = authentication.authorities.joinToString("|") { it.authority }
         return generateToken(username, roles)
     }
-
-    fun isTokenValid(token: String): Boolean =
-        try {
-            createClaimsJws(token)
-            true
-
-        } catch (e: Exception) {
-            log.warn(
-                """
-                [Invalid JWT Token]
-                Exception Class: ${e.javaClass.simpleName}
-                Message: ${e.message}
-            """.trimIndent()
-            )
-            false
-        }
 
     fun getAuthentication(token: String): Authentication {
         val claims = createClaimsJws(token).body
