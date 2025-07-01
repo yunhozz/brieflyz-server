@@ -64,4 +64,5 @@ subprojects {
 }
 
 project(":core")
+project(":api-gateway")
 project(":auth-service")
