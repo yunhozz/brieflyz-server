@@ -48,11 +48,12 @@ data class ApiResponse<T> private constructor(
 @JsonInclude(JsonInclude.Include.NON_NULL)
 data class ErrorData private constructor(
     val timestamp: LocalDateTime,
-    val exception: String,
+    val exception: String?,
     val fieldErrors: List<FieldError>?
 ) {
     companion object {
-        fun of(ex: String, fieldErrors: List<FieldError>? = null) = ErrorData(LocalDateTime.now(), ex, fieldErrors)
+        fun of(ex: Exception, fieldErrors: List<FieldError>? = null) =
+            ErrorData(LocalDateTime.now(), ex::class.qualifiedName, fieldErrors)
     }
 
     data class FieldError private constructor(
