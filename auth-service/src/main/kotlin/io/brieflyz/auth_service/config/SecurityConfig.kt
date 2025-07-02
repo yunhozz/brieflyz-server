@@ -18,8 +18,6 @@ import org.springframework.security.web.SecurityFilterChain
 @EnableWebSecurity
 class SecurityConfig(
     private val userDetailsService: CustomUserDetailsService,
-//    private val jwtAccessDeniedHandler: JwtAccessDeniedHandler,
-//    private val jwtAuthenticationEntryPoint: JwtAuthenticationEntryPoint,
     private val oAuthAuthenticationSuccessHandler: OAuthAuthenticationSuccessHandler,
     private val oAuthAuthenticationFailureHandler: OAuthAuthenticationFailureHandler,
     private val oAuthUserCustomService: OAuthUserCustomService,
@@ -31,21 +29,13 @@ class SecurityConfig(
 
     @Bean
     fun securityFilterChain(http: HttpSecurity): SecurityFilterChain = http
-//        .cors { it.configurationSource(corsConfigurationSource()) }
+        .cors { it.disable() }
         .csrf { it.disable() }
         .headers { it.frameOptions { cfg -> cfg.sameOrigin() } }
-//        .formLogin { it.disable() }
-//        .httpBasic { it.disable() }
+        .httpBasic { it.disable() }
+        .formLogin { it.disable() }
         .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
-//        .authorizeHttpRequests {
-//            it.requestMatchers(HttpMethod.GET, "/api/members/**").hasAuthority(Role.ADMIN.authority)
-//            it.anyRequest().permitAll()
-//        }
         .userDetailsService(userDetailsService)
-//        .exceptionHandling {
-//            it.accessDeniedHandler(jwtAccessDeniedHandler)
-//            it.authenticationEntryPoint(jwtAuthenticationEntryPoint)
-//        }
         .oauth2Login {
             it.authorizationEndpoint { cfg ->
                 cfg.baseUri(authServiceProperties.oauth?.authorizationUri)
@@ -56,16 +46,4 @@ class SecurityConfig(
             it.failureHandler(oAuthAuthenticationFailureHandler)
         }
         .build()
-
-//    @Bean
-//    fun corsConfigurationSource(): CorsConfigurationSource {
-//        val corsConfiguration = CorsConfiguration().apply {
-//            allowedMethods = listOf("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
-//            allowedOriginPatterns = listOf("*")
-//            allowedHeaders = listOf("*")
-//        }
-//        return UrlBasedCorsConfigurationSource().apply {
-//            registerCorsConfiguration("/**", corsConfiguration)
-//        }
-//    }
 }
