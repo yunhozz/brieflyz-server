@@ -1,5 +1,7 @@
 package io.brieflyz.api_gateway.filter
 
+import io.brieflyz.api_gateway.exception.JwtTokenNotExistException
+import io.brieflyz.api_gateway.exception.JwtTokenNotValidException
 import io.brieflyz.core.config.GatewayProperties
 import io.brieflyz.core.utils.logger
 import io.jsonwebtoken.Jwts
@@ -33,27 +35,27 @@ class AuthorizationHeaderFilter(
 
         log.debug("Header Token: $headerToken")
 
-        return@OrderedGatewayFilter resolveToken(headerToken)?.let { token ->
+        resolveToken(headerToken)?.let { token ->
             log.debug("Parsed Token: $token")
-            if (isTokenValid(token)) {
-                val requestWithToken = request.mutate()
-                    .header(HttpHeaders.AUTHORIZATION, token)
-                    .build()
-                val mutatedExchange = exchange.mutate()
-                    .request(requestWithToken)
-                    .build()
-                chain.filter(mutatedExchange)
-            } else {
-                chain.filter(exchange)
+            if (!isTokenValid(token)) {
+                throw JwtTokenNotValidException()
             }
-        }
+            val requestWithToken = request.mutate()
+                .header(HttpHeaders.AUTHORIZATION, token)
+                .build()
+            val mutatedExchange = exchange.mutate()
+                .request(requestWithToken)
+                .build()
+            chain.filter(mutatedExchange)
+        } ?: throw JwtTokenNotExistException()
     }, -1)
 
-    private fun resolveToken(token: String?): String? = token.takeIf { Strings.hasText(it) }?.let {
-        val parts = it.split(" ")
-        val tokenType = gatewayProperties.jwt?.tokenType!!
-        return if (parts.size == 2 && parts[0] == tokenType.trim()) parts[1] else null
-    }
+    private fun resolveToken(token: String?): String? =
+        token.takeIf { Strings.hasText(it) }?.let {
+            val parts = it.split(" ")
+            val tokenType = gatewayProperties.jwt?.tokenType!!
+            return if (parts.size == 2 && parts[0] == tokenType.trim()) parts[1] else null
+        }
 
     private fun isTokenValid(token: String): Boolean =
         try {
@@ -64,7 +66,7 @@ class AuthorizationHeaderFilter(
             true
 
         } catch (e: Exception) {
-            log.warn(
+            log.error(
                 """
                 [Invalid JWT Token]
                 Exception Class: ${e.javaClass.simpleName}

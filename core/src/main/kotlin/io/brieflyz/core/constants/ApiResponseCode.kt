@@ -45,6 +45,7 @@ enum class ErrorCode(
     // 409 Conflict
     USER_ALREADY_EXIST(ApiStatus.CONFLICT, "유저 정보가 이미 존재합니다."),
 
-    // 500 Internal Server Error
-    INTERNAL_SERVER_ERROR(ApiStatus.INTERNAL_SERVER_ERROR, "서버에 오류가 발생하였습니다.")
+    // 5xx Server Error
+    INTERNAL_SERVER_ERROR(ApiStatus.INTERNAL_SERVER_ERROR, "서버 오류가 발생하였습니다. 잠시 후 다시 시도해 주세요."),
+    SERVICE_UNAVAILABLE(ApiStatus.SERVICE_UNAVAILABLE, "서비스 접속이 원활하지 않습니다. 잠시 후 다시 시도해 주세요.")
 }
