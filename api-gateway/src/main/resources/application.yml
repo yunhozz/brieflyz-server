@@ -35,3 +35,28 @@ spring:
                 - AuthorizationHeaderFilter
               predicates:
                 - Path=/api/members/**
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+  cloud:
+    config:
+      enabled: false
+    gateway:
+      server:
+        webflux:
+          discovery:
+            locator:
+              enabled: true
+          routes:
+            - id: auth-service
+              uri: http://auth-service:8090
+              predicates:
+                - Path=/api/auth/**
+            - id: auth-service
+              uri: http://auth-service:8090
+              filters:
+                - AuthorizationHeaderFilter
+              predicates:
+                - Path=/api/members/**
