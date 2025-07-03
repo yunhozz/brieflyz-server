@@ -20,7 +20,6 @@ data class OAuthProfile private constructor(
                 OAuthProvider.GOOGLE -> ofGoogle(provider, userNameAttributeName, attributes)
                 OAuthProvider.KAKAO -> ofKakao(provider, userNameAttributeName, attributes)
                 OAuthProvider.NAVER -> ofNaver(provider, userNameAttributeName, attributes)
-                null -> TODO()
             }
         }
 

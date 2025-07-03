@@ -9,6 +9,7 @@ enum class OAuthProvider(
     ;
 
     companion object {
-        fun of(provider: String): OAuthProvider? = entries.find { it.provider == provider }
+        fun of(provider: String): OAuthProvider = entries.find { it.provider == provider }
+            ?: throw IllegalArgumentException("This provider $provider does not provide OAuth2.0")
     }
 }
