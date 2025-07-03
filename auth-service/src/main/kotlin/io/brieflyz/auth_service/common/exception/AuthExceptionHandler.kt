@@ -1,12 +1,15 @@
 package io.brieflyz.auth_service.common.exception
 
 import io.brieflyz.core.constants.ErrorCode
+import io.brieflyz.core.dto.api.ApiResponse
 import io.brieflyz.core.dto.api.ErrorData
 import io.brieflyz.core.utils.logger
 import org.springframework.beans.BeansException
+import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
+import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestControllerAdvice
 import java.io.IOException
 import java.sql.SQLException
@@ -16,71 +19,62 @@ class AuthExceptionHandler {
 
     private val log = logger()
 
-    @ExceptionHandler(CustomException::class)
-    fun handleCustomException(e: CustomException): ResponseEntity<ErrorData> {
-        val message = e.localizedMessage
-        log.warn("[인증 서비스 예외] $message")
-        return ResponseEntity.status(e.errorCode.status)
-            .body(ErrorData.of(message))
+    companion object {
+        private const val RUNTIME_ERROR = "[런타임 오류]"
+        private const val INTERNAL_ERROR = "[서버 내부 오류]"
+    }
+
+    @ExceptionHandler(AuthServiceException::class)
+    fun handleAuthServiceException(e: AuthServiceException): ResponseEntity<ApiResponse<ErrorData>> {
+        val errorCode = e.errorCode
+        val apiResponse = ApiResponse.fail(errorCode, ErrorData.of(e))
+        return ResponseEntity.status(errorCode.status).body(apiResponse)
+            .also { log.warn("[인증 서비스 예외] ${e.localizedMessage}") }
     }
 
     @ExceptionHandler(MethodArgumentNotValidException::class)
-    fun handleMethodArgumentNotValidException(e: MethodArgumentNotValidException): ResponseEntity<ErrorData> {
-        val message = e.localizedMessage
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    fun handleMethodArgumentNotValidException(e: MethodArgumentNotValidException): ApiResponse<ErrorData> {
         val fieldErrors = ErrorData.FieldError.fromBindingResult(e.bindingResult)
-        log.warn("[Validation 오류] $message")
-        return ResponseEntity.status(ErrorCode.BAD_REQUEST.status)
-            .body(ErrorData.of(message, fieldErrors))
+        return ApiResponse.fail(ErrorCode.BAD_REQUEST, ErrorData.of(e, fieldErrors))
+            .also { log.warn("[Validation 오류] ${e.localizedMessage}") }
     }
 
     @ExceptionHandler(NullPointerException::class, IndexOutOfBoundsException::class)
-    fun handleRuntimeException(e: RuntimeException) {
-        when (e) {
-            is NullPointerException ->
-                log.error("[런타임 오류] NullPointerException 발생: ${e.message}", e)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    fun handleBasicRuntimeException(e: RuntimeException): ApiResponse<ErrorData> {
+        val message = e.message ?: "Basic Runtime Exception"
+        return ApiResponse.fail(ErrorCode.INTERNAL_SERVER_ERROR, ErrorData.of(e))
+            .also { log.error("$RUNTIME_ERROR ${e::class.simpleName} 발생: $message", e) }
+    }
 
-            is IndexOutOfBoundsException ->
-                log.error("[런타임 오류] IndexOutOfBoundsException 발생: ${e.message}", e)
-
-            else ->
-                log.error("[런타임 오류] 처리되지 않은 RuntimeException 발생: ${e.message}", e)
+    @ExceptionHandler(
+        IllegalStateException::class,
+        SQLException::class,
+        BeansException::class,
+        IOException::class
+    )
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    fun handleInternalException(e: Exception): ApiResponse<ErrorData> {
+        val prefix = when (e) {
+            is IllegalStateException -> "[서버 상태 오류]"
+            is SQLException -> "[DB 오류]"
+            is BeansException -> "[Spring Bean 오류]"
+            is IOException -> "[입출력 오류]"
+            else -> INTERNAL_ERROR
         }
-        throw e
-    }
-
-    @ExceptionHandler(SQLException::class)
-    fun handleDatabaseException(e: SQLException) {
-        log.error("[DB 오류] SQL 예외 발생: ${e.message}", e)
-        throw e
-    }
-
-    @ExceptionHandler(IllegalStateException::class)
-    fun handleIllegalStateException(e: IllegalStateException) {
-        log.error("[서버 상태 오류] IllegalStateException 발생: ${e.message}", e)
-        throw e
-    }
-
-    @ExceptionHandler(OutOfMemoryError::class)
-    fun handleOutOfMemory(e: OutOfMemoryError) {
-        log.error("[메모리 오류] OutOfMemoryError 발생: ${e.message}", e)
-        throw e
-    }
-
-    @ExceptionHandler(BeansException::class)
-    fun handleSpringBeansException(e: BeansException) {
-        log.error("[Spring Bean 오류] BeansException 발생: ${e.message}", e)
-        throw e
-    }
-
-    @ExceptionHandler(IOException::class)
-    fun handleIOException(e: IOException) {
-        log.error("[입출력 오류] IOException 발생: ${e.message}", e)
-        throw e
+        return ApiResponse.fail(ErrorCode.INTERNAL_SERVER_ERROR, ErrorData.of(e))
+            .also { log.error("$prefix ${e::class.simpleName} 발생: ${e.message}", e) }
     }
 
     @ExceptionHandler(Exception::class)
-    fun handleOtherExceptions(e: Exception) {
-        log.error("[서버 내부 오류] 처리되지 않은 예외 발생: ${e.message}", e)
-        throw e
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    fun handleOtherExceptions(e: Exception): ApiResponse<ErrorData> =
+        ApiResponse.fail(ErrorCode.INTERNAL_SERVER_ERROR, ErrorData.of(e))
+            .also { log.error("$INTERNAL_ERROR 처리되지 않은 예외 발생: ${e.message}", e) }
+
+    @ExceptionHandler(OutOfMemoryError::class, StackOverflowError::class)
+    fun handleErrors(e: Error) {
+        log.error("[심각] ${e::class.simpleName} 발생: ${e.message}", e)
     }
 }

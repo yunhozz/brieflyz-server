@@ -31,9 +31,11 @@ class OAuthUserCustomService(
         log.debug("OAuth2 Profile: {}", oAuthProfile)
 
         val member = memberRepository.findByEmail(email)?.let { localMember ->
+            log.info("Update Local Member with Social Profile")
             localMember.updateBySocialLogin()
             localMember
         } ?: run {
+            log.info("Create New Member with Social Profile")
             val socialMember = Member.forSocial(email, nickname)
             memberRepository.save(socialMember)
         }

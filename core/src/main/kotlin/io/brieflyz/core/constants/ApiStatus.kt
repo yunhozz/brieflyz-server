@@ -11,4 +11,5 @@ object ApiStatus {
     const val METHOD_NOT_ALLOWED = 405
     const val CONFLICT = 409
     const val INTERNAL_SERVER_ERROR = 500
+    const val SERVICE_UNAVAILABLE = 503
 }
