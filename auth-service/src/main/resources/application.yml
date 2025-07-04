@@ -82,10 +82,10 @@ spring:
       cluster:
         nodes:
           - redis-0:6379
-          - redis-1:16379
-          - redis-2:26379
+          - redis-1:6379
+          - redis-2:6379
   kafka:
-    bootstrap-servers: kafka-0:9092,kafka-1:19092,kafka-2:29092
+    bootstrap-servers: kafka-0:9092,kafka-1:9093,kafka-2:9094
 app:
   auth:
     kafka:

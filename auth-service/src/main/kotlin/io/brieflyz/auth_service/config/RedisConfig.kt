@@ -15,32 +15,31 @@ import org.springframework.data.redis.serializer.StringRedisSerializer
 class RedisConfig(
     private val redisProperties: RedisProperties
 ) {
+    private fun createRedisson(config: Config.() -> Unit): RedissonClient =
+        Redisson.create(Config().apply(config))
+
     @Bean
     @Profile("local")
-    fun singleRedissonClient(): RedissonClient = Redisson.create(
-        Config().also { config ->
-            config.useSingleServer()
-                .setAddress("redis://${redisProperties.host}:${redisProperties.port}")
-                .setConnectTimeout(100)
-                .setTimeout(3000)
-                .setRetryAttempts(3)
+    fun singleRedissonClient(): RedissonClient = createRedisson {
+        useSingleServer().apply {
+            address = "redis://${redisProperties.host}:${redisProperties.port}"
+            connectTimeout = 100
+            timeout = 3000
+            retryAttempts = 3
         }
-    )
+    }
 
     @Bean
     @Profile("dev", "prod")
-    fun clusterRedissonClient(): RedissonClient = Redisson.create(
-        Config().also { config ->
-            val nodes = redisProperties.cluster.nodes
-            val addresses = nodes.map { "redis://$it" }.toTypedArray()
-            config.useClusterServers()
-                .addNodeAddress(*addresses)
-                .setScanInterval(2000)
-                .setConnectTimeout(100)
-                .setTimeout(3000)
-                .setRetryAttempts(3)
+    fun clusterRedissonClient(): RedissonClient = createRedisson {
+        useClusterServers().apply {
+            nodeAddresses = redisProperties.cluster.nodes.map { "redis://$it" }
+            scanInterval = 2000
+            connectTimeout = 100
+            timeout = 3000
+            retryAttempts = 3
         }
-    )
+    }
 
     @Bean
     fun redisTemplate(factory: RedissonConnectionFactory): RedisTemplate<String, String> {
