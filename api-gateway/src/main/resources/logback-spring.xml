@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration scan="true" scanPeriod="10 seconds">
     <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
-    <springProperty scope="context" name="springAppName" source="spring.application.name"/>
+    <springProperty scope="context" name="SPRING_APP_NAME" source="spring.application.name"/>
 
     <!-- 프로젝트 이름 -->
     <property name="PROJECT_NAME" value="io.brieflyz"/>
 
     <!-- 로깅 경로 지정 -->
     <property name="LOG_PATH" value="./logs"/>
-    <property name="FILE_NAME" value="${springAppName}"/>
+    <property name="FILE_NAME" value="${SPRING_APP_NAME}"/>
 
     <!-- 콘솔 로그 패턴 -->
     <property name="CONSOLE_LOG_PATTERN"
@@ -39,7 +39,7 @@
         </rollingPolicy>
     </appender>
 
-    <!-- local -->
+    <!-- 프로파일 별 로깅 레벨 -->
     <springProfile name="local">
         <logger name="${PROJECT_NAME}" level="DEBUG"/>
         <root level="INFO">
@@ -47,16 +47,15 @@
         </root>
     </springProfile>
 
-    <!-- dev -->
-    <springProfile name="dev|stg">
+    <springProfile name="dev">
+        <logger name="${PROJECT_NAME}" level="DEBUG"/>
         <root level="INFO">
             <appender-ref ref="CONSOLE"/>
             <appender-ref ref="FILE"/>
         </root>
     </springProfile>
 
-    <!-- prod -->
-    <springProfile name="prod">
+    <springProfile name="stg|prod">
         <root level="WARN">
             <appender-ref ref="CONSOLE"/>
             <appender-ref ref="FILE"/>
