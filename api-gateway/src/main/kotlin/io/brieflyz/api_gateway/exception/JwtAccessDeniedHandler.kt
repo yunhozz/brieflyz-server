@@ -15,6 +15,7 @@ import org.springframework.security.web.server.authorization.ServerAccessDeniedH
 import org.springframework.stereotype.Component
 import org.springframework.web.server.ServerWebExchange
 import reactor.core.publisher.Mono
+import java.nio.charset.StandardCharsets
 
 @Component
 class JwtAccessDeniedHandler(
@@ -41,7 +42,7 @@ class JwtAccessDeniedHandler(
         val errorCode = ErrorCode.FORBIDDEN
         val apiResponse = ApiResponse.fail(errorCode, ErrorData.of(ex))
 
-        response.headers.contentType = MediaType.APPLICATION_JSON
+        response.headers.contentType = MediaType(MediaType.APPLICATION_JSON, StandardCharsets.UTF_8)
         response.statusCode = HttpStatusCode.valueOf(errorCode.status)
 
         return response.writeWith(

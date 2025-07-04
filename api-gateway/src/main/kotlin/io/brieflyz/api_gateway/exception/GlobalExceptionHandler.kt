@@ -16,6 +16,7 @@ import org.springframework.http.codec.json.Jackson2JsonEncoder
 import org.springframework.stereotype.Component
 import org.springframework.web.server.ServerWebExchange
 import reactor.core.publisher.Mono
+import java.nio.charset.StandardCharsets
 
 @Component
 @Order(-1)
@@ -27,7 +28,6 @@ class GlobalExceptionHandler(
 
     override fun handle(exchange: ServerWebExchange, ex: Throwable): Mono<Void?> {
         val response = exchange.response
-        response.headers.contentType = MediaType.APPLICATION_JSON
 
         val apiResponse = when (ex) {
             is ApiGatewayException -> {
@@ -43,6 +43,8 @@ class GlobalExceptionHandler(
                 ApiResponse.fail(ErrorCode.SERVICE_UNAVAILABLE, ErrorData.of(Exception(ex)))
             }
         }
+
+        response.headers.contentType = MediaType(MediaType.APPLICATION_JSON, StandardCharsets.UTF_8)
 
         return response.writeWith(
             Jackson2JsonEncoder(objectMapper).encode(
