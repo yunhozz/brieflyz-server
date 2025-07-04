@@ -70,7 +70,7 @@ spring:
         maximum-pool-size: 3
         minimum-idle: 1
       replica:
-        jdbc-url: jdbc:mysql://mysql-replica:13306/brieflyz_auth?createDatabaseIfNotExist=true
+        jdbc-url: jdbc:mysql://mysql-replica:3306/brieflyz_auth?createDatabaseIfNotExist=true
         username: ${MYSQL_USERNAME}
         password: ${MYSQL_ROOT_PASSWORD}
         pool-name: auth-service-replica-pool
