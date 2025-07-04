@@ -1,8 +1,10 @@
 HELP.md
 .gradle
 .idea
+.env
 build/
-scripts
+conf/
+scripts/
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
 !**/src/test/**/build/
