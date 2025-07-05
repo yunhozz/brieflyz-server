@@ -6,25 +6,21 @@ import io.brieflyz.auth_service.model.dto.SignInRequestDTO
 import io.brieflyz.auth_service.model.dto.SignUpRequestDTO
 import io.brieflyz.auth_service.model.dto.TokenResponseDTO
 import io.brieflyz.auth_service.service.AuthService
-import io.brieflyz.core.config.AuthServiceProperties
 import io.brieflyz.core.constants.SuccessCode
 import io.brieflyz.core.dto.api.ApiResponse
 import jakarta.servlet.http.HttpServletResponse
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
-import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
 @RequestMapping("/api/auth")
 class AuthController(
-    private val authService: AuthService,
-    private val authServiceProperties: AuthServiceProperties
+    private val authService: AuthService
 ) {
     @PostMapping("/sign-up")
     @ResponseStatus(HttpStatus.CREATED)
@@ -33,7 +29,7 @@ class AuthController(
         return ApiResponse.success(SuccessCode.SIGN_UP_SUCCESS, memberId)
     }
 
-    @PostMapping("/sign-in/local")
+    @PostMapping("/sign-in")
     @ResponseStatus(HttpStatus.CREATED)
     fun signInByLocal(
         @Valid @RequestBody body: SignInRequestDTO,
@@ -47,11 +43,5 @@ class AuthController(
             maxAge = token.accessTokenValidTime
         )
         return ApiResponse.success(SuccessCode.SIGN_IN_SUCCESS, token)
-    }
-
-    @GetMapping("/sign-in/social")
-    fun signInByOauth2(@RequestParam provider: String, response: HttpServletResponse) {
-        val oAuth2Url = "${authServiceProperties.oauth?.authorizationUri}/$provider"
-        response.sendRedirect(oAuth2Url)
     }
 }

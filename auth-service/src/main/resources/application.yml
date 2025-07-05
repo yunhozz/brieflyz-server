@@ -5,7 +5,7 @@ spring:
     name: auth-service
   profiles:
     active: ${APPLICATION_PROFILE:local}
-    include: jwt, oauth
+    include: oauth
   jpa:
     open-in-view: false
   kafka:
@@ -15,6 +15,16 @@ spring:
     redis:
       connect-timeout: 3000
       timeout: 3000
+app:
+  auth:
+    jwt:
+      secret-key: ${SECRET_KEY}
+      token-type: ${TOKEN_TYPE}
+      access-token-valid-time: ${ACCESS_TOKEN_VALID_TIME}
+      refresh-token-valid-time: ${REFRESH_TOKEN_VALID_TIME}
+    oauth:
+      authorization-uri: ${OAUTH_AUTHORIZATION_URI}
+      authorized-redirect-uris: ${AUTHORIZED_REDIRECT_URIS}
 ---
 spring:
   config:
@@ -36,10 +46,22 @@ spring:
     url: jdbc:mysql://localhost:3306/brieflyz?createDatabaseIfNotExist=true
     username: ${MYSQL_USERNAME}
     password: ${MYSQL_ROOT_PASSWORD}
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            redirect-uri: http://localhost:8090/login/oauth2/code/google
+          kakao:
+            redirect-uri: http://localhost:8090/login/oauth2/code/kakao
+          naver:
+            redirect-uri: http://localhost:8090/login/oauth2/code/naver
   kafka:
     bootstrap-servers: localhost:9092
 app:
   auth:
+    oauth:
+      redirect-uri: http://localhost:8090/login/oauth2/code/{registrationId}
     kafka:
       num-of-partitions: 1
       replication-factor: 1
@@ -77,6 +99,16 @@ spring:
         maximum-pool-size: 5
         minimum-idle: 3
         read-only: true
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            redirect-uri: http://localhost/login/oauth2/code/google
+          kakao:
+            redirect-uri: http://localhost/login/oauth2/code/kakao
+          naver:
+            redirect-uri: http://localhost/login/oauth2/code/naver
   data:
     redis:
       cluster:
@@ -88,6 +120,8 @@ spring:
     bootstrap-servers: kafka-0:9092,kafka-1:9093,kafka-2:9094
 app:
   auth:
+    oauth:
+      redirect-uri: http://localhost/login/oauth2/code/{registrationId}
     kafka:
       num-of-partitions: 3
       replication-factor: 3

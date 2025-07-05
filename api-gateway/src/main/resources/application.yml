@@ -25,16 +25,16 @@ spring:
             locator:
               enabled: true
           routes:
-            - id: auth-service
+            - id: auth-service-authentication
               uri: http://localhost:8090
               predicates:
-                - Path=/api/auth/**
-            - id: auth-service
+                - Path=/api/auth/**,/oauth2/authorization/**
+            - id: auth-service-members
               uri: http://localhost:8090
-              filters:
-                - AuthorizationHeaderFilter
               predicates:
                 - Path=/api/members/**
+              filters:
+                - AuthorizationHeaderFilter
 ---
 spring:
   config:
@@ -50,13 +50,17 @@ spring:
             locator:
               enabled: true
           routes:
-            - id: auth-service
+            - id: auth-service-authentication
               uri: http://auth-service:8090
               predicates:
-                - Path=/api/auth/**
-            - id: auth-service
+                - Path=/api/auth/**,/oauth2/authorization/**
+            - id: auth-service-members
               uri: http://auth-service:8090
-              filters:
-                - AuthorizationHeaderFilter
               predicates:
                 - Path=/api/members/**
+              filters:
+                - AuthorizationHeaderFilter
+            - id: auth-service-oauth-redirection
+              uri: http://auth-service:8090
+              predicates:
+                - Path=/login/oauth2/code/**
