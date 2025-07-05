@@ -7,14 +7,12 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Primary
 import org.springframework.context.annotation.Profile
-import org.springframework.data.jpa.repository.config.EnableJpaAuditing
 import org.springframework.jdbc.datasource.LazyConnectionDataSourceProxy
 import org.springframework.jdbc.datasource.lookup.AbstractRoutingDataSource
 import org.springframework.transaction.support.TransactionSynchronizationManager
 import javax.sql.DataSource
 
 @Configuration
-@EnableJpaAuditing
 @Profile("dev", "prod")
 class DataSourceConfig {
 
@@ -50,7 +48,7 @@ class DataSourceConfig {
 
     @Bean
     @Primary
-    fun appDataSource() = LazyConnectionDataSourceProxy(routingDataSource())
+    fun dataSourceProxy() = LazyConnectionDataSourceProxy(routingDataSource())
 
     private fun createDataSource(): DataSource =
         DataSourceBuilder.create()
