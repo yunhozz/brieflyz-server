@@ -43,13 +43,13 @@ data class OAuthProfile private constructor(
             attributes: Map<String, Any>
         ): OAuthProfile {
             val account = attributes["kakao_account"] as Map<String, Any>
-            val profile = attributes["profile"] as Map<String, Any>
+            val profile = account["profile"] as Map<String, Any>
             return OAuthProfile(
                 provider,
-                attributes["sub"] as String,
+                attributes["id"].toString(),
                 account["email"] as String,
                 profile["nickname"] as String,
-                profile["profile_img_url"] as String,
+                profile["profile_image_url"] as String,
                 userNameAttributeName,
                 attributes
             )
@@ -63,7 +63,7 @@ data class OAuthProfile private constructor(
             val response = attributes["response"] as Map<String, Any>
             return OAuthProfile(
                 provider,
-                attributes["sub"] as String,
+                response["id"] as String,
                 response["email"] as String,
                 response["name"] as String,
                 response["profile_image"] as String,
