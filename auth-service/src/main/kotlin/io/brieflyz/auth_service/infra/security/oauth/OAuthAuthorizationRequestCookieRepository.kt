@@ -40,8 +40,7 @@ class OAuthAuthorizationRequestCookieRepository : AuthorizationRequestRepository
                 maxAge = COOKIE_EXPIRE_MILLIS
             )
 
-            val redirectUri = request.getParameter(CookieName.REDIRECT_URI_PARAM_COOKIE_NAME)
-            if (!redirectUri.isNullOrBlank()) {
+            request.getParameter(CookieName.REDIRECT_URI_PARAM_COOKIE_NAME)?.let { redirectUri ->
                 log.debug("Requested Redirect URI: $redirectUri")
                 CookieUtils.addCookie(
                     response,
