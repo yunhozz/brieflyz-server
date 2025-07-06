@@ -23,6 +23,10 @@ class OAuthAuthenticationSuccessHandler(
 
     private val log = logger()
 
+    companion object {
+        private const val DEFAULT_REDIRECT_URI = "http://localhost"
+    }
+
     override fun onAuthenticationSuccess(
         request: HttpServletRequest,
         response: HttpServletResponse,
@@ -37,7 +41,7 @@ class OAuthAuthenticationSuccessHandler(
             throw NotAuthorizedRedirectionException("승인되지 않은 리디렉션 URI가 있어 인증을 진행할 수 없습니다.")
         }
 
-        val targetUri = requestedRedirectUri ?: defaultTargetUrl
+        val targetUri = requestedRedirectUri ?: DEFAULT_REDIRECT_URI
         val tokens = jwtProvider.generateToken(authentication)
 
         CookieUtils.addCookie(
@@ -47,10 +51,6 @@ class OAuthAuthenticationSuccessHandler(
             maxAge = tokens.accessTokenValidTime
         )
         redisHandler.save(authentication.name, tokens.refreshToken, tokens.refreshTokenValidTime)
-
-//        val targetUrl = ServletUriComponentsBuilder.fromUriString(targetUri)
-//            .queryParam("token", tokens.tokenType + tokens.accessToken)
-//            .toUriString()
 
         log.debug("Token Info: {}", tokens)
         log.info("OAuth2 Authentication Success, redirecting to: $targetUri")

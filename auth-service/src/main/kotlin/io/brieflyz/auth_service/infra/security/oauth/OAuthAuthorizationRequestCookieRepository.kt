@@ -11,7 +11,12 @@ import org.springframework.stereotype.Component
 
 @Component
 class OAuthAuthorizationRequestCookieRepository : AuthorizationRequestRepository<OAuth2AuthorizationRequest> {
+
     private val log = logger()
+
+    companion object {
+        private const val COOKIE_EXPIRE_MILLIS = 180 * 1000L // 3 min
+    }
 
     override fun loadAuthorizationRequest(request: HttpServletRequest): OAuth2AuthorizationRequest? =
         CookieUtils.getCookie(request, CookieName.OAUTH2_AUTHORIZATION_REQUEST_COOKIE_NAME)?.let { cookie ->
@@ -24,24 +29,25 @@ class OAuthAuthorizationRequestCookieRepository : AuthorizationRequestRepository
         response: HttpServletResponse
     ) {
         authorizationRequest?.let { authRequest ->
-            log.debug("Authorization Request URI: ${authRequest.authorizationRequestUri}")
-            log.debug("Authorization URI: ${authRequest.authorizationUri}")
-            log.debug("redirect URI: ${authRequest.redirectUri}")
+            log.debug("OAuth2.0 Authorization Request URI: ${authRequest.authorizationRequestUri}")
+            log.debug("OAuth2.0 Authorization URI: ${authRequest.authorizationUri}")
+            log.debug("OAuth2.0 Redirect URI: ${authRequest.redirectUri}")
 
             CookieUtils.addCookie(
                 response,
                 name = CookieName.OAUTH2_AUTHORIZATION_REQUEST_COOKIE_NAME,
                 value = CookieUtils.serialize(authRequest),
-                maxAge = CookieName.COOKIE_EXPIRE_MILLIS
+                maxAge = COOKIE_EXPIRE_MILLIS
             )
 
-            request.getParameter(CookieName.REDIRECT_URI_PARAM_COOKIE_NAME)?.let { redirectUriAfterLogin ->
-                log.debug("Redirect URI after Login: $redirectUriAfterLogin")
+            val redirectUri = request.getParameter(CookieName.REDIRECT_URI_PARAM_COOKIE_NAME)
+            if (!redirectUri.isNullOrBlank()) {
+                log.debug("Requested Redirect URI: $redirectUri")
                 CookieUtils.addCookie(
                     response,
                     name = CookieName.REDIRECT_URI_PARAM_COOKIE_NAME,
-                    value = redirectUriAfterLogin,
-                    maxAge = CookieName.COOKIE_EXPIRE_MILLIS
+                    value = redirectUri,
+                    maxAge = COOKIE_EXPIRE_MILLIS
                 )
             }
 
