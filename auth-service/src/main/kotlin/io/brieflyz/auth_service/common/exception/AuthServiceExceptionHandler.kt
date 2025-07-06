@@ -15,7 +15,7 @@ import java.io.IOException
 import java.sql.SQLException
 
 @RestControllerAdvice
-class AuthExceptionHandler {
+class AuthServiceExceptionHandler {
 
     private val log = logger()
 

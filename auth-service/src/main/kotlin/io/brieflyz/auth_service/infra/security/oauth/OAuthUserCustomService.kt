@@ -1,5 +1,6 @@
 package io.brieflyz.auth_service.infra.security.oauth
 
+import io.brieflyz.auth_service.common.constants.LoginType
 import io.brieflyz.auth_service.infra.db.MemberRepository
 import io.brieflyz.auth_service.infra.security.user.UserDetailsAdapter
 import io.brieflyz.auth_service.model.entity.Member
@@ -28,14 +29,23 @@ class OAuthUserCustomService(
         val email = oAuthProfile.email
         val nickname = oAuthProfile.provider + "_" + oAuthProfile.providerId
 
-        log.debug("OAuth2 Profile: {}", oAuthProfile)
+        log.debug("OAuth2.0 Profile: {}", oAuthProfile)
 
-        val member = memberRepository.findByEmail(email)?.let { localMember ->
-            log.info("Update Local Member with Social Profile")
-            localMember.updateBySocialLogin()
-            localMember
+        val member = memberRepository.findByEmail(email)?.let { member ->
+            when (member.loginType) {
+                LoginType.LOCAL -> {
+                    log.info("Update Local Member with Social Profile")
+                    member.updateBySocialLogin()
+                }
+
+                LoginType.SOCIAL -> {
+                    log.info("Login by OAuth2.0 provider: ${oAuthProfile.provider}")
+                }
+            }
+            member
+
         } ?: run {
-            log.info("Create New Member with Social Profile")
+            log.info("Create New Member with Social Profile with nickname: $nickname")
             val socialMember = Member.forSocial(email, nickname)
             memberRepository.save(socialMember)
         }

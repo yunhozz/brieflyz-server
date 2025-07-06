@@ -1,8 +1,10 @@
 package io.brieflyz.auth_service.service
 
+import io.brieflyz.auth_service.common.constants.LoginType
 import io.brieflyz.auth_service.common.exception.PasswordNotMatchException
 import io.brieflyz.auth_service.common.exception.UserAlreadyExistsException
 import io.brieflyz.auth_service.common.exception.UserNotFoundException
+import io.brieflyz.auth_service.common.exception.UserRegisteredBySocialException
 import io.brieflyz.auth_service.infra.db.MemberRepository
 import io.brieflyz.auth_service.infra.redis.RedisHandler
 import io.brieflyz.auth_service.infra.security.jwt.JwtProvider
@@ -39,6 +41,7 @@ class AuthService(
         val member = memberRepository.findByEmail(email)
             ?: throw UserNotFoundException("Email: $email")
 
+        if (member.loginType == LoginType.SOCIAL) throw UserRegisteredBySocialException()
         if (!passwordEncoder.matches(password, member.password)) throw PasswordNotMatchException()
 
         val username = member.email

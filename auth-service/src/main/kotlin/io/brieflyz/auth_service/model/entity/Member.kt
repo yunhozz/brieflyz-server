@@ -44,6 +44,7 @@ class Member private constructor(
         protected set
 
     fun updateNickname(newNickname: String) {
+        require(newNickname != nickname)
         nickname = newNickname
     }
 
@@ -52,16 +53,17 @@ class Member private constructor(
     }
 
     fun addRoles(vararg newRoles: Role) {
-        newRoles.forEach { role ->
+        val newAuthorities = newRoles.joinToString("") { role ->
             val authority = role.authority
             require(!roles.contains(authority)) { "Already Authorized on $authority" }
-            roles += "|$authority"
+            "|$authority"
         }
+        roles += newAuthorities
     }
 
     fun updateBySocialLogin() {
         loginType = LoginType.SOCIAL
-        addRoles(Role.USER)
+        if (!roles.contains(Role.USER.authority)) addRoles(Role.USER)
     }
 
     fun isLoginBy(type: LoginType): Boolean = loginType == type

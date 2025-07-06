@@ -44,6 +44,7 @@ enum class ErrorCode(
 
     // 409 Conflict
     USER_ALREADY_EXIST(ApiStatus.CONFLICT, "유저 정보가 이미 존재합니다."),
+    USER_REGISTERED_BY_SOCIAL_LOGIN(ApiStatus.CONFLICT, "소셜 로그인 가입 계정입니다. 소셜 로그인을 이용해주세요."),
 
     // 5xx Server Error
     INTERNAL_SERVER_ERROR(ApiStatus.INTERNAL_SERVER_ERROR, "서버 오류가 발생하였습니다. 잠시 후 다시 시도해 주세요."),
