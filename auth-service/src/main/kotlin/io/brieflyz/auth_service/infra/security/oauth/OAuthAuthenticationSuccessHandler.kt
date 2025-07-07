@@ -1,7 +1,7 @@
 package io.brieflyz.auth_service.infra.security.oauth
 
+import com.nimbusds.jose.util.StandardCharset
 import io.brieflyz.auth_service.common.constants.CookieName
-import io.brieflyz.auth_service.common.exception.NotAuthorizedRedirectionException
 import io.brieflyz.auth_service.common.utils.CookieUtils
 import io.brieflyz.auth_service.infra.redis.RedisHandler
 import io.brieflyz.auth_service.infra.security.jwt.JwtProvider
@@ -12,6 +12,8 @@ import jakarta.servlet.http.HttpServletResponse
 import org.springframework.security.core.Authentication
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler
 import org.springframework.stereotype.Component
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder
+import java.net.URLEncoder
 
 @Component
 class OAuthAuthenticationSuccessHandler(
@@ -24,7 +26,7 @@ class OAuthAuthenticationSuccessHandler(
     private val log = logger()
 
     companion object {
-        private const val DEFAULT_REDIRECT_URI = "http://localhost"
+        private const val DEFAULT_REDIRECT_URL = "http://localhost"
     }
 
     override fun onAuthenticationSuccess(
@@ -38,10 +40,11 @@ class OAuthAuthenticationSuccessHandler(
         log.debug("Requested Redirect URI: $requestedRedirectUri")
 
         if (isNotAuthorizedRedirectUri(requestedRedirectUri, authorizedRedirectUris)) {
-            throw NotAuthorizedRedirectionException("승인되지 않은 리디렉션 URI가 있어 인증을 진행할 수 없습니다.")
+            handleUnauthorizedRedirect(request, response, requestedRedirectUri!!)
+            return
         }
 
-        val targetUri = requestedRedirectUri ?: DEFAULT_REDIRECT_URI
+        val targetUrl = requestedRedirectUri ?: DEFAULT_REDIRECT_URL
         val tokens = jwtProvider.generateToken(authentication)
 
         CookieUtils.addCookie(
@@ -53,11 +56,10 @@ class OAuthAuthenticationSuccessHandler(
         redisHandler.save(authentication.name, tokens.refreshToken, tokens.refreshTokenValidTime)
 
         log.debug("Token Info: {}", tokens)
-        log.info("OAuth2 Authentication Success, redirecting to: $targetUri")
+        log.info("OAuth2 Authentication Success, redirecting to: $targetUrl")
 
-        clearAuthenticationAttributes(request)
-        oAuthAuthorizationRequestCookieRepository.removeAuthorizationRequestCookies(request, response)
-        redirectStrategy.sendRedirect(request, response, targetUri)
+        cleanUpAuthenticationState(request, response)
+        redirectStrategy.sendRedirect(request, response, targetUrl)
     }
 
     private fun isNotAuthorizedRedirectUri(
@@ -65,9 +67,28 @@ class OAuthAuthenticationSuccessHandler(
         authorizedRedirectUris: List<String>
     ): Boolean =
         if (requestedRedirectUri != null &&
-            authorizedRedirectUris.none { requestedRedirectUri.startsWith(it) }
+            authorizedRedirectUris.none { requestedRedirectUri == it }
         ) {
             log.warn("Unauthorized redirect URI: $requestedRedirectUri")
             true
         } else false
+
+    private fun handleUnauthorizedRedirect(
+        request: HttpServletRequest,
+        response: HttpServletResponse,
+        requestedRedirectUri: String
+    ) {
+        val errorMsg = URLEncoder.encode("승인되지 않은 리디렉션 URI가 있어 인증을 진행할 수 없습니다.", StandardCharset.UTF_8)
+        val targetUrl = ServletUriComponentsBuilder.fromUriString(requestedRedirectUri)
+            .queryParam("error", errorMsg)
+            .toUriString()
+
+        cleanUpAuthenticationState(request, response)
+        redirectStrategy.sendRedirect(request, response, targetUrl)
+    }
+
+    private fun cleanUpAuthenticationState(request: HttpServletRequest, response: HttpServletResponse) {
+        clearAuthenticationAttributes(request)
+        oAuthAuthorizationRequestCookieRepository.removeAuthorizationRequestCookies(request, response)
+    }
 }

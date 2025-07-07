@@ -39,13 +39,13 @@ class OAuthUserCustomService(
                 }
 
                 LoginType.SOCIAL -> {
-                    log.info("Login by OAuth2.0 provider: ${oAuthProfile.provider}")
+                    log.info("Login by OAuth2.0 Provider: ${oAuthProfile.provider}")
                 }
             }
             member
 
         } ?: run {
-            log.info("Create New Member with Social Profile with nickname: $nickname")
+            log.info("Create New Member with Social Profile with Nickname: $nickname")
             val socialMember = Member.forSocial(email, nickname)
             memberRepository.save(socialMember)
         }

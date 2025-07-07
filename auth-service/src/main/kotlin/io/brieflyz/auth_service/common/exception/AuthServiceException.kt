@@ -11,4 +11,3 @@ class UserRegisteredBySocialException : AuthServiceException(ErrorCode.USER_REGI
 class PasswordNotMatchException : AuthServiceException(ErrorCode.PASSWORD_NOT_MATCH, "")
 class RefreshTokenNotFoundException : AuthServiceException(ErrorCode.REFRESH_TOKEN_NOT_FOUND, "")
 class RedisKeyNotExistsException(msg: String) : AuthServiceException(ErrorCode.REDIS_KEY_NOT_FOUND, msg)
-class NotAuthorizedRedirectionException(msg: String) : AuthServiceException(ErrorCode.FORBIDDEN, msg)
