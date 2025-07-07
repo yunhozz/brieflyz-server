@@ -37,7 +37,7 @@ object CookieUtils {
         }
 
     fun deleteAllCookies(request: HttpServletRequest, response: HttpServletResponse) {
-        request.cookies.forEach { cookie ->
+        request.cookies?.forEach { cookie ->
             val cookieName = cookie.name
             if (cookieName in CookieName.members) {
                 Cookie(cookieName, null).apply {
