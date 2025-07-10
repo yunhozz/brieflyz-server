@@ -1,0 +1,116 @@
+services:
+  zookeeper-0:
+    image: zookeeper:latest
+    container_name: zookeeper-0
+    ports:
+      - "2181:2181"
+    environment:
+      ZOO_MY_ID: 1
+      ZOO_SERVERS: server.1=zookeeper-0:2888:3888;2181 server.2=zookeeper-1:2888:3888;2181 server.3=zookeeper-2:2888:3888;2181
+    networks:
+      - brieflyz-network
+
+  zookeeper-1:
+    image: zookeeper:latest
+    container_name: zookeeper-1
+    ports:
+      - "2182:2181"
+    environment:
+      ZOO_MY_ID: 2
+      ZOO_SERVERS: server.1=zookeeper-0:2888:3888;2181 server.2=zookeeper-1:2888:3888;2181 server.3=zookeeper-2:2888:3888;2181
+    networks:
+      - brieflyz-network
+
+  zookeeper-2:
+    image: zookeeper:latest
+    container_name: zookeeper-2
+    ports:
+      - "2183:2181"
+    environment:
+      ZOO_MY_ID: 3
+      ZOO_SERVERS: server.1=zookeeper-0:2888:3888;2181 server.2=zookeeper-1:2888:3888;2181 server.3=zookeeper-2:2888:3888;2181
+    networks:
+      - brieflyz-network
+
+  kafka-0:
+    image: wurstmeister/kafka:latest
+    container_name: kafka-0
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper-0:2181,zookeeper-1:2182,zookeeper-2:2183
+      KAFKA_LISTENERS: INTERNAL://kafka-0:19092,EXTERNAL://kafka-0:9092
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka-0:19092,EXTERNAL://kafka-0:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
+    ports:
+      - "9092:9092"
+      - "19092:19092"
+    depends_on:
+      - zookeeper-0
+      - zookeeper-1
+      - zookeeper-2
+    networks:
+      - brieflyz-network
+
+  kafka-1:
+    image: wurstmeister/kafka:latest
+    container_name: kafka-1
+    environment:
+      KAFKA_BROKER_ID: 2
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper-0:2181,zookeeper-1:2182,zookeeper-2:2183
+      KAFKA_LISTENERS: INTERNAL://kafka-1:19093,EXTERNAL://kafka-1:9093
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka-1:19093,EXTERNAL://kafka-1:9093
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
+    ports:
+      - "9093:9093"
+      - "19093:19093"
+    depends_on:
+      - zookeeper-0
+      - zookeeper-1
+      - zookeeper-2
+    networks:
+      - brieflyz-network
+
+  kafka-2:
+    image: wurstmeister/kafka:latest
+    container_name: kafka-2
+    environment:
+      KAFKA_BROKER_ID: 3
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper-0:2181,zookeeper-1:2182,zookeeper-2:2183
+      KAFKA_LISTENERS: INTERNAL://kafka-2:19094,EXTERNAL://kafka-2:9094
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka-2:19094,EXTERNAL://kafka-2:9094
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
+    ports:
+      - "9094:9094"
+      - "19094:19094"
+    depends_on:
+      - zookeeper-0
+      - zookeeper-1
+      - zookeeper-2
+    networks:
+      - brieflyz-network
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui
+    container_name: kafka-ui
+    ports:
+      - "10000:8080"
+    environment:
+      - KAFKA_CLUSTERS_0_NAME=local
+      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka-0:9092,kafka-1:9093,kafka-2:9094
+      - KAFKA_CLUSTERS_0_ZOOKEEPER=zookeeper:2181
+    depends_on:
+      - kafka-0
+      - kafka-1
+      - kafka-2
+    restart: always
+    networks:
+      - brieflyz-network
+
+networks:
+  brieflyz-network:
