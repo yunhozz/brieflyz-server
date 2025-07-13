@@ -12,7 +12,7 @@ jobs:
       contents: read
 
     steps:
-      - name: Checkout source code
+      - name: Checkout Source Code
         uses: actions/checkout@v4
 
       - name: Set up JDK 21
@@ -35,7 +35,7 @@ jobs:
       contents: read
 
     steps:
-      - name: Checkout source code
+      - name: Checkout Source Code
         uses: actions/checkout@v4
 
       - name: Set up JDK 21
@@ -46,6 +46,11 @@ jobs:
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@af1da67850ed9a4cedd57bfd976089dd991e2582
+
+      - name: Write application.properties to Core Module
+        run: |
+          mkdir -p core/src/main/resources
+          echo "${{ secrets.APPLICATION_PROPERTIES }}" > core/src/main/resources/application.properties
 
       - name: Run Unit Tests
         run: ./gradlew test --stacktrace
@@ -72,5 +77,5 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
-      - name: Generate and submit dependency graph
+      - name: Generate and Submit Dependency Graph
         uses: gradle/actions/dependency-submission@af1da67850ed9a4cedd57bfd976089dd991e2582
