@@ -1,3 +1,5 @@
+import org.springframework.boot.gradle.tasks.bundling.BootJar
+
 plugins {
     kotlin("jvm") version "1.9.25"
     kotlin("plugin.spring") version "1.9.25"
@@ -55,6 +57,10 @@ subprojects {
         annotation("jakarta.persistence.MappedSuperclass")
         annotation("jakarta.persistence.Embeddable")
     }
+}
+
+tasks.named<BootJar>("bootJar") {
+    enabled = false
 }
 
 project(":core")
