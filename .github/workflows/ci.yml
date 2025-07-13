@@ -51,8 +51,15 @@ jobs:
         run: |
           mkdir -p core/src/main/resources
           echo "${{ secrets.APPLICATION_PROPERTIES }}" > core/src/main/resources/application.properties
+          echo "${{ secrets.ENV }}" > .env
 
-      - name: Run Unit Tests
+      - name: Set up Docker Containers
+        run: |
+          docker compose -f docker-compose-local.yml --env-file .env up -d
+          sleep 10
+          docker compose -f docker-compose-local.yml ps
+
+      - name: Run Unit & Integration Tests
         run: ./gradlew test --stacktrace
 
       - name: Upload Test Reports
