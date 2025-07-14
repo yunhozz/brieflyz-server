@@ -20,7 +20,7 @@ import java.nio.charset.StandardCharsets
 
 @Component
 @Order(-1)
-class GlobalExceptionHandler(
+class ApiGatewayExceptionHandler(
     private val objectMapper: ObjectMapper
 ) : ErrorWebExceptionHandler {
 
