@@ -15,7 +15,7 @@ import org.hibernate.annotations.SQLRestriction
 @SQLRestriction("deleted is false")
 class Subscription(
     val memberId: Long,
-    val memberEmail: String,
+    val email: String,
     subscriptionInterval: SubscriptionInterval
 ) : BaseEntity() {
 

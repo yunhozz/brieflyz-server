@@ -17,10 +17,10 @@ class SubscriptionService(
 ) {
     @Transactional
     fun createSubscription(request: CreateSubscriptionRequest): Long {
-        val (memberId, memberEmail, subscriptionInterval) = request
+        val (memberId, email, subscriptionInterval) = request
         val subscription = Subscription(
             memberId,
-            memberEmail,
+            email,
             subscriptionInterval = SubscriptionInterval.of(subscriptionInterval)
         )
         val savedSubscription = subscriptionRepository.save(subscription)
@@ -35,16 +35,9 @@ class SubscriptionService(
     }
 
     @Transactional(readOnly = true)
-    fun getAllSubscriptions(): List<SubscriptionResponse> =
-        subscriptionRepository.findAll().map { it.toResponse() }
-
-    @Transactional(readOnly = true)
-    fun getSubscriptionsByMemberId(memberId: Long): List<SubscriptionResponse> =
-        subscriptionRepository.findByMemberId(memberId).map { it.toResponse() }
-
-    @Transactional(readOnly = true)
-    fun getSubscriptionsByMemberEmail(memberEmail: String): List<SubscriptionResponse> =
-        subscriptionRepository.findByMemberEmail(memberEmail).map { it.toResponse() }
+    fun getSubscriptionsByMemberIdOrEmail(memberId: Long?, email: String?): List<SubscriptionResponse> =
+        subscriptionRepository.findByMemberIdOrEmail(memberId, email)
+            .map { it.toResponse() }
 
     @Transactional
     fun updateSubscription(id: Long, request: UpdateSubscriptionRequest): Long {
@@ -77,7 +70,7 @@ class SubscriptionService(
     private fun Subscription.toResponse() = SubscriptionResponse(
         id = this.id,
         memberId = this.memberId,
-        memberEmail = this.memberEmail,
+        email = this.email,
         subscriptionInterval = this.subscriptionInterval.name,
         deleted = this.deleted,
         createdAt = this.createdAt.toString(),

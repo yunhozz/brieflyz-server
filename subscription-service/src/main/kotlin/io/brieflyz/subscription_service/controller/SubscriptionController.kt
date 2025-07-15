@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 
@@ -33,34 +34,18 @@ class SubscriptionController(
     @GetMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
     fun getSubscription(@PathVariable id: Long): ApiResponse<SubscriptionResponse> {
-        val response = subscriptionService.getSubscription(id)
-        return ApiResponse.success(SuccessCode.SUBSCRIPTION_INFO_READ_SUCCESS, response)
+        val subscription = subscriptionService.getSubscription(id)
+        return ApiResponse.success(SuccessCode.SUBSCRIPTION_INFO_READ_SUCCESS, subscription)
     }
 
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
-    fun getAllSubscriptions(): ApiResponse<List<SubscriptionResponse>> {
-        val responses = subscriptionService.getAllSubscriptions()
-        return ApiResponse.success(SuccessCode.SUBSCRIPTION_INFO_READ_SUCCESS, responses)
-    }
-
-    data class SubscriptionParams(
-        val memberId: Long?,
-        val email: String?
-    )
-
-    @GetMapping("/member/{memberId}")
-    @ResponseStatus(HttpStatus.OK)
-    fun getSubscriptionsByMemberId(@PathVariable memberId: Long): ApiResponse<List<SubscriptionResponse>> {
-        val responses = subscriptionService.getSubscriptionsByMemberId(memberId)
-        return ApiResponse.success(SuccessCode.SUBSCRIPTION_INFO_READ_SUCCESS, responses)
-    }
-
-    @GetMapping("/email/{memberEmail}")
-    @ResponseStatus(HttpStatus.OK)
-    fun getSubscriptionsByMemberEmail(@PathVariable memberEmail: String): ApiResponse<List<SubscriptionResponse>> {
-        val responses = subscriptionService.getSubscriptionsByMemberEmail(memberEmail)
-        return ApiResponse.success(SuccessCode.SUBSCRIPTION_INFO_READ_SUCCESS, responses)
+    fun getSubscriptionsByParams(
+        @RequestParam(required = false) memberId: Long?,
+        @RequestParam(required = false) email: String?
+    ): ApiResponse<List<SubscriptionResponse>> {
+        val subscriptions = subscriptionService.getSubscriptionsByMemberIdOrEmail(memberId, email)
+        return ApiResponse.success(SuccessCode.SUBSCRIPTION_INFO_READ_SUCCESS, subscriptions)
     }
 
     @PatchMapping("/{id}")

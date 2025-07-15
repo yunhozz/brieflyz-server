@@ -12,7 +12,7 @@ data class CreateSubscriptionRequest(
 
     @field:NotBlank(message = "회원 이메일은 필수입니다.")
     @field:Email(message = "올바른 이메일 형식이 아닙니다.")
-    val memberEmail: String,
+    val email: String,
 
     @field:NotBlank(message = "구독 간격은 필수입니다.")
     val subscriptionInterval: String
