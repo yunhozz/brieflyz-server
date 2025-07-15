@@ -1,3 +1,7 @@
+plugins {
+    kotlin("kapt")
+}
+
 dependencies {
     implementation(project(":core"))
     // Spring Boot
@@ -11,6 +15,11 @@ dependencies {
     implementation("org.springframework.cloud:spring-cloud-starter-config")
     // Kafka
     implementation("org.springframework.kafka:spring-kafka")
+    // QueryDSL
+    implementation("com.querydsl:querydsl-jpa:5.1.0:jakarta")
+    kapt("com.querydsl:querydsl-apt:5.1.0:jakarta")
+    kapt("jakarta.annotation:jakarta.annotation-api")
+    kapt("jakarta.persistence:jakarta.persistence-api")
     // Module
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
