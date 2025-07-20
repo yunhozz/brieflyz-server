@@ -7,15 +7,15 @@ import jakarta.persistence.Enumerated
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
-import org.hibernate.annotations.SQLDelete
 import org.hibernate.annotations.SQLRestriction
 
 @Entity
-@SQLDelete(sql = "update subscription set deleted = true where id = ?")
 @SQLRestriction("deleted is false")
 class Subscription(
     val memberId: Long,
     val email: String,
+    val country: String,
+    val city: String,
     subscriptionInterval: SubscriptionInterval
 ) : BaseEntity() {
 
