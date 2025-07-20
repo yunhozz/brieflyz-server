@@ -1,6 +1,6 @@
 package io.brieflyz.subscription_service.model.entity
 
-import io.brieflyz.subscription_service.common.constants.SubscriptionInterval
+import io.brieflyz.subscription_service.common.constants.SubscriptionPlan
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
@@ -16,7 +16,7 @@ class Subscription(
     val email: String,
     val country: String,
     val city: String,
-    subscriptionInterval: SubscriptionInterval
+    plan: SubscriptionPlan
 ) : BaseEntity() {
 
     @Id
@@ -24,14 +24,14 @@ class Subscription(
     var id: Long = 0
 
     @Enumerated(EnumType.STRING)
-    var subscriptionInterval = subscriptionInterval
+    var plan: SubscriptionPlan = plan
         protected set
 
     var deleted: Boolean = false
         protected set
 
-    fun updateSubscriptionInterval(interval: SubscriptionInterval) {
-        subscriptionInterval = interval
+    fun updateSubscriptionPlan(plan: SubscriptionPlan) {
+        this.plan = plan
     }
 
     fun delete() {

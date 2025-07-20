@@ -1,11 +1,11 @@
 package io.brieflyz.subscription_service.service
 
-import io.brieflyz.subscription_service.common.constants.SubscriptionInterval
+import io.brieflyz.subscription_service.common.constants.SubscriptionPlan
 import io.brieflyz.subscription_service.common.exception.SubscriptionNotFoundException
 import io.brieflyz.subscription_service.infra.db.SubscriptionRepository
-import io.brieflyz.subscription_service.model.dto.CreateSubscriptionRequest
+import io.brieflyz.subscription_service.model.dto.SubscriptionCreateRequest
 import io.brieflyz.subscription_service.model.dto.SubscriptionResponse
-import io.brieflyz.subscription_service.model.dto.UpdateSubscriptionRequest
+import io.brieflyz.subscription_service.model.dto.SubscriptionUpdateRequest
 import io.brieflyz.subscription_service.model.entity.Subscription
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
@@ -16,12 +16,14 @@ class SubscriptionService(
     private val subscriptionRepository: SubscriptionRepository
 ) {
     @Transactional
-    fun createSubscription(request: CreateSubscriptionRequest): Long {
-        val (memberId, email, subscriptionInterval) = request
+    fun createSubscription(request: SubscriptionCreateRequest): Long {
+        val (memberId, email, country, city, plan) = request
         val subscription = Subscription(
             memberId,
             email,
-            subscriptionInterval = SubscriptionInterval.of(subscriptionInterval)
+            country,
+            city,
+            plan = SubscriptionPlan.of(plan)
         )
         val savedSubscription = subscriptionRepository.save(subscription)
 
@@ -40,12 +42,9 @@ class SubscriptionService(
             .map { it.toResponse() }
 
     @Transactional
-    fun updateSubscription(id: Long, request: UpdateSubscriptionRequest): Long {
+    fun updateSubscription(id: Long, request: SubscriptionUpdateRequest): Long {
         val subscription = findSubscriptionById(id)
-        val subscriptionInterval = SubscriptionInterval.of(request.subscriptionInterval)
-
-        subscription.updateSubscriptionInterval(subscriptionInterval)
-
+        subscription.updateSubscriptionPlan(SubscriptionPlan.of(request.plan))
         return subscription.id
     }
 
@@ -71,7 +70,9 @@ class SubscriptionService(
         id = this.id,
         memberId = this.memberId,
         email = this.email,
-        subscriptionInterval = this.subscriptionInterval.name,
+        country = this.country,
+        city = this.city,
+        plan = this.plan.name,
         deleted = this.deleted,
         createdAt = this.createdAt.toString(),
         updatedAt = this.updatedAt.toString()

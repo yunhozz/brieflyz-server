@@ -2,9 +2,9 @@ package io.brieflyz.subscription_service.controller
 
 import io.brieflyz.core.constants.SuccessCode
 import io.brieflyz.core.dto.api.ApiResponse
-import io.brieflyz.subscription_service.model.dto.CreateSubscriptionRequest
+import io.brieflyz.subscription_service.model.dto.SubscriptionCreateRequest
 import io.brieflyz.subscription_service.model.dto.SubscriptionResponse
-import io.brieflyz.subscription_service.model.dto.UpdateSubscriptionRequest
+import io.brieflyz.subscription_service.model.dto.SubscriptionUpdateRequest
 import io.brieflyz.subscription_service.service.SubscriptionService
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
@@ -26,7 +26,7 @@ class SubscriptionController(
 ) {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    fun createSubscription(@RequestBody @Valid request: CreateSubscriptionRequest): ApiResponse<Long> {
+    fun createSubscription(@RequestBody @Valid request: SubscriptionCreateRequest): ApiResponse<Long> {
         val subscriptionId = subscriptionService.createSubscription(request)
         return ApiResponse.success(SuccessCode.SUBSCRIBE_SUCCESS, subscriptionId)
     }
@@ -52,7 +52,7 @@ class SubscriptionController(
     @ResponseStatus(HttpStatus.CREATED)
     fun updateSubscription(
         @PathVariable id: Long,
-        @RequestBody @Valid request: UpdateSubscriptionRequest
+        @RequestBody @Valid request: SubscriptionUpdateRequest
     ): ApiResponse<Long> {
         val subscriptionId = subscriptionService.updateSubscription(id, request)
         return ApiResponse.success(SuccessCode.SUBSCRIPTION_UPDATE_SUCCESS, subscriptionId)
