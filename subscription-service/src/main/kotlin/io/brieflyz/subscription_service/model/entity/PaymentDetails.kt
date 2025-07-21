@@ -1,5 +1,6 @@
 package io.brieflyz.subscription_service.model.entity
 
+import jakarta.persistence.DiscriminatorValue
 import jakarta.persistence.Entity
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
@@ -17,6 +18,7 @@ abstract class PaymentDetails : BaseEntity() {
 }
 
 @Entity
+@DiscriminatorValue("CREDIT_CARD")
 class CreditCardPaymentDetails(
     val cardNumber: String,
     val expirationDate: ZonedDateTime,
@@ -24,6 +26,7 @@ class CreditCardPaymentDetails(
 ) : PaymentDetails()
 
 @Entity
+@DiscriminatorValue("BANK")
 class BankTransferPaymentDetails(
     val bankName: String,
     val accountNumber: String,
@@ -32,7 +35,8 @@ class BankTransferPaymentDetails(
 ) : PaymentDetails()
 
 @Entity
+@DiscriminatorValue("DIGITAL_WALLET")
 class DigitalWalletPaymentDetails(
-    val walletType: String, //  "KakaoPay", "NaverPay", "PayPal" etc.
+    val walletType: String,
     val walletAccountId: String
 ) : PaymentDetails()

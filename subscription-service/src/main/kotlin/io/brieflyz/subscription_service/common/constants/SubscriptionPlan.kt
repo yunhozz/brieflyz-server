@@ -1,16 +1,13 @@
 package io.brieflyz.subscription_service.common.constants
 
-enum class SubscriptionPlan(
-    private val plan: String
-) {
-    ONE_MONTH("one month"),
-    THREE_MONTH("three month"),
-    SIX_MONTH("six month"),
-    ONE_YEAR("one year")
+enum class SubscriptionPlan {
+    ONE_MONTH,
+    ONE_YEAR,
+    UNLIMITED
     ;
 
     companion object {
-        fun of(plan: String): SubscriptionPlan = entries.find { it.plan == plan }
-            ?: throw IllegalArgumentException("Subscription Plan: '$plan'")
+        fun of(plan: String): SubscriptionPlan = entries.find { it.name == plan }
+            ?: throw IllegalArgumentException("Unknown Subscription Plan : $plan")
     }
 }

@@ -7,9 +7,12 @@ import jakarta.persistence.Enumerated
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
+import jakarta.persistence.Index
+import jakarta.persistence.Table
 import org.hibernate.annotations.SQLRestriction
 
 @Entity
+@Table(indexes = [Index(name = "idx_memberId_email", columnList = "memberId, email")])
 @SQLRestriction("deleted is false")
 class Subscription(
     val memberId: Long,
