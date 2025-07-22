@@ -13,22 +13,22 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo
     JsonSubTypes.Type(value = BankTransferDetailsRequest::class, name = "BANK_TRANSFER"),
     JsonSubTypes.Type(value = DigitalWalletDetailsRequest::class, name = "DIGITAL_WALLET")
 )
-interface PaymentDetailsCreateRequest
+sealed interface PaymentDetailsCreateRequest
 
 data class CreditCardDetailsRequest(
-    val cardNumber: String = "",
-    val expirationDate: String = "",
-    val cvc: String = ""
+    val cardNumber: String?,
+    val expirationDate: String?,
+    val cvc: String?
 ) : PaymentDetailsCreateRequest
 
 data class BankTransferDetailsRequest(
-    val bankName: String = "",
-    val accountNumber: String = "",
-    val accountHolderName: String = "",
-    val routingNumber: String = ""
+    val bankName: String?,
+    val accountNumber: String?,
+    val accountHolderName: String?,
+    val routingNumber: String?
 ) : PaymentDetailsCreateRequest
 
 data class DigitalWalletDetailsRequest(
-    val walletType: String = "",
-    val walletAccountId: String = ""
+    val walletType: String?,
+    val walletAccountId: String?
 ) : PaymentDetailsCreateRequest

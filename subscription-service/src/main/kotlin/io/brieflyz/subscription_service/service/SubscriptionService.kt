@@ -6,23 +6,14 @@ import io.brieflyz.subscription_service.common.exception.SubscriptionNotFoundExc
 import io.brieflyz.subscription_service.infra.db.PaymentDetailsRepository
 import io.brieflyz.subscription_service.infra.db.PaymentRepository
 import io.brieflyz.subscription_service.infra.db.SubscriptionRepository
-import io.brieflyz.subscription_service.model.dto.BankTransferDetailsRequest
-import io.brieflyz.subscription_service.model.dto.CreditCardDetailsRequest
-import io.brieflyz.subscription_service.model.dto.DigitalWalletDetailsRequest
 import io.brieflyz.subscription_service.model.dto.SubscriptionCreateRequest
 import io.brieflyz.subscription_service.model.dto.SubscriptionResponse
 import io.brieflyz.subscription_service.model.dto.SubscriptionUpdateRequest
-import io.brieflyz.subscription_service.model.entity.BankTransferPaymentDetails
-import io.brieflyz.subscription_service.model.entity.CreditCardPaymentDetails
-import io.brieflyz.subscription_service.model.entity.DigitalWalletPaymentDetails
 import io.brieflyz.subscription_service.model.entity.Payment
 import io.brieflyz.subscription_service.model.entity.Subscription
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import java.time.YearMonth
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
 
 @Service
 class SubscriptionService(
@@ -42,47 +33,16 @@ class SubscriptionService(
             plan = SubscriptionPlan.of(plan)
         )
 
-        val (charge, method, details) = paymentRequest
+        val (charge, method, paymentDetailsRequest) = paymentRequest
         val paymentMethod = PaymentMethod.of(method)
 
-        when (paymentMethod) {
-            PaymentMethod.CREDIT_CARD -> {
-                val creditCard = details as CreditCardDetailsRequest
-                val creditCardPaymentDetails = CreditCardPaymentDetails(
-                    creditCard.cardNumber,
-                    YearMonth.parse(creditCard.expirationDate, DateTimeFormatter.ofPattern("MM/yy"))
-                        .atEndOfMonth()
-                        .atStartOfDay(ZoneId.of("Asia/Seoul")),
-                    creditCard.cvc.toInt()
-                )
-                paymentDetailsRepository.save(creditCardPaymentDetails)
-                paymentRepository.save(Payment(subscription, charge, paymentMethod, creditCardPaymentDetails))
-            }
+        val paymentDetails = PaymentDetailsFactory.createByRequest(paymentDetailsRequest)
+        val payment = Payment(subscription, charge, paymentMethod, paymentDetails)
 
-            PaymentMethod.BANK_TRANSFER -> {
-                val bank = details as BankTransferDetailsRequest
-                val bankTransferPaymentDetails = BankTransferPaymentDetails(
-                    bank.bankName,
-                    bank.accountNumber,
-                    bank.accountHolderName,
-                    bank.routingNumber
-                )
-                paymentDetailsRepository.save(bankTransferPaymentDetails)
-                paymentRepository.save(Payment(subscription, charge, paymentMethod, bankTransferPaymentDetails))
-            }
+        paymentRepository.save(payment)
+        paymentDetailsRepository.save(paymentDetails)
 
-            PaymentMethod.DIGITAL_WALLET -> {
-                val digitalWallet = details as DigitalWalletDetailsRequest
-                val digitalWalletPaymentDetails =
-                    DigitalWalletPaymentDetails(digitalWallet.walletType, digitalWallet.walletAccountId)
-                paymentDetailsRepository.save(digitalWalletPaymentDetails)
-                paymentRepository.save(Payment(subscription, charge, paymentMethod, digitalWalletPaymentDetails))
-            }
-        }
-
-        val savedSubscription = subscriptionRepository.save(subscription)
-
-        return savedSubscription.id
+        return subscriptionRepository.save(subscription).id
     }
 
     @Transactional(readOnly = true)
