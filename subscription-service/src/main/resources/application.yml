@@ -5,6 +5,15 @@ spring:
     name: subscription-service
   profiles:
     active: ${APPLICATION_PROFILE:local}
+  jpa:
+    open-in-view: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        show_sql: true
+        format_sql: true
+        default_batch_fetch_size: 100
+        query.in_clause_parameter_padding: true
 ---
 spring:
   config:
@@ -16,12 +25,6 @@ spring:
   jpa:
     hibernate:
       ddl-auto: create
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.MySQLDialect
-        default_batch_fetch_size: 100
-        show_sql: true
-        format_sql: true
   datasource:
     url: jdbc:mysql://localhost:3306/brieflyz?createDatabaseIfNotExist=true
     username: ${MYSQL_USERNAME}
