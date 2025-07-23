@@ -13,13 +13,14 @@ import org.hibernate.annotations.SQLRestriction
 
 @Entity
 @Table(indexes = [Index(name = "idx_memberId_email", columnList = "memberId, email")])
-@SQLRestriction("deleted is false")
+@SQLRestriction("deleted = false")
 class Subscription(
     val memberId: Long,
     val email: String,
     val country: String,
     val city: String,
-    plan: SubscriptionPlan
+    plan: SubscriptionPlan,
+    count: Int = 0
 ) : BaseEntity() {
 
     @Id
@@ -30,11 +31,20 @@ class Subscription(
     var plan: SubscriptionPlan = plan
         protected set
 
+    var count: Int = count
+        protected set
+
     var deleted: Boolean = false
         protected set
 
+    fun isSubscriptionPlanEquals(plan: SubscriptionPlan): Boolean = this.plan == plan
+
     fun updateSubscriptionPlan(plan: SubscriptionPlan) {
         this.plan = plan
+    }
+
+    fun addCount() {
+        count++
     }
 
     fun delete() {

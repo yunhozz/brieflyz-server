@@ -33,7 +33,6 @@ enum class ErrorCode(
     // 400 Bad Request
     BAD_REQUEST(ApiStatus.BAD_REQUEST, "잘못된 요청입니다."),
     PASSWORD_NOT_MATCH(ApiStatus.BAD_REQUEST, "비밀번호가 일치하지 않습니다."),
-    INVALID_SUBSCRIPTION_INTERVAL(ApiStatus.BAD_REQUEST, "잘못된 구독 주기 요청입니다."),
 
     // 401 Unauthorized
     UNAUTHORIZED(ApiStatus.UNAUTHORIZED, "인증되지 않은 사용자입니다."),
@@ -54,6 +53,7 @@ enum class ErrorCode(
     // 409 Conflict
     USER_ALREADY_EXIST(ApiStatus.CONFLICT, "유저 정보가 이미 존재합니다."),
     USER_REGISTERED_BY_SOCIAL_LOGIN(ApiStatus.CONFLICT, "소셜 로그인 가입 계정입니다. 소셜 로그인을 이용해주세요."),
+    ALREADY_UNLIMITED_PLAN_EXCEPTION(ApiStatus.CONFLICT, "이미 무제한 구독 중입니다. 대신 결제 방식 업데이트를 진행해주세요."),
 
     // 5xx Server Error
     INTERNAL_SERVER_ERROR(ApiStatus.INTERNAL_SERVER_ERROR, "서버 오류가 발생하였습니다. 잠시 후 다시 시도해 주세요."),

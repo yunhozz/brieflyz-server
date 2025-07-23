@@ -1,9 +1,9 @@
 package io.brieflyz.subscription_service.service
 
-import io.brieflyz.subscription_service.model.dto.BankTransferDetailsRequest
-import io.brieflyz.subscription_service.model.dto.CreditCardDetailsRequest
-import io.brieflyz.subscription_service.model.dto.DigitalWalletDetailsRequest
-import io.brieflyz.subscription_service.model.dto.PaymentDetailsCreateRequest
+import io.brieflyz.subscription_service.model.dto.request.BankTransferDetailsRequest
+import io.brieflyz.subscription_service.model.dto.request.CreditCardDetailsRequest
+import io.brieflyz.subscription_service.model.dto.request.DigitalWalletDetailsRequest
+import io.brieflyz.subscription_service.model.dto.request.PaymentDetailsCreateRequest
 import io.brieflyz.subscription_service.model.entity.BankTransferPaymentDetails
 import io.brieflyz.subscription_service.model.entity.CreditCardPaymentDetails
 import io.brieflyz.subscription_service.model.entity.DigitalWalletPaymentDetails
