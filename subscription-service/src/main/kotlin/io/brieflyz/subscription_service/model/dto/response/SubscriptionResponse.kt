@@ -7,7 +7,7 @@ data class SubscriptionResponse(
     val country: String,
     val city: String,
     val plan: String,
-    val count: Int,
+    val payCount: Int,
     val deleted: Boolean,
     val createdAt: String,
     val updatedAt: String

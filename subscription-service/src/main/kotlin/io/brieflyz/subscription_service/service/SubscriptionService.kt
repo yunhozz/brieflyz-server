@@ -15,10 +15,14 @@ import io.brieflyz.subscription_service.model.dto.response.SubscriptionResponse
 import io.brieflyz.subscription_service.model.entity.Payment
 import io.brieflyz.subscription_service.model.entity.Subscription
 import org.springframework.data.repository.findByIdOrNull
+import org.springframework.scheduling.annotation.EnableScheduling
+import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.LocalDateTime
 
 @Service
+@EnableScheduling
 class SubscriptionService(
     private val subscriptionRepository: SubscriptionRepository,
     private val paymentRepository: PaymentRepository,
@@ -32,19 +36,19 @@ class SubscriptionService(
         val (email, country, city, plan, paymentRequest) = request
         log.debug("User Request : {}", request)
 
-        val subscription = subscriptionRepository.findByMemberId(memberId)?.let { subscription ->
-            if (subscription.isSubscriptionPlanEquals(SubscriptionPlan.UNLIMITED)) {
-                log.warn("Already Have UNLIMITED Plan!")
-                throw AlreadyUnlimitedPlanException() // Request update payment method instead
+        val foundSubscription = subscriptionRepository.findByMemberIdAndPlan(memberId, SubscriptionPlan.of(plan))
+        val subscription = foundSubscription
+            ?.takeUnless { it.isSubscriptionPlanEquals(SubscriptionPlan.UNLIMITED) }
+            ?: run {
+                foundSubscription?.let { throw AlreadyUnlimitedPlanException() }
+                Subscription(
+                    memberId,
+                    email,
+                    country,
+                    city,
+                    plan = SubscriptionPlan.of(plan)
+                )
             }
-            subscription
-        } ?: Subscription(
-            memberId,
-            email,
-            country,
-            city,
-            plan = SubscriptionPlan.of(plan)
-        )
 
         log.debug("Subscription Information : {}", subscription.toResponse())
 
@@ -60,8 +64,8 @@ class SubscriptionService(
         paymentRepository.save(payment)
         paymentDetailsRepository.save(paymentDetails)
 
-        log.info("Add Subscription Count")
-        subscription.addCount()
+        log.info("Add Subscription's Pay Count")
+        subscription.addPayCount()
 
         return subscriptionRepository.save(subscription).id
     }
@@ -91,13 +95,30 @@ class SubscriptionService(
     }
 
     @Transactional
+    @Scheduled(cron = "0 0 0 * * *")
+    fun deleteExpiredSubscriptionsEveryDay() {
+        val currentTime = LocalDateTime.now()
+        val expiredSubscriptions = subscriptionRepository.findLimitedSubscriptions()
+            .filter { it.isExpired(currentTime) }
+
+        expiredSubscriptions.forEach { subscription ->
+            subscription.delete()
+            log.debug(
+                "Deleted Subscription : ID={}, Member ID={}, Plan={}",
+                subscription.id,
+                subscription.memberId,
+                subscription.plan
+            )
+        }
+
+        log.info("A total of ${expiredSubscriptions.size} subscriptions have been successfully deleted.")
+    }
+
+    @Transactional
     fun hardDeleteSubscription(id: Long) {
         val subscription = findSubscriptionById(id)
         subscriptionRepository.delete(subscription)
     }
-
-    @Transactional(readOnly = true)
-    fun existsByMemberId(memberId: Long): Boolean = subscriptionRepository.existsByMemberId(memberId)
 
     private fun findSubscriptionById(id: Long): Subscription = subscriptionRepository.findByIdOrNull(id)
         ?: throw SubscriptionNotFoundException("Subscription ID: $id")
@@ -109,7 +130,7 @@ class SubscriptionService(
         country = this.country,
         city = this.city,
         plan = this.plan.name,
-        count = this.count,
+        payCount = this.payCount,
         deleted = this.deleted,
         createdAt = this.createdAt.toString(),
         updatedAt = this.updatedAt.toString()

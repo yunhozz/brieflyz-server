@@ -68,6 +68,7 @@ enum class ErrorStatus(
     // 409 Conflict
     USER_ALREADY_EXIST(409 conflict "유저 정보가 이미 존재합니다."),
     USER_REGISTERED_BY_SOCIAL_LOGIN(409 conflict "소셜 로그인 가입 계정입니다. 소셜 로그인을 이용해주세요."),
+    SUBSCRIPTION_PLAN_IDENTICAL(409 conflict "이미 동일한 구독 플랜에 가입되어 있습니다."),
     ALREADY_UNLIMITED_PLAN_EXCEPTION(409 conflict "이미 무제한 구독 중입니다. 대신 결제 방식 업데이트를 진행해주세요."),
 
     // 5xx Server Error

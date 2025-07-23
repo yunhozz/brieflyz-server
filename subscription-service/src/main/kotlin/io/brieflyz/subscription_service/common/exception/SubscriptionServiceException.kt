@@ -7,4 +7,6 @@ sealed class SubscriptionServiceException(val status: ErrorStatus, msg: String) 
 
 class SubscriptionNotFoundException(msg: String) : SubscriptionServiceException(ErrorStatus.SUBSCRIPTION_NOT_FOUND, msg)
 
+class SubscriptionPlanIdenticalException : SubscriptionServiceException(ErrorStatus.SUBSCRIPTION_PLAN_IDENTICAL, "")
+
 class AlreadyUnlimitedPlanException : SubscriptionServiceException(ErrorStatus.ALREADY_UNLIMITED_PLAN_EXCEPTION, "")
