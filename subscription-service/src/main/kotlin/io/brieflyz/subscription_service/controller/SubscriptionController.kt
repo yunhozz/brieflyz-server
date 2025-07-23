@@ -1,10 +1,10 @@
 package io.brieflyz.subscription_service.controller
 
-import io.brieflyz.core.constants.SuccessCode
+import io.brieflyz.core.constants.SuccessStatus
 import io.brieflyz.core.dto.api.ApiResponse
-import io.brieflyz.subscription_service.model.dto.SubscriptionCreateRequest
-import io.brieflyz.subscription_service.model.dto.SubscriptionResponse
-import io.brieflyz.subscription_service.model.dto.SubscriptionUpdateRequest
+import io.brieflyz.subscription_service.model.dto.request.SubscriptionCreateRequest
+import io.brieflyz.subscription_service.model.dto.request.SubscriptionUpdateRequest
+import io.brieflyz.subscription_service.model.dto.response.SubscriptionResponse
 import io.brieflyz.subscription_service.service.SubscriptionService
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
@@ -27,15 +27,16 @@ class SubscriptionController(
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     fun createSubscription(@RequestBody @Valid request: SubscriptionCreateRequest): ApiResponse<Long> {
-        val subscriptionId = subscriptionService.createSubscription(request)
-        return ApiResponse.success(SuccessCode.SUBSCRIBE_SUCCESS, subscriptionId)
+        // TODO: member ID 입력
+        val subscriptionId = subscriptionService.createSubscription(100L, request)
+        return ApiResponse.success(SuccessStatus.SUBSCRIBE_SUCCESS, subscriptionId)
     }
 
     @GetMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
     fun getSubscription(@PathVariable id: Long): ApiResponse<SubscriptionResponse> {
         val subscription = subscriptionService.getSubscription(id)
-        return ApiResponse.success(SuccessCode.SUBSCRIPTION_INFO_READ_SUCCESS, subscription)
+        return ApiResponse.success(SuccessStatus.SUBSCRIPTION_INFO_READ_SUCCESS, subscription)
     }
 
     @GetMapping
@@ -45,7 +46,7 @@ class SubscriptionController(
         @RequestParam(required = false) email: String?
     ): ApiResponse<List<SubscriptionResponse>> {
         val subscriptions = subscriptionService.getSubscriptionsByMemberIdOrEmail(memberId, email)
-        return ApiResponse.success(SuccessCode.SUBSCRIPTION_INFO_READ_SUCCESS, subscriptions)
+        return ApiResponse.success(SuccessStatus.SUBSCRIPTION_INFO_READ_SUCCESS, subscriptions)
     }
 
     @PatchMapping("/{id}")
@@ -55,13 +56,13 @@ class SubscriptionController(
         @RequestBody @Valid request: SubscriptionUpdateRequest
     ): ApiResponse<Long> {
         val subscriptionId = subscriptionService.updateSubscription(id, request)
-        return ApiResponse.success(SuccessCode.SUBSCRIPTION_UPDATE_SUCCESS, subscriptionId)
+        return ApiResponse.success(SuccessStatus.SUBSCRIPTION_UPDATE_SUCCESS, subscriptionId)
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
     fun cancelSubscription(@PathVariable id: Long): ApiResponse<Void> {
         subscriptionService.deleteSubscription(id)
-        return ApiResponse.success(SuccessCode.SUBSCRIBE_CANCEL_SUCCESS)
+        return ApiResponse.success(SuccessStatus.SUBSCRIBE_CANCEL_SUCCESS)
     }
 }

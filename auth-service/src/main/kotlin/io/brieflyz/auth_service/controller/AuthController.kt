@@ -6,7 +6,7 @@ import io.brieflyz.auth_service.model.dto.SignInRequestDTO
 import io.brieflyz.auth_service.model.dto.SignUpRequestDTO
 import io.brieflyz.auth_service.model.dto.TokenResponseDTO
 import io.brieflyz.auth_service.service.AuthService
-import io.brieflyz.core.constants.SuccessCode
+import io.brieflyz.core.constants.SuccessStatus
 import io.brieflyz.core.dto.api.ApiResponse
 import jakarta.servlet.http.HttpServletResponse
 import jakarta.validation.Valid
@@ -26,7 +26,7 @@ class AuthController(
     @ResponseStatus(HttpStatus.CREATED)
     fun signUp(@Valid @RequestBody body: SignUpRequestDTO): ApiResponse<Long> {
         val memberId = authService.join(body)
-        return ApiResponse.success(SuccessCode.SIGN_UP_SUCCESS, memberId)
+        return ApiResponse.success(SuccessStatus.SIGN_UP_SUCCESS, memberId)
     }
 
     @PostMapping("/sign-in")
@@ -42,6 +42,6 @@ class AuthController(
             value = CookieUtils.serialize(token.accessToken),
             maxAge = token.accessTokenValidTime
         )
-        return ApiResponse.success(SuccessCode.SIGN_IN_SUCCESS, token)
+        return ApiResponse.success(SuccessStatus.SIGN_IN_SUCCESS, token)
     }
 }

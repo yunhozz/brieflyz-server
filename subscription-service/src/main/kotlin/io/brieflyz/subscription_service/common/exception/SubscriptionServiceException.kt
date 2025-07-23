@@ -1,10 +1,10 @@
 package io.brieflyz.subscription_service.common.exception
 
-import io.brieflyz.core.constants.ErrorCode
+import io.brieflyz.core.constants.ErrorStatus
 
-sealed class SubscriptionServiceException(val errorCode: ErrorCode, msg: String) :
-    RuntimeException("${errorCode.message} $msg".trim())
+sealed class SubscriptionServiceException(val status: ErrorStatus, msg: String) :
+    RuntimeException("${status.message} $msg".trim())
 
-class SubscriptionNotFoundException(msg: String) : SubscriptionServiceException(ErrorCode.SUBSCRIPTION_NOT_FOUND, msg)
+class SubscriptionNotFoundException(msg: String) : SubscriptionServiceException(ErrorStatus.SUBSCRIPTION_NOT_FOUND, msg)
 
-class AlreadyUnlimitedPlanException : SubscriptionServiceException(ErrorCode.ALREADY_UNLIMITED_PLAN_EXCEPTION, "")
+class AlreadyUnlimitedPlanException : SubscriptionServiceException(ErrorStatus.ALREADY_UNLIMITED_PLAN_EXCEPTION, "")

@@ -1,7 +1,7 @@
 package io.brieflyz.api_gateway.exception
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import io.brieflyz.core.constants.ErrorCode
+import io.brieflyz.core.constants.ErrorStatus
 import io.brieflyz.core.dto.api.ApiResponse
 import io.brieflyz.core.dto.api.ErrorData
 import io.brieflyz.core.utils.logger
@@ -32,15 +32,15 @@ class ApiGatewayExceptionHandler(
         val apiResponse = when (ex) {
             is ApiGatewayException -> {
                 log.warn("[API Gateway 예외] ${ex.localizedMessage}")
-                val errorCode = ex.errorCode
-                response.statusCode = HttpStatusCode.valueOf(errorCode.status)
-                ApiResponse.fail(errorCode, ErrorData.of(ex))
+                val status = ex.status
+                response.statusCode = HttpStatusCode.valueOf(status.statusCode)
+                ApiResponse.fail(status, ErrorData.of(ex))
             }
 
             else -> {
                 log.error(ex.message, ex)
                 response.statusCode = HttpStatus.SERVICE_UNAVAILABLE
-                ApiResponse.fail(ErrorCode.SERVICE_UNAVAILABLE, ErrorData.of(Exception(ex)))
+                ApiResponse.fail(ErrorStatus.SERVICE_UNAVAILABLE, ErrorData.of(Exception(ex)))
             }
         }
 

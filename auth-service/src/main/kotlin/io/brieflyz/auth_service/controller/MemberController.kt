@@ -5,7 +5,7 @@ import io.brieflyz.auth_service.common.utils.CookieUtils
 import io.brieflyz.auth_service.model.dto.MemberResponseDTO
 import io.brieflyz.auth_service.model.dto.TokenResponseDTO
 import io.brieflyz.auth_service.service.MemberService
-import io.brieflyz.core.constants.SuccessCode
+import io.brieflyz.core.constants.SuccessStatus
 import io.brieflyz.core.dto.api.ApiResponse
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
@@ -29,14 +29,14 @@ class MemberController(
     @ResponseStatus(HttpStatus.OK)
     fun lookupAllMembers(): ApiResponse<List<MemberResponseDTO>> {
         val members = memberService.findAllMembers()
-        return ApiResponse.success(SuccessCode.USER_INFORMATION_READ_SUCCESS, members)
+        return ApiResponse.success(SuccessStatus.USER_INFORMATION_READ_SUCCESS, members)
     }
 
     @GetMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
     fun lookupMember(@PathVariable id: Long): ApiResponse<MemberResponseDTO> {
         val member = memberService.findMemberById(id)
-        return ApiResponse.success(SuccessCode.USER_INFORMATION_READ_SUCCESS, member)
+        return ApiResponse.success(SuccessStatus.USER_INFORMATION_READ_SUCCESS, member)
     }
 
     @PostMapping("/token")
@@ -52,7 +52,7 @@ class MemberController(
             value = CookieUtils.serialize(token.accessToken),
             maxAge = token.accessTokenValidTime
         )
-        return ApiResponse.success(SuccessCode.TOKEN_REFRESH_SUCCESS, token)
+        return ApiResponse.success(SuccessStatus.TOKEN_REFRESH_SUCCESS, token)
     }
 
     @PostMapping("/logout")
@@ -64,7 +64,7 @@ class MemberController(
     ): ApiResponse<Any> {
         CookieUtils.deleteCookie(request, response, CookieName.ACCESS_TOKEN_COOKIE_NAME)
         memberService.deleteRefreshToken(userDetails.username)
-        return ApiResponse.success(SuccessCode.LOGOUT_SUCCESS)
+        return ApiResponse.success(SuccessStatus.LOGOUT_SUCCESS)
     }
 
     @DeleteMapping("/withdraw")
@@ -76,6 +76,6 @@ class MemberController(
     ): ApiResponse<Any> {
         CookieUtils.deleteAllCookies(request, response)
         memberService.withdraw(userDetails.username)
-        return ApiResponse.success(SuccessCode.USER_WITHDRAW_SUCCESS)
+        return ApiResponse.success(SuccessStatus.USER_WITHDRAW_SUCCESS)
     }
 }
