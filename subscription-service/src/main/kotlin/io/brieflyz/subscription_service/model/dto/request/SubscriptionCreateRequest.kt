@@ -1,4 +1,4 @@
-package io.brieflyz.subscription_service.model.dto
+package io.brieflyz.subscription_service.model.dto.request
 
 import jakarta.validation.Valid
 import jakarta.validation.constraints.Email

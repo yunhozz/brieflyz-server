@@ -1,4 +1,4 @@
-package io.brieflyz.subscription_service.model.dto
+package io.brieflyz.subscription_service.model.dto.response
 
 data class SubscriptionResponse(
     val id: Long,
@@ -7,6 +7,7 @@ data class SubscriptionResponse(
     val country: String,
     val city: String,
     val plan: String,
+    val count: Int,
     val deleted: Boolean,
     val createdAt: String,
     val updatedAt: String

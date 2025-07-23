@@ -1,10 +1,10 @@
 package io.brieflyz.subscription_service.model.dto.validate
 
 import io.brieflyz.subscription_service.common.constants.PaymentMethod
-import io.brieflyz.subscription_service.model.dto.BankTransferDetailsRequest
-import io.brieflyz.subscription_service.model.dto.CreditCardDetailsRequest
-import io.brieflyz.subscription_service.model.dto.DigitalWalletDetailsRequest
-import io.brieflyz.subscription_service.model.dto.PaymentDetailsCreateRequest
+import io.brieflyz.subscription_service.model.dto.request.BankTransferDetailsRequest
+import io.brieflyz.subscription_service.model.dto.request.CreditCardDetailsRequest
+import io.brieflyz.subscription_service.model.dto.request.DigitalWalletDetailsRequest
+import io.brieflyz.subscription_service.model.dto.request.PaymentDetailsCreateRequest
 import jakarta.validation.ConstraintValidatorContext
 
 object PaymentCreateRequestValidator {

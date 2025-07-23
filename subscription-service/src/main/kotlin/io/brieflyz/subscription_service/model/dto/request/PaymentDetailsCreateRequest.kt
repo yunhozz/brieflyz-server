@@ -1,4 +1,4 @@
-package io.brieflyz.subscription_service.model.dto
+package io.brieflyz.subscription_service.model.dto.request
 
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
