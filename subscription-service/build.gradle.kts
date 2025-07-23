@@ -15,6 +15,8 @@ dependencies {
     implementation("org.springframework.cloud:spring-cloud-starter-config")
     // Kafka
     implementation("org.springframework.kafka:spring-kafka")
+    // Redisson
+    implementation("org.redisson:redisson-spring-boot-starter:3.50.0")
     // QueryDSL
     implementation("com.querydsl:querydsl-jpa:5.1.0:jakarta")
     kapt("com.querydsl:querydsl-apt:5.1.0:jakarta")
