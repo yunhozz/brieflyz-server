@@ -26,11 +26,11 @@ data class ApiResponse<T> private constructor(
     }
 
     data class ApiHeader private constructor(
-        val status: ApiStatus,
+        val code: Int,
         val success: Boolean
     ) {
         companion object {
-            internal fun of(status: ApiStatus, success: Boolean) = ApiHeader(status, success)
+            internal fun of(status: ApiStatus, success: Boolean) = ApiHeader(status.statusCode, success)
         }
     }
 
@@ -48,12 +48,13 @@ data class ApiResponse<T> private constructor(
 @JsonInclude(JsonInclude.Include.NON_NULL)
 data class ErrorData private constructor(
     val timestamp: LocalDateTime,
-    val exception: String?,
+    val description: String,
+    val location: String?,
     val fieldErrors: List<FieldError>?
 ) {
     companion object {
         fun of(ex: Exception, fieldErrors: List<FieldError>? = null) =
-            ErrorData(LocalDateTime.now(), ex::class.qualifiedName, fieldErrors)
+            ErrorData(LocalDateTime.now(), ex.localizedMessage, ex::class.qualifiedName, fieldErrors)
     }
 
     data class FieldError private constructor(
