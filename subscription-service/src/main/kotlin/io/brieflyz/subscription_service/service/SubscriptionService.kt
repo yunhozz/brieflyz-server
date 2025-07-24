@@ -98,20 +98,16 @@ class SubscriptionService(
     @Scheduled(cron = "0 0 0 * * *")
     fun deleteExpiredSubscriptionsEveryDay() {
         val currentTime = LocalDateTime.now()
-        val expiredSubscriptions = subscriptionRepository.findLimitedSubscriptions()
+        val expiredSubscriptionIds = subscriptionRepository.findLimitedSubscriptions()
             .filter { it.isExpired(currentTime) }
+            .map { it.id }
 
-        expiredSubscriptions.forEach { subscription ->
-            subscription.delete()
-            log.debug(
-                "Deleted Subscription : ID={}, Member ID={}, Plan={}",
-                subscription.id,
-                subscription.memberId,
-                subscription.plan
-            )
+        expiredSubscriptionIds.chunked(100).forEach { ids ->
+            log.debug("Expired Subscription IDs : {}", ids)
         }
 
-        log.info("A total of ${expiredSubscriptions.size} subscriptions have been successfully deleted.")
+        subscriptionRepository.softDeleteSubscriptionsInIds(expiredSubscriptionIds)
+        log.info("A total of ${expiredSubscriptionIds.size} subscriptions have been successfully deleted.")
     }
 
     @Transactional
