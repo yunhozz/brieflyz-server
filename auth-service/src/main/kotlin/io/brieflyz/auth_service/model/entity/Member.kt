@@ -34,7 +34,7 @@ class Member private constructor(
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    var id: Long = 0
+    val id: Long = 0
 
     var nickname: String = nickname
         protected set

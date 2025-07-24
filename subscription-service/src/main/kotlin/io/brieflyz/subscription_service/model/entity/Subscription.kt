@@ -27,7 +27,7 @@ class Subscription(
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    var id: Long = 0
+    val id: Long = 0
 
     @Enumerated(EnumType.STRING)
     var plan: SubscriptionPlan = plan
