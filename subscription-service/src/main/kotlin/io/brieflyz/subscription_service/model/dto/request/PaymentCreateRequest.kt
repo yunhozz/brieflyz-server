@@ -1,8 +1,8 @@
 package io.brieflyz.subscription_service.model.dto.request
 
 import io.brieflyz.subscription_service.common.annotation.CustomValidate
-import io.brieflyz.subscription_service.model.dto.validate.PaymentCreateRequestValidator
-import io.brieflyz.subscription_service.model.dto.validate.Validatable
+import io.brieflyz.subscription_service.model.dto.validation.PaymentCreateRequestValidator
+import io.brieflyz.subscription_service.model.dto.validation.Validatable
 import jakarta.validation.ConstraintValidatorContext
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull

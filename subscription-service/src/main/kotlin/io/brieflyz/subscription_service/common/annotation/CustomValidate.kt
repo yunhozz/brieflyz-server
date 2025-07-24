@@ -1,6 +1,6 @@
 package io.brieflyz.subscription_service.common.annotation
 
-import io.brieflyz.subscription_service.model.dto.validate.CustomValidator
+import io.brieflyz.subscription_service.model.dto.validation.CustomValidator
 import jakarta.validation.Constraint
 import jakarta.validation.Payload
 import kotlin.reflect.KClass

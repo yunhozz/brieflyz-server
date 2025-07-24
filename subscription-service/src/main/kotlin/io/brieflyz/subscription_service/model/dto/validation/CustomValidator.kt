@@ -1,4 +1,4 @@
-package io.brieflyz.subscription_service.model.dto.validate
+package io.brieflyz.subscription_service.model.dto.validation
 
 import io.brieflyz.subscription_service.common.annotation.CustomValidate
 import jakarta.validation.ConstraintValidator
