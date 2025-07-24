@@ -3,7 +3,8 @@ package io.brieflyz.subscription_service.service
 import io.brieflyz.core.utils.logger
 import io.brieflyz.subscription_service.common.constants.PaymentMethod
 import io.brieflyz.subscription_service.common.constants.SubscriptionPlan
-import io.brieflyz.subscription_service.common.exception.AlreadyUnlimitedPlanException
+import io.brieflyz.subscription_service.common.exception.AlreadyHaveSubscriptionException
+import io.brieflyz.subscription_service.common.exception.AlreadyHaveUnlimitedSubscriptionException
 import io.brieflyz.subscription_service.common.exception.SubscriptionNotFoundException
 import io.brieflyz.subscription_service.infra.db.PaymentDetailsRepository
 import io.brieflyz.subscription_service.infra.db.PaymentRepository
@@ -36,19 +37,11 @@ class SubscriptionService(
         val (email, country, city, plan, paymentRequest) = request
         log.debug("User Request : {}", request)
 
-        val foundSubscription = subscriptionRepository.findByMemberIdAndPlan(memberId, SubscriptionPlan.of(plan))
-        val subscription = foundSubscription
-            ?.takeUnless { it.isSubscriptionPlanEquals(SubscriptionPlan.UNLIMITED) }
-            ?: run {
-                foundSubscription?.let { throw AlreadyUnlimitedPlanException() }
-                Subscription(
-                    memberId,
-                    email,
-                    country,
-                    city,
-                    plan = SubscriptionPlan.of(plan)
-                )
-            }
+        val subscription = subscriptionRepository.findByMemberId(memberId)
+            ?.let { subscription ->
+                validateSubscriptionExist(subscription)
+                subscription.activate()
+            } ?: Subscription(memberId, email, country, city, SubscriptionPlan.of(plan))
 
         log.debug("Subscription Information : {}", subscription.toResponse())
 
@@ -98,7 +91,7 @@ class SubscriptionService(
     @Scheduled(cron = "0 0 0 * * *")
     fun deleteExpiredSubscriptionsEveryDay() {
         val currentTime = LocalDateTime.now()
-        val expiredSubscriptionIds = subscriptionRepository.findLimitedSubscriptions()
+        val expiredSubscriptionIds = subscriptionRepository.findLimitedSubscriptionsQuery()
             .filter { it.isExpired(currentTime) }
             .map { it.id }
 
@@ -106,7 +99,7 @@ class SubscriptionService(
             log.debug("Expired Subscription IDs : {}", ids)
         }
 
-        subscriptionRepository.softDeleteSubscriptionsInIds(expiredSubscriptionIds)
+        subscriptionRepository.softDeleteSubscriptionsInIdsQuery(expiredSubscriptionIds)
         log.info("A total of ${expiredSubscriptionIds.size} subscriptions have been successfully deleted.")
     }
 
@@ -118,6 +111,13 @@ class SubscriptionService(
 
     private fun findSubscriptionById(id: Long): Subscription = subscriptionRepository.findByIdOrNull(id)
         ?: throw SubscriptionNotFoundException("Subscription ID: $id")
+
+    private fun validateSubscriptionExist(subscription: Subscription) {
+        if (subscription.isSubscriptionPlanEquals(SubscriptionPlan.UNLIMITED))
+            throw AlreadyHaveUnlimitedSubscriptionException("Email : ${subscription.email}")
+        else if (subscription.isActivated())
+            throw AlreadyHaveSubscriptionException("Email : ${subscription.email}, Plan : ${subscription.plan}")
+    }
 
     private fun Subscription.toResponse() = SubscriptionResponse(
         id = this.id,

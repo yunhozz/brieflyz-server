@@ -10,12 +10,10 @@ import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Index
 import jakarta.persistence.Table
-import org.hibernate.annotations.SQLRestriction
 import java.time.LocalDateTime
 
 @Entity
-@Table(indexes = [Index(name = "idx_memberId_email", columnList = "memberId, email")])
-@SQLRestriction("deleted = false")
+@Table(indexes = [Index(name = "idx_memberId", columnList = "memberId")])
 class Subscription(
     val memberId: Long,
     val email: String,
@@ -48,8 +46,7 @@ class Subscription(
         this.plan = plan
     }
 
-    fun isExpired(time: LocalDateTime): Boolean =
-        plan.getExpirationTime(updatedAt!!) <= time
+    fun isExpired(time: LocalDateTime): Boolean = plan.getExpirationTime(updatedAt!!) <= time
 
     fun addPayCount() {
         payCount++
@@ -58,5 +55,13 @@ class Subscription(
     fun delete() {
         require(!deleted)
         deleted = true
+    }
+
+    fun isActivated(): Boolean = !deleted
+
+    fun activate(): Subscription {
+        require(deleted)
+        deleted = false
+        return this
     }
 }

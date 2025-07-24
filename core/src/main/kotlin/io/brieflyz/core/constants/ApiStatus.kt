@@ -69,7 +69,8 @@ enum class ErrorStatus(
     USER_ALREADY_EXIST(409 conflict "유저 정보가 이미 존재합니다."),
     USER_REGISTERED_BY_SOCIAL_LOGIN(409 conflict "소셜 로그인 가입 계정입니다. 소셜 로그인을 이용해주세요."),
     SUBSCRIPTION_PLAN_IDENTICAL(409 conflict "이미 동일한 구독 플랜에 가입되어 있습니다."),
-    ALREADY_UNLIMITED_PLAN_EXCEPTION(409 conflict "이미 무제한 구독 중입니다. 대신 결제 방식 업데이트를 진행해주세요."),
+    ALREADY_HAVE_SUBSCRIPTION(409 conflict "이미 구독 상태입니다."),
+    ALREADY_HAVE_UNLIMITED_SUBSCRIPTION(409 conflict "이미 무제한 구독 중입니다."),
 
     // 5xx Server Error
     INTERNAL_SERVER_ERROR(500 internalServerError "서버 오류가 발생하였습니다. 잠시 후 다시 시도해 주세요."),

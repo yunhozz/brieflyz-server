@@ -9,4 +9,8 @@ class SubscriptionNotFoundException(msg: String) : SubscriptionServiceException(
 
 class SubscriptionPlanIdenticalException : SubscriptionServiceException(ErrorStatus.SUBSCRIPTION_PLAN_IDENTICAL, "")
 
-class AlreadyUnlimitedPlanException : SubscriptionServiceException(ErrorStatus.ALREADY_UNLIMITED_PLAN_EXCEPTION, "")
+class AlreadyHaveSubscriptionException(msg: String) :
+    SubscriptionServiceException(ErrorStatus.ALREADY_HAVE_SUBSCRIPTION, msg)
+
+class AlreadyHaveUnlimitedSubscriptionException(msg: String) :
+    SubscriptionServiceException(ErrorStatus.ALREADY_HAVE_UNLIMITED_SUBSCRIPTION, msg)
