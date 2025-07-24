@@ -19,8 +19,7 @@ class Subscription(
     val email: String,
     val country: String,
     val city: String,
-    plan: SubscriptionPlan,
-    payCount: Int = 0
+    plan: SubscriptionPlan
 ) : BaseEntity() {
 
     @Id
@@ -31,7 +30,7 @@ class Subscription(
     var plan: SubscriptionPlan = plan
         protected set
 
-    var payCount: Int = payCount
+    var payCount: Int = 0
         protected set
 
     var deleted: Boolean = false
