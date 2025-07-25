@@ -64,10 +64,8 @@ class SubscriptionService(
     }
 
     @Transactional(readOnly = true)
-    fun getSubscription(id: Long): SubscriptionResponse {
-        val subscription = findSubscriptionById(id)
-        return subscription.toResponse()
-    }
+    fun getSubscription(id: Long): SubscriptionQuery = subscriptionRepository.findAllWithPaymentsByIdQuery(id)
+        ?: throw SubscriptionNotFoundException("Subscription ID : $id")
 
     @Transactional(readOnly = true)
     fun getSubscriptionsByMemberIdOrEmail(memberId: Long?, email: String?): List<SubscriptionResponse> =

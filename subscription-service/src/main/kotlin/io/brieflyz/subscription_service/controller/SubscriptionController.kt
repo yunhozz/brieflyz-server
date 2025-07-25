@@ -4,6 +4,7 @@ import io.brieflyz.core.constants.SuccessStatus
 import io.brieflyz.core.dto.api.ApiResponse
 import io.brieflyz.subscription_service.model.dto.request.SubscriptionCreateRequest
 import io.brieflyz.subscription_service.model.dto.request.SubscriptionUpdateRequest
+import io.brieflyz.subscription_service.model.dto.response.SubscriptionQuery
 import io.brieflyz.subscription_service.model.dto.response.SubscriptionResponse
 import io.brieflyz.subscription_service.service.SubscriptionService
 import jakarta.validation.Valid
@@ -34,7 +35,7 @@ class SubscriptionController(
 
     @GetMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
-    fun getSubscription(@PathVariable id: Long): ApiResponse<SubscriptionResponse> {
+    fun getSubscription(@PathVariable id: Long): ApiResponse<SubscriptionQuery> {
         val subscription = subscriptionService.getSubscription(id)
         return ApiResponse.success(SuccessStatus.SUBSCRIPTION_INFO_READ_SUCCESS, subscription)
     }
