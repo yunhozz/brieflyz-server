@@ -12,6 +12,7 @@ import io.brieflyz.subscription_service.infra.db.SubscriptionRepository
 import io.brieflyz.subscription_service.model.dto.request.SubscriptionCreateRequest
 import io.brieflyz.subscription_service.model.dto.request.SubscriptionUpdateRequest
 import io.brieflyz.subscription_service.model.dto.response.PaymentResponse
+import io.brieflyz.subscription_service.model.dto.response.SubscriptionQuery
 import io.brieflyz.subscription_service.model.dto.response.SubscriptionResponse
 import io.brieflyz.subscription_service.model.entity.Payment
 import io.brieflyz.subscription_service.model.entity.Subscription
@@ -104,7 +105,15 @@ class SubscriptionService(
     @Transactional
     fun hardDeleteSubscription(id: Long) {
         val subscription = findSubscriptionById(id)
+        val payments = paymentRepository.findAllBySubscription(subscription)
+
         subscriptionRepository.delete(subscription)
+        paymentRepository.deleteAllInBatch(payments)
+
+        log.debug("Deleted Subscription Details : {}", subscription.toResponse())
+        payments.forEach { log.debug("Deleted Payment Details : {}", it) }
+
+        log.info("Subscription and payments have been successfully deleted.")
     }
 
     private fun findSubscriptionById(id: Long): Subscription = subscriptionRepository.findByIdOrNull(id)
@@ -131,6 +140,7 @@ class SubscriptionService(
     )
 
     private fun Payment.toResponse() = PaymentResponse(
+        id = this.id,
         charge = this.charge,
         method = this.method.name
     )
