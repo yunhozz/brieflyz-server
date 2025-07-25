@@ -6,16 +6,23 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 
 @Configuration
+@EnableConfigurationProperties(
+    GatewayProperties::class,
+    AuthServiceProperties::class,
+    SubscriptionServiceProperties::class
+)
 class AppConfig {
     @Bean
     fun gatewayProperties() = GatewayProperties()
 
     @Bean
     fun authServiceProperties() = AuthServiceProperties()
+
+    @Bean
+    fun subscriptionServiceProperties() = SubscriptionServiceProperties()
 }
 
 @ConfigurationProperties(prefix = "app.gateway")
-@EnableConfigurationProperties(GatewayProperties::class)
 data class GatewayProperties(
     val jwt: JwtProperties? = null,
 ) {
@@ -26,7 +33,6 @@ data class GatewayProperties(
 }
 
 @ConfigurationProperties(prefix = "app.auth")
-@EnableConfigurationProperties(AuthServiceProperties::class)
 data class AuthServiceProperties(
     val jwt: JwtProperties? = null,
     val oauth: OAuthProperties? = null,
@@ -45,6 +51,16 @@ data class AuthServiceProperties(
         val authorizedRedirectUris: List<String> = emptyList()
     )
 
+    data class KafkaProperties(
+        val numOfPartitions: Int = 0,
+        val replicationFactor: Short = 0
+    )
+}
+
+@ConfigurationProperties(prefix = "app.subscription")
+data class SubscriptionServiceProperties(
+    val kafka: KafkaProperties? = null
+) {
     data class KafkaProperties(
         val numOfPartitions: Int = 0,
         val replicationFactor: Short = 0
