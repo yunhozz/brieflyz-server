@@ -5,6 +5,12 @@ import io.brieflyz.subscription_service.model.dto.response.QPaymentDetailsQuery
 import io.brieflyz.subscription_service.model.dto.response.QPaymentQuery
 import io.brieflyz.subscription_service.model.dto.response.QSubscriptionQuery
 import io.brieflyz.subscription_service.model.dto.response.SubscriptionQuery
+import io.brieflyz.subscription_service.model.entity.QBankTransferPaymentDetails
+import io.brieflyz.subscription_service.model.entity.QCreditCardPaymentDetails
+import io.brieflyz.subscription_service.model.entity.QDigitalWalletPaymentDetails
+import io.brieflyz.subscription_service.model.entity.QPayment
+import io.brieflyz.subscription_service.model.entity.QPaymentDetails
+import io.brieflyz.subscription_service.model.entity.QSubscription
 import org.springframework.stereotype.Repository
 
 @Repository
@@ -12,7 +18,17 @@ class SubscriptionQueryRepositoryImpl(
     private val query: JPAQueryFactory
 ) : SubscriptionQueryRepository {
 
-    override fun findAllWithPaymentsByIdQuery(id: Long): SubscriptionQuery? {
+    private val subscription: QSubscription = QSubscription.subscription
+    private val payment: QPayment = QPayment.payment
+    private val paymentDetails: QPaymentDetails = QPaymentDetails.paymentDetails
+    private val creditCardDetails: QCreditCardPaymentDetails =
+        paymentDetails.`as`(QCreditCardPaymentDetails::class.java)
+    private val bankTransferDetails: QBankTransferPaymentDetails =
+        paymentDetails.`as`(QBankTransferPaymentDetails::class.java)
+    private val digitalWalletDetails: QDigitalWalletPaymentDetails =
+        paymentDetails.`as`(QDigitalWalletPaymentDetails::class.java)
+
+    override fun findWithPaymentsByIdQuery(id: Long): SubscriptionQuery? {
         val subscriptionQuery = query
             .select(
                 QSubscriptionQuery(
