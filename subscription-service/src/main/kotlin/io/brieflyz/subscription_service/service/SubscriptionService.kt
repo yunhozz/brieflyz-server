@@ -10,12 +10,12 @@ import io.brieflyz.subscription_service.infra.db.PaymentDetailsRepository
 import io.brieflyz.subscription_service.infra.db.PaymentRepository
 import io.brieflyz.subscription_service.infra.db.SubscriptionRepository
 import io.brieflyz.subscription_service.model.dto.request.SubscriptionCreateRequest
-import io.brieflyz.subscription_service.model.dto.request.SubscriptionUpdateRequest
 import io.brieflyz.subscription_service.model.dto.response.PaymentResponse
 import io.brieflyz.subscription_service.model.dto.response.SubscriptionQuery
 import io.brieflyz.subscription_service.model.dto.response.SubscriptionResponse
 import io.brieflyz.subscription_service.model.entity.Payment
 import io.brieflyz.subscription_service.model.entity.Subscription
+import io.brieflyz.subscription_service.service.component.PaymentDetailsFactory
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.scheduling.annotation.EnableScheduling
 import org.springframework.scheduling.annotation.Scheduled
@@ -48,7 +48,6 @@ class SubscriptionService(
 
         val (charge, method, paymentDetailsRequest) = paymentRequest
         val paymentMethod = PaymentMethod.of(method)
-
         val paymentDetails = PaymentDetailsFactory.createByRequest(paymentDetailsRequest)
         val payment = Payment(subscription, charge, paymentMethod, paymentDetails)
 
@@ -58,14 +57,15 @@ class SubscriptionService(
         paymentRepository.save(payment)
         paymentDetailsRepository.save(paymentDetails)
 
-        log.info("Add Subscription's Pay Count")
         subscription.addPayCount()
+
+        log.info("Successfully created subscription for email: $email, plan: ${subscription.plan}")
 
         return subscriptionRepository.save(subscription).id
     }
 
     @Transactional(readOnly = true)
-    fun getSubscription(id: Long): SubscriptionQuery = subscriptionRepository.findAllWithPaymentsByIdQuery(id)
+    fun getSubscription(id: Long): SubscriptionQuery = subscriptionRepository.findWithPaymentsByIdQuery(id)
         ?: throw SubscriptionNotFoundException("Subscription ID : $id")
 
     @Transactional(readOnly = true)
@@ -74,16 +74,10 @@ class SubscriptionService(
             .map { it.toResponse() }
 
     @Transactional
-    fun updateSubscription(id: Long, request: SubscriptionUpdateRequest): Long {
-        val subscription = findSubscriptionById(id)
-        subscription.updateSubscriptionPlan(SubscriptionPlan.of(request.plan))
-        return subscription.id
-    }
-
-    @Transactional
     fun deleteSubscription(id: Long) {
         val subscription = findSubscriptionById(id)
         subscription.delete()
+        log.debug("Deleted Subscription Details : {}", subscription.toResponse())
     }
 
     @Transactional
@@ -110,7 +104,7 @@ class SubscriptionService(
         subscriptionRepository.delete(subscription)
         paymentRepository.deleteAllInBatch(payments)
 
-        log.debug("Deleted Subscription Details : {}", subscription.toResponse())
+        log.debug("Hard Deleted Subscription Details : {}", subscription.toResponse())
         payments.forEach { log.debug("Deleted Payment Details : {}", it) }
 
         log.info("Subscription and payments have been successfully deleted.")
