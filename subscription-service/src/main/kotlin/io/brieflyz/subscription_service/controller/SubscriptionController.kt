@@ -3,20 +3,20 @@ package io.brieflyz.subscription_service.controller
 import io.brieflyz.core.constants.SuccessStatus
 import io.brieflyz.core.dto.api.ApiResponse
 import io.brieflyz.subscription_service.model.dto.request.SubscriptionCreateRequest
-import io.brieflyz.subscription_service.model.dto.request.SubscriptionUpdateRequest
-import io.brieflyz.subscription_service.model.dto.response.SubscriptionQuery
-import io.brieflyz.subscription_service.model.dto.response.SubscriptionResponse
+import io.brieflyz.subscription_service.model.dto.request.SubscriptionQueryRequest
+import io.brieflyz.subscription_service.model.dto.response.SubscriptionQueryResponse
+import io.brieflyz.subscription_service.model.dto.response.SubscriptionSimpleQueryResponse
 import io.brieflyz.subscription_service.service.SubscriptionService
 import jakarta.validation.Valid
+import org.springframework.data.domain.Pageable
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PatchMapping
+import org.springframework.web.bind.annotation.ModelAttribute
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 
@@ -35,29 +35,19 @@ class SubscriptionController(
 
     @GetMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
-    fun getSubscription(@PathVariable id: Long): ApiResponse<SubscriptionQuery> {
+    fun getSubscription(@PathVariable id: Long): ApiResponse<SubscriptionQueryResponse> {
         val subscription = subscriptionService.getSubscription(id)
         return ApiResponse.success(SuccessStatus.SUBSCRIPTION_INFO_READ_SUCCESS, subscription)
     }
 
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
-    fun getSubscriptionsByParams(
-        @RequestParam(required = false) memberId: Long?,
-        @RequestParam(required = false) email: String?
-    ): ApiResponse<List<SubscriptionResponse>> {
-        val subscriptions = subscriptionService.getSubscriptionsByMemberIdOrEmail(memberId, email)
-        return ApiResponse.success(SuccessStatus.SUBSCRIPTION_INFO_READ_SUCCESS, subscriptions)
-    }
-
-    @PatchMapping("/{id}")
-    @ResponseStatus(HttpStatus.CREATED)
-    fun updateSubscription(
-        @PathVariable id: Long,
-        @RequestBody @Valid request: SubscriptionUpdateRequest
-    ): ApiResponse<Long> {
-        val subscriptionId = subscriptionService.updateSubscription(id, request)
-        return ApiResponse.success(SuccessStatus.SUBSCRIPTION_UPDATE_SUCCESS, subscriptionId)
+    fun getSubscriptionPage(
+        @ModelAttribute request: SubscriptionQueryRequest,
+        pageable: Pageable
+    ): ApiResponse<List<SubscriptionSimpleQueryResponse>> {
+        val subscriptionPage = subscriptionService.getSubscriptionPage(request, pageable)
+        return ApiResponse.success(SuccessStatus.SUBSCRIPTION_INFO_READ_SUCCESS, subscriptionPage)
     }
 
     @DeleteMapping("/{id}")

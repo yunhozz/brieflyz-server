@@ -1,16 +1,23 @@
 package io.brieflyz.subscription_service.infra.db
 
 import com.querydsl.jpa.impl.JPAQueryFactory
+import io.brieflyz.subscription_service.common.constants.SubscriptionPlan
+import io.brieflyz.subscription_service.model.dto.request.SubscriptionQueryRequest
 import io.brieflyz.subscription_service.model.dto.response.QPaymentDetailsQuery
 import io.brieflyz.subscription_service.model.dto.response.QPaymentQuery
 import io.brieflyz.subscription_service.model.dto.response.QSubscriptionQuery
-import io.brieflyz.subscription_service.model.dto.response.SubscriptionQuery
+import io.brieflyz.subscription_service.model.dto.response.QSubscriptionSimpleQuery
+import io.brieflyz.subscription_service.model.dto.response.SubscriptionQueryResponse
+import io.brieflyz.subscription_service.model.dto.response.SubscriptionSimpleQueryResponse
 import io.brieflyz.subscription_service.model.entity.QBankTransferPaymentDetails
 import io.brieflyz.subscription_service.model.entity.QCreditCardPaymentDetails
 import io.brieflyz.subscription_service.model.entity.QDigitalWalletPaymentDetails
 import io.brieflyz.subscription_service.model.entity.QPayment
 import io.brieflyz.subscription_service.model.entity.QPaymentDetails
 import io.brieflyz.subscription_service.model.entity.QSubscription
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.PageImpl
+import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Repository
 
 @Repository
@@ -28,7 +35,7 @@ class SubscriptionQueryRepositoryImpl(
     private val digitalWalletDetails: QDigitalWalletPaymentDetails =
         paymentDetails.`as`(QDigitalWalletPaymentDetails::class.java)
 
-    override fun findWithPaymentsByIdQuery(id: Long): SubscriptionQuery? {
+    override fun findWithPaymentsByIdQuery(id: Long): SubscriptionQueryResponse? {
         val subscriptionQuery = query
             .select(
                 QSubscriptionQuery(
@@ -62,7 +69,7 @@ class SubscriptionQueryRepositoryImpl(
                 .join(payment.subscription, subscription)
                 .join(payment.details, paymentDetails)
                 .where(payment.subscription.id.eq(sq.id))
-                .orderBy(payment.id.desc())
+                .orderBy(payment.createdAt.desc())
                 .fetch()
 
             val paymentDetailsQueryList = query
@@ -96,4 +103,44 @@ class SubscriptionQueryRepositoryImpl(
 
         return subscriptionQuery
     }
+
+    override fun findPageWithPaymentsQuery(
+        request: SubscriptionQueryRequest,
+        pageable: Pageable
+    ): Page<SubscriptionSimpleQueryResponse> {
+        val (isDeleted, memberId, email, plan, paymentMethod) = request
+        val subscriptionQueryList = query
+            .select(
+                QSubscriptionSimpleQuery(
+                    subscription.id,
+                    subscription.memberId,
+                    subscription.plan,
+                    subscription.payCount,
+                    subscription.updatedAt
+                )
+            )
+            .from(subscription)
+            .where(isDeletedEq(isDeleted), memberIdEq(memberId), emailEq(email), planEq(plan))
+            .offset(pageable.offset)
+            .limit(pageable.pageSize.toLong())
+            .orderBy(subscription.updatedAt.desc())
+            .fetch()
+
+        val subscriptionCount = query
+            .select(subscription.count())
+            .from(subscription)
+            .fetchOne() ?: 0L
+
+        return PageImpl(subscriptionQueryList, pageable, subscriptionCount)
+    }
+
+    private fun isDeletedEq(isDeleted: Boolean?) = isDeleted?.let { subscription.deleted.eq(it) }
+
+    private fun memberIdEq(memberId: Long?) = memberId?.let { subscription.memberId.eq(it) }
+
+    private fun emailEq(email: String?) =
+        if (email.isNullOrBlank()) null else subscription.email.eq(email)
+
+    private fun planEq(plan: String?) =
+        if (plan.isNullOrBlank()) null else subscription.plan.eq(SubscriptionPlan.of(plan))
 }

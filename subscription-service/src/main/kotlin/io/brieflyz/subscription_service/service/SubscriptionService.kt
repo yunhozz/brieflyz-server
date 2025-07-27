@@ -65,13 +65,35 @@ class SubscriptionService(
     }
 
     @Transactional(readOnly = true)
-    fun getSubscription(id: Long): SubscriptionQuery = subscriptionRepository.findWithPaymentsByIdQuery(id)
+    fun getSubscription(id: Long): SubscriptionQueryResponse = subscriptionRepository.findWithPaymentsByIdQuery(id)
         ?: throw SubscriptionNotFoundException("Subscription ID : $id")
 
     @Transactional(readOnly = true)
     fun getSubscriptionsByMemberIdOrEmail(memberId: Long?, email: String?): List<SubscriptionResponse> =
         subscriptionRepository.findByMemberIdOrEmail(memberId, email)
             .map { it.toResponse() }
+
+    @Transactional(readOnly = true)
+    fun getSubscriptionPage(
+        request: SubscriptionQueryRequest,
+        pageable: Pageable
+    ): List<SubscriptionSimpleQueryResponse> {
+        val subscriptionPage = subscriptionRepository.findPageWithPaymentsQuery(request, pageable)
+        val pageableInfo = subscriptionPage.pageable
+
+        log.debug(
+            """
+            [Subscription Page Info]
+            Total Elements: ${subscriptionPage.totalElements}
+            Total Pages: ${subscriptionPage.totalPages}
+            Page Size: ${pageableInfo.pageSize}
+            Page Number: ${pageableInfo.pageNumber}
+            Subscription Count: ${subscriptionPage.content.size}
+        """.trimIndent()
+        )
+
+        return subscriptionPage.content
+    }
 
     @Transactional
     fun deleteSubscription(id: Long) {
