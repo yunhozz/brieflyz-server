@@ -66,8 +66,9 @@ class SubscriptionService(
     }
 
     @Transactional(readOnly = true)
-    fun getSubscriptionDetailsById(id: Long): SubscriptionQueryResponse = subscriptionRepository.findWithPaymentsByIdQuery(id)
-        ?: throw SubscriptionNotFoundException("Subscription ID : $id")
+    fun getSubscriptionDetailsById(id: Long): SubscriptionQueryResponse =
+        subscriptionRepository.findWithPaymentsByIdQuery(id)
+            ?: throw SubscriptionNotFoundException("Subscription ID : $id")
 
     @Transactional(readOnly = true)
     fun getSubscriptionPageByQuery(

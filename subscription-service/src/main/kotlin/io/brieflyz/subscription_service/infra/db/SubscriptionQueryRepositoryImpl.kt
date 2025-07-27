@@ -1,12 +1,13 @@
 package io.brieflyz.subscription_service.infra.db
 
+import com.querydsl.core.types.OrderSpecifier
 import com.querydsl.jpa.impl.JPAQueryFactory
 import io.brieflyz.subscription_service.common.constants.SubscriptionPlan
 import io.brieflyz.subscription_service.model.dto.request.SubscriptionQueryRequest
-import io.brieflyz.subscription_service.model.dto.response.QPaymentDetailsQuery
-import io.brieflyz.subscription_service.model.dto.response.QPaymentQuery
-import io.brieflyz.subscription_service.model.dto.response.QSubscriptionQuery
-import io.brieflyz.subscription_service.model.dto.response.QSubscriptionSimpleQuery
+import io.brieflyz.subscription_service.model.dto.response.QPaymentDetailsQueryResponse
+import io.brieflyz.subscription_service.model.dto.response.QPaymentQueryResponse
+import io.brieflyz.subscription_service.model.dto.response.QSubscriptionQueryResponse
+import io.brieflyz.subscription_service.model.dto.response.QSubscriptionSimpleQueryResponse
 import io.brieflyz.subscription_service.model.dto.response.SubscriptionQueryResponse
 import io.brieflyz.subscription_service.model.dto.response.SubscriptionSimpleQueryResponse
 import io.brieflyz.subscription_service.model.entity.QBankTransferPaymentDetails
@@ -38,7 +39,7 @@ class SubscriptionQueryRepositoryImpl(
     override fun findWithPaymentsByIdQuery(id: Long): SubscriptionQueryResponse? {
         val subscriptionQuery = query
             .select(
-                QSubscriptionQuery(
+                QSubscriptionQueryResponse(
                     subscription.id,
                     subscription.memberId,
                     subscription.email,
@@ -57,7 +58,7 @@ class SubscriptionQueryRepositoryImpl(
         subscriptionQuery?.let { sq ->
             val paymentQueryList = query
                 .select(
-                    QPaymentQuery(
+                    QPaymentQueryResponse(
                         payment.id,
                         subscription.id,
                         paymentDetails.id,
@@ -68,13 +69,13 @@ class SubscriptionQueryRepositoryImpl(
                 .from(payment)
                 .join(payment.subscription, subscription)
                 .join(payment.details, paymentDetails)
-                .where(payment.subscription.id.eq(sq.id))
+                .where(subscription.id.eq(sq.id))
                 .orderBy(payment.createdAt.desc())
                 .fetch()
 
             val paymentDetailsQueryList = query
                 .select(
-                    QPaymentDetailsQuery(
+                    QPaymentDetailsQueryResponse(
                         paymentDetails.id,
                         creditCardDetails.cardNumber,
                         creditCardDetails.expirationDate,
@@ -108,10 +109,10 @@ class SubscriptionQueryRepositoryImpl(
         request: SubscriptionQueryRequest,
         pageable: Pageable
     ): Page<SubscriptionSimpleQueryResponse> {
-        val (isDeleted, memberId, email, plan, paymentMethod) = request
+        val (isDeleted, memberId, email, plan, paymentMethod, order) = request
         val subscriptionQueryList = query
             .select(
-                QSubscriptionSimpleQuery(
+                QSubscriptionSimpleQueryResponse(
                     subscription.id,
                     subscription.memberId,
                     subscription.plan,
@@ -120,10 +121,15 @@ class SubscriptionQueryRepositoryImpl(
                 )
             )
             .from(subscription)
-            .where(isDeletedEq(isDeleted), memberIdEq(memberId), emailEq(email), planEq(plan))
+            .where(
+                isDeletedEq(isDeleted),
+                memberIdEq(memberId),
+                emailEq(email),
+                planEq(plan)
+            )
             .offset(pageable.offset)
             .limit(pageable.pageSize.toLong())
-            .orderBy(subscription.updatedAt.desc())
+            .orderBy(OrderSpecifier(order, subscription.updatedAt))
             .fetch()
 
         val subscriptionCount = query
