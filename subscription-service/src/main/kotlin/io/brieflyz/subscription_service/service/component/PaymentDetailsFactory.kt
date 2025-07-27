@@ -1,4 +1,4 @@
-package io.brieflyz.subscription_service.service
+package io.brieflyz.subscription_service.service.component
 
 import io.brieflyz.subscription_service.model.dto.request.BankTransferDetailsRequest
 import io.brieflyz.subscription_service.model.dto.request.CreditCardDetailsRequest

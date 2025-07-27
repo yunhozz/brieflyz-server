@@ -1,7 +1,6 @@
 package io.brieflyz.subscription_service.model.entity
 
 import io.brieflyz.subscription_service.common.constants.SubscriptionPlan
-import io.brieflyz.subscription_service.common.exception.SubscriptionPlanIdenticalException
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
@@ -38,29 +37,24 @@ class Subscription(
 
     fun isSubscriptionPlanEquals(plan: SubscriptionPlan): Boolean = this.plan == plan
 
-    fun updateSubscriptionPlan(plan: SubscriptionPlan) {
-        require(this.plan != plan) {
-            throw SubscriptionPlanIdenticalException()
-        }
-        this.plan = plan
-    }
-
-    fun isExpired(time: LocalDateTime): Boolean = plan.getExpirationTime(updatedAt!!) <= time
+    fun isExpired(time: LocalDateTime = LocalDateTime.now()): Boolean = plan.getExpirationTime(updatedAt!!) <= time
 
     fun addPayCount() {
         payCount++
     }
 
     fun delete() {
-        require(!deleted)
+        require(isActivated())
         deleted = true
     }
 
     fun isActivated(): Boolean = !deleted
 
-    fun activate(): Subscription {
-        require(deleted)
+    fun reSubscribe(plan: SubscriptionPlan): Subscription {
+        require(!isActivated())
+        this.plan = plan
         deleted = false
+
         return this
     }
 }

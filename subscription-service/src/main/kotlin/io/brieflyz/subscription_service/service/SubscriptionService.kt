@@ -9,19 +9,23 @@ import io.brieflyz.subscription_service.common.exception.SubscriptionNotFoundExc
 import io.brieflyz.subscription_service.infra.db.PaymentDetailsRepository
 import io.brieflyz.subscription_service.infra.db.PaymentRepository
 import io.brieflyz.subscription_service.infra.db.SubscriptionRepository
+import io.brieflyz.subscription_service.model.dto.request.PaymentCreateRequest
 import io.brieflyz.subscription_service.model.dto.request.SubscriptionCreateRequest
+import io.brieflyz.subscription_service.model.dto.request.SubscriptionQueryRequest
 import io.brieflyz.subscription_service.model.dto.response.PaymentResponse
-import io.brieflyz.subscription_service.model.dto.response.SubscriptionQuery
+import io.brieflyz.subscription_service.model.dto.response.SubscriptionQueryResponse
 import io.brieflyz.subscription_service.model.dto.response.SubscriptionResponse
+import io.brieflyz.subscription_service.model.dto.response.SubscriptionSimpleQueryResponse
 import io.brieflyz.subscription_service.model.entity.Payment
+import io.brieflyz.subscription_service.model.entity.PaymentDetails
 import io.brieflyz.subscription_service.model.entity.Subscription
 import io.brieflyz.subscription_service.service.component.PaymentDetailsFactory
+import org.springframework.data.domain.Pageable
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.scheduling.annotation.EnableScheduling
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import java.time.LocalDateTime
 
 @Service
 @EnableScheduling
@@ -35,21 +39,18 @@ class SubscriptionService(
     @Transactional
     fun createSubscription(memberId: Long, request: SubscriptionCreateRequest): Long {
         // TODO: 구독하고자 하는 유저의 ID 조회
-        val (email, country, city, plan, paymentRequest) = request
-        log.debug("User Request : {}", request)
-
+        log.debug("Member ID: $memberId, Subscription Request: {}", request)
+        val paymentRequest = request.payment
         val subscription = subscriptionRepository.findByMemberId(memberId)
             ?.let { subscription ->
                 validateSubscriptionExist(subscription)
-                subscription.activate()
-            } ?: Subscription(memberId, email, country, city, SubscriptionPlan.of(plan))
+                subscription.reSubscribe(SubscriptionPlan.of(request.plan))
+            } ?: request.toSubscription(memberId)
 
         log.debug("Subscription Information : {}", subscription.toResponse())
 
-        val (charge, method, paymentDetailsRequest) = paymentRequest
-        val paymentMethod = PaymentMethod.of(method)
-        val paymentDetails = PaymentDetailsFactory.createByRequest(paymentDetailsRequest)
-        val payment = Payment(subscription, charge, paymentMethod, paymentDetails)
+        val paymentDetails = PaymentDetailsFactory.createByRequest(paymentRequest.details)
+        val payment = paymentRequest.toPayment(subscription, paymentDetails)
 
         log.info("Payment Method : ${paymentDetails::class.simpleName}")
         log.debug("Payment Information : {}", payment.toResponse())
@@ -59,7 +60,7 @@ class SubscriptionService(
 
         subscription.addPayCount()
 
-        log.info("Successfully created subscription for email: $email, plan: ${subscription.plan}")
+        log.info("Successfully created subscription for email: ${request.email}, plan: ${subscription.plan}")
 
         return subscriptionRepository.save(subscription).id
     }
@@ -105,9 +106,8 @@ class SubscriptionService(
     @Transactional
     @Scheduled(cron = "0 0 0 * * *")
     fun deleteExpiredSubscriptionsEveryDay() {
-        val currentTime = LocalDateTime.now()
         val expiredSubscriptionIds = subscriptionRepository.findLimitedSubscriptionsQuery()
-            .filter { it.isExpired(currentTime) }
+            .filter { it.isExpired() }
             .map { it.id }
 
         expiredSubscriptionIds.chunked(100).forEach { ids ->
@@ -142,6 +142,21 @@ class SubscriptionService(
             throw AlreadyHaveSubscriptionException("Email : ${subscription.email}, Plan : ${subscription.plan}")
     }
 
+    private fun SubscriptionCreateRequest.toSubscription(memberId: Long) = Subscription(
+        memberId,
+        email = this.email,
+        country = this.country,
+        city = this.city,
+        plan = SubscriptionPlan.of(this.plan)
+    )
+
+    private fun PaymentCreateRequest.toPayment(subscription: Subscription, details: PaymentDetails) = Payment(
+        subscription,
+        charge = this.charge,
+        method = PaymentMethod.of(this.method),
+        details
+    )
+
     private fun Subscription.toResponse() = SubscriptionResponse(
         id = this.id,
         memberId = this.memberId,
@@ -158,6 +173,7 @@ class SubscriptionService(
     private fun Payment.toResponse() = PaymentResponse(
         id = this.id,
         charge = this.charge,
-        method = this.method.name
+        method = this.method.name,
+        details = this.details::class.simpleName
     )
 }
