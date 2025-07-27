@@ -35,8 +35,8 @@ class SubscriptionController(
 
     @GetMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
-    fun getSubscription(@PathVariable id: Long): ApiResponse<SubscriptionQueryResponse> {
-        val subscription = subscriptionService.getSubscription(id)
+    fun getSubscriptionDetails(@PathVariable id: Long): ApiResponse<SubscriptionQueryResponse> {
+        val subscription = subscriptionService.getSubscriptionDetailsById(id)
         return ApiResponse.success(SuccessStatus.SUBSCRIPTION_INFO_READ_SUCCESS, subscription)
     }
 
@@ -46,14 +46,14 @@ class SubscriptionController(
         @ModelAttribute request: SubscriptionQueryRequest,
         pageable: Pageable
     ): ApiResponse<List<SubscriptionSimpleQueryResponse>> {
-        val subscriptionPage = subscriptionService.getSubscriptionPage(request, pageable)
+        val subscriptionPage = subscriptionService.getSubscriptionPageByQuery(request, pageable)
         return ApiResponse.success(SuccessStatus.SUBSCRIPTION_INFO_READ_SUCCESS, subscriptionPage)
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
-    fun cancelSubscription(@PathVariable id: Long): ApiResponse<Void> {
-        subscriptionService.deleteSubscription(id)
-        return ApiResponse.success(SuccessStatus.SUBSCRIBE_CANCEL_SUCCESS)
+    fun cancelSubscription(@PathVariable id: Long): ApiResponse<Long> {
+        val canceledSubscriptionId = subscriptionService.cancelSubscriptionById(id)
+        return ApiResponse.success(SuccessStatus.SUBSCRIBE_CANCEL_SUCCESS, canceledSubscriptionId)
     }
 }

@@ -2,6 +2,7 @@ package io.brieflyz.api_gateway.config
 
 import io.brieflyz.api_gateway.exception.JwtAccessDeniedHandler
 import io.brieflyz.api_gateway.exception.JwtAuthenticationEntryPoint
+import io.brieflyz.core.constants.Role
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.http.HttpMethod
@@ -23,7 +24,8 @@ class SecurityConfig(
         .cors { it.configurationSource(corsConfigurationSource()) }
         .csrf { it.disable() }
         .authorizeExchange {
-            it.pathMatchers(HttpMethod.GET, "/api/members/**").hasAuthority("ROLE_ADMIN")
+            it.pathMatchers(HttpMethod.GET, "/api/members/**").hasAuthority(Role.ADMIN.auth)
+            it.pathMatchers("/api/admin/**").hasAuthority(Role.ADMIN.auth)
             it.anyExchange().permitAll()
         }
         .exceptionHandling {

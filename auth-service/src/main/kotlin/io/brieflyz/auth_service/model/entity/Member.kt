@@ -1,7 +1,7 @@
 package io.brieflyz.auth_service.model.entity
 
 import io.brieflyz.auth_service.common.constants.LoginType
-import io.brieflyz.auth_service.common.constants.Role
+import io.brieflyz.core.constants.Role
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
@@ -18,7 +18,7 @@ class Member private constructor(
     val password: String?,
     nickname: String,
     loginType: LoginType,
-    roles: String = Role.GUEST.authority
+    roles: String = Role.GUEST.auth
 ) : BaseEntity() {
 
     companion object {
@@ -57,7 +57,7 @@ class Member private constructor(
 
     fun addRoles(vararg newRoles: Role) {
         val newAuthorities = newRoles.joinToString("") { role ->
-            val authority = role.authority
+            val authority = role.auth
             require(!roles.contains(authority)) { "Already Authorized on $authority" }
             "|$authority"
         }
@@ -66,7 +66,7 @@ class Member private constructor(
 
     fun updateBySocialLogin() {
         loginType = LoginType.SOCIAL
-        if (!roles.contains(Role.USER.authority)) addRoles(Role.USER)
+        if (!roles.contains(Role.USER.auth)) addRoles(Role.USER)
     }
 
     fun isLoginBy(type: LoginType): Boolean = loginType == type

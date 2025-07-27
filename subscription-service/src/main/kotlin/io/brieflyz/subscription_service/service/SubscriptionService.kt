@@ -66,16 +66,11 @@ class SubscriptionService(
     }
 
     @Transactional(readOnly = true)
-    fun getSubscription(id: Long): SubscriptionQueryResponse = subscriptionRepository.findWithPaymentsByIdQuery(id)
+    fun getSubscriptionDetailsById(id: Long): SubscriptionQueryResponse = subscriptionRepository.findWithPaymentsByIdQuery(id)
         ?: throw SubscriptionNotFoundException("Subscription ID : $id")
 
     @Transactional(readOnly = true)
-    fun getSubscriptionsByMemberIdOrEmail(memberId: Long?, email: String?): List<SubscriptionResponse> =
-        subscriptionRepository.findByMemberIdOrEmail(memberId, email)
-            .map { it.toResponse() }
-
-    @Transactional(readOnly = true)
-    fun getSubscriptionPage(
+    fun getSubscriptionPageByQuery(
         request: SubscriptionQueryRequest,
         pageable: Pageable
     ): List<SubscriptionSimpleQueryResponse> {
@@ -97,10 +92,16 @@ class SubscriptionService(
     }
 
     @Transactional
-    fun deleteSubscription(id: Long) {
+    fun cancelSubscriptionById(id: Long): Long {
         val subscription = findSubscriptionById(id)
+        if (!subscription.isActivated()) {
+            throw SubscriptionNotFoundException("Subscription ID: $id")
+        }
+
         subscription.delete()
-        log.debug("Deleted Subscription Details : {}", subscription.toResponse())
+        log.debug("Canceled Subscription Details : {}", subscription.toResponse())
+
+        return subscription.id
     }
 
     @Transactional
@@ -119,7 +120,7 @@ class SubscriptionService(
     }
 
     @Transactional
-    fun hardDeleteSubscription(id: Long) {
+    fun hardDeleteSubscriptionById(id: Long) {
         val subscription = findSubscriptionById(id)
         val payments = paymentRepository.findAllBySubscription(subscription)
 
