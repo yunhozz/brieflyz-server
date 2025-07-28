@@ -12,9 +12,8 @@ import jakarta.persistence.Table
 import java.time.LocalDateTime
 
 @Entity
-@Table(indexes = [Index(name = "idx_memberId", columnList = "memberId")])
+@Table(indexes = [Index(name = "idx_email", columnList = "email")])
 class Subscription(
-    val memberId: Long,
     val email: String,
     val country: String,
     val city: String,

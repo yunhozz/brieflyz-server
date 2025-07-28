@@ -9,7 +9,6 @@ import java.time.ZonedDateTime
 
 data class SubscriptionQueryResponse @QueryProjection constructor(
     val id: Long,
-    val memberId: Long,
     val email: String,
     val country: String,
     val city: String,
@@ -23,7 +22,7 @@ data class SubscriptionQueryResponse @QueryProjection constructor(
 
 data class SubscriptionSimpleQueryResponse @QueryProjection constructor(
     val id: Long,
-    val memberId: Long,
+    val email: String,
     val plan: SubscriptionPlan,
     val payCount: Int,
     val updatedAt: LocalDateTime

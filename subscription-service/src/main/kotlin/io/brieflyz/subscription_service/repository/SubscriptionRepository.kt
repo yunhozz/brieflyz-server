@@ -7,8 +7,7 @@ import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 
 interface SubscriptionRepository : JpaRepository<Subscription, Long>, SubscriptionQueryRepository {
-    fun findByMemberId(memberId: Long): Subscription?
-    fun findByMemberIdOrEmail(memberId: Long?, email: String?): List<Subscription>
+    fun findByEmail(email: String): Subscription?
 
     @Query("select s from Subscription s where s.plan != 'UNLIMITED' and s.deleted = false")
     fun findLimitedSubscriptionsQuery(): List<Subscription>

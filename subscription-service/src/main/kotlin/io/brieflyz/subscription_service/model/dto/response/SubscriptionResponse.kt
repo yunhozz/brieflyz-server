@@ -2,7 +2,6 @@ package io.brieflyz.subscription_service.model.dto.response
 
 data class SubscriptionResponse(
     val id: Long,
-    val memberId: Long,
     val email: String,
     val country: String,
     val city: String,

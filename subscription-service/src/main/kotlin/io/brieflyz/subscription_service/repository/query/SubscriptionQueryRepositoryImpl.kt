@@ -41,7 +41,6 @@ class SubscriptionQueryRepositoryImpl(
             .select(
                 QSubscriptionQueryResponse(
                     subscription.id,
-                    subscription.memberId,
                     subscription.email,
                     subscription.country,
                     subscription.city,
@@ -109,12 +108,12 @@ class SubscriptionQueryRepositoryImpl(
         request: SubscriptionQueryRequest,
         pageable: Pageable
     ): Page<SubscriptionSimpleQueryResponse> {
-        val (isDeleted, memberId, email, plan, paymentMethod, order) = request
+        val (isDeleted, email, plan, paymentMethod, order) = request
         val subscriptionQueryList = query
             .select(
                 QSubscriptionSimpleQueryResponse(
                     subscription.id,
-                    subscription.memberId,
+                    subscription.email,
                     subscription.plan,
                     subscription.payCount,
                     subscription.updatedAt
@@ -123,7 +122,6 @@ class SubscriptionQueryRepositoryImpl(
             .from(subscription)
             .where(
                 isDeletedEq(isDeleted),
-                memberIdEq(memberId),
                 emailEq(email),
                 planEq(plan)
             )
@@ -141,8 +139,6 @@ class SubscriptionQueryRepositoryImpl(
     }
 
     private fun isDeletedEq(isDeleted: Boolean?) = isDeleted?.let { subscription.deleted.eq(it) }
-
-    private fun memberIdEq(memberId: Long?) = memberId?.let { subscription.memberId.eq(it) }
 
     private fun emailEq(email: String?) =
         if (email.isNullOrBlank()) null else subscription.email.eq(email)
