@@ -9,7 +9,7 @@ import java.time.Duration
 class RedisHandler(
     redisTemplate: RedisTemplate<String, String>
 ) {
-    private val ops = redisTemplate.opsForValue()
+    private val ops by lazy { redisTemplate.opsForValue() }
 
     fun save(key: String, value: String, ttl: Long) {
         ops.set(key, value, Duration.ofMillis(ttl))
