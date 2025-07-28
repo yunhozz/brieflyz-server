@@ -1,9 +1,9 @@
-package io.brieflyz.auth_service.infra.security.oauth
+package io.brieflyz.auth_service.config.security
 
 import io.brieflyz.auth_service.common.constants.LoginType
-import io.brieflyz.auth_service.infra.db.MemberRepository
-import io.brieflyz.auth_service.infra.security.user.UserDetailsAdapter
 import io.brieflyz.auth_service.model.entity.Member
+import io.brieflyz.auth_service.model.security.UserDetailsAdapter
+import io.brieflyz.auth_service.repository.MemberRepository
 import io.brieflyz.core.utils.logger
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest
@@ -25,7 +25,7 @@ class OAuthUserCustomService(
         val oAuth2User = delegate.loadUser(userRequest)
         val registration = userRequest.clientRegistration
 
-        val oAuthProfile = OAuthProfile.of(oAuth2User.attributes, registration)
+        val oAuthProfile = OAuthProfile.Companion.of(oAuth2User.attributes, registration)
         val email = oAuthProfile.email
         val nickname = oAuthProfile.provider + "_" + oAuthProfile.providerId
 

@@ -1,6 +1,8 @@
-package io.brieflyz.auth_service.infra.security.user
+package io.brieflyz.auth_service.service
 
-import io.brieflyz.auth_service.infra.db.MemberRepository
+import io.brieflyz.auth_service.model.security.CustomUserDetails
+import io.brieflyz.auth_service.model.security.UserDetailsAdapter
+import io.brieflyz.auth_service.repository.MemberRepository
 import org.springframework.security.core.userdetails.UserDetailsService
 import org.springframework.security.core.userdetails.UsernameNotFoundException
 import org.springframework.stereotype.Component

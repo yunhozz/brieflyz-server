@@ -5,13 +5,13 @@ import io.brieflyz.auth_service.common.exception.PasswordNotMatchException
 import io.brieflyz.auth_service.common.exception.UserAlreadyExistsException
 import io.brieflyz.auth_service.common.exception.UserNotFoundException
 import io.brieflyz.auth_service.common.exception.UserRegisteredBySocialException
-import io.brieflyz.auth_service.infra.db.MemberRepository
-import io.brieflyz.auth_service.infra.redis.RedisHandler
-import io.brieflyz.auth_service.infra.security.jwt.JwtProvider
+import io.brieflyz.auth_service.common.redis.RedisHandler
+import io.brieflyz.auth_service.common.security.jwt.JwtProvider
 import io.brieflyz.auth_service.model.dto.SignInRequestDTO
 import io.brieflyz.auth_service.model.dto.SignUpRequestDTO
 import io.brieflyz.auth_service.model.dto.TokenResponseDTO
 import io.brieflyz.auth_service.model.entity.Member
+import io.brieflyz.auth_service.repository.MemberRepository
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional

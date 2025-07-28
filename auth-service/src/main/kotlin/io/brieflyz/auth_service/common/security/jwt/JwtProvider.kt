@@ -1,6 +1,6 @@
-package io.brieflyz.auth_service.infra.security.jwt
+package io.brieflyz.auth_service.common.security.jwt
 
-import io.brieflyz.auth_service.infra.security.user.CustomUserDetailsService
+import io.brieflyz.auth_service.service.CustomUserDetailsService
 import io.brieflyz.core.config.AuthServiceProperties
 import io.brieflyz.core.utils.logger
 import io.jsonwebtoken.Claims

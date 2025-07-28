@@ -1,4 +1,4 @@
-package io.brieflyz.auth_service.infra.security.user
+package io.brieflyz.auth_service.model.security
 
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.userdetails.UserDetails

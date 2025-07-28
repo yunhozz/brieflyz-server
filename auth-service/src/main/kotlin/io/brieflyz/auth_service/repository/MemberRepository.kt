@@ -1,4 +1,4 @@
-package io.brieflyz.auth_service.infra.db
+package io.brieflyz.auth_service.repository
 
 import io.brieflyz.auth_service.model.entity.Member
 import org.springframework.data.jpa.repository.JpaRepository

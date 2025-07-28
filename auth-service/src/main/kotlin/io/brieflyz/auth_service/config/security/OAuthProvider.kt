@@ -1,4 +1,4 @@
-package io.brieflyz.auth_service.infra.security.oauth
+package io.brieflyz.auth_service.config.security
 
 enum class OAuthProvider(
     val provider: String

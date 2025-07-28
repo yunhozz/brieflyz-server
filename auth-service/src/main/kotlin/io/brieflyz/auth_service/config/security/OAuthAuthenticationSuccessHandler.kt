@@ -1,9 +1,9 @@
-package io.brieflyz.auth_service.infra.security.oauth
+package io.brieflyz.auth_service.config.security
 
 import io.brieflyz.auth_service.common.constants.CookieName
+import io.brieflyz.auth_service.common.redis.RedisHandler
+import io.brieflyz.auth_service.common.security.jwt.JwtProvider
 import io.brieflyz.auth_service.common.utils.CookieUtils
-import io.brieflyz.auth_service.infra.redis.RedisHandler
-import io.brieflyz.auth_service.infra.security.jwt.JwtProvider
 import io.brieflyz.core.config.AuthServiceProperties
 import io.brieflyz.core.utils.logger
 import jakarta.servlet.http.HttpServletRequest

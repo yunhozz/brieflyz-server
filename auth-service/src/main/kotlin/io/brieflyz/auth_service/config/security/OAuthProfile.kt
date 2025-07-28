@@ -1,4 +1,4 @@
-package io.brieflyz.auth_service.infra.security.oauth
+package io.brieflyz.auth_service.config.security
 
 import org.springframework.security.oauth2.client.registration.ClientRegistration
 
@@ -16,7 +16,7 @@ data class OAuthProfile private constructor(
             val userNameAttributeName = registration.providerDetails.userInfoEndpoint.userNameAttributeName
             val provider = registration.registrationId
 
-            return when (OAuthProvider.of(provider)) {
+            return when (OAuthProvider.Companion.of(provider)) {
                 OAuthProvider.GOOGLE -> ofGoogle(provider, userNameAttributeName, attributes)
                 OAuthProvider.KAKAO -> ofKakao(provider, userNameAttributeName, attributes)
                 OAuthProvider.NAVER -> ofNaver(provider, userNameAttributeName, attributes)

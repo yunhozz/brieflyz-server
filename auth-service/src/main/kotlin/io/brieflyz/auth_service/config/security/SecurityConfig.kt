@@ -1,10 +1,6 @@
-package io.brieflyz.auth_service.config
+package io.brieflyz.auth_service.config.security
 
-import io.brieflyz.auth_service.infra.security.oauth.OAuthAuthenticationFailureHandler
-import io.brieflyz.auth_service.infra.security.oauth.OAuthAuthenticationSuccessHandler
-import io.brieflyz.auth_service.infra.security.oauth.OAuthAuthorizationRequestCookieRepository
-import io.brieflyz.auth_service.infra.security.oauth.OAuthUserCustomService
-import io.brieflyz.auth_service.infra.security.user.CustomUserDetailsService
+import io.brieflyz.auth_service.service.CustomUserDetailsService
 import io.brieflyz.core.config.AuthServiceProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
