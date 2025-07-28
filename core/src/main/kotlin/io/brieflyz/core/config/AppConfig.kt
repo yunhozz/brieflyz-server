@@ -7,13 +7,13 @@ import org.springframework.context.annotation.Configuration
 
 @Configuration
 @EnableConfigurationProperties(
-    GatewayProperties::class,
+    JwtProperties::class,
     AuthServiceProperties::class,
     SubscriptionServiceProperties::class
 )
 class AppConfig {
     @Bean
-    fun gatewayProperties() = GatewayProperties()
+    fun jwtProperties() = JwtProperties()
 
     @Bean
     fun authServiceProperties() = AuthServiceProperties()
@@ -22,29 +22,19 @@ class AppConfig {
     fun subscriptionServiceProperties() = SubscriptionServiceProperties()
 }
 
-@ConfigurationProperties(prefix = "app.gateway")
-data class GatewayProperties(
-    val jwt: JwtProperties? = null,
-) {
-    data class JwtProperties(
-        val secretKey: String = "",
-        val tokenType: String = ""
-    )
-}
+@ConfigurationProperties(prefix = "jwt")
+data class JwtProperties(
+    val secretKey: String = "",
+    val tokenType: String = "",
+    val accessTokenValidTime: Long = 0,
+    val refreshTokenValidTime: Long = 0
+)
 
 @ConfigurationProperties(prefix = "app.auth")
 data class AuthServiceProperties(
-    val jwt: JwtProperties? = null,
     val oauth: OAuthProperties? = null,
     val kafka: KafkaProperties? = null,
 ) {
-    data class JwtProperties(
-        val secretKey: String = "",
-        val tokenType: String = "",
-        val accessTokenValidTime: Long = 0L,
-        val refreshTokenValidTime: Long = 0L
-    )
-
     data class OAuthProperties(
         val authorizationUri: String = "",
         val redirectUri: String = "",

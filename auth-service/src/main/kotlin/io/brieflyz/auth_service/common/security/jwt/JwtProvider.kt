@@ -1,7 +1,7 @@
 package io.brieflyz.auth_service.common.security.jwt
 
 import io.brieflyz.auth_service.service.CustomUserDetailsService
-import io.brieflyz.core.config.AuthServiceProperties
+import io.brieflyz.core.config.JwtProperties
 import io.brieflyz.core.utils.logger
 import io.jsonwebtoken.Claims
 import io.jsonwebtoken.Jws
@@ -19,7 +19,7 @@ import javax.crypto.SecretKey
 @Component
 class JwtProvider(
     private val userDetailsService: CustomUserDetailsService,
-    private val authServiceProperties: AuthServiceProperties
+    private val jwtProperties: JwtProperties
 ) {
     private val log = logger()
 
@@ -27,18 +27,14 @@ class JwtProvider(
 
     @PostConstruct
     fun initSecretKey() {
-        secretKey = Keys.hmacShaKeyFor(authServiceProperties.jwt?.secretKey?.toByteArray())
+        secretKey = Keys.hmacShaKeyFor(jwtProperties.secretKey.toByteArray())
     }
 
     fun generateToken(username: String, rolesStr: String): JwtTokens {
         val now = Date()
-        val jwtProperties = authServiceProperties.jwt!!
-
         val roles = rolesStr.split("|")
-        val tokenType = jwtProperties.tokenType
-        val accessTokenValidTime = jwtProperties.accessTokenValidTime
-        val refreshTokenValidTime = jwtProperties.refreshTokenValidTime
 
+        val (_, tokenType, accessTokenValidTime, refreshTokenValidTime) = jwtProperties
         val accessToken = createToken(username, roles, now, accessTokenValidTime)
         val refreshToken = createToken(username, roles, now, refreshTokenValidTime)
 

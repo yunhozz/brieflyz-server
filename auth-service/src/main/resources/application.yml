@@ -24,14 +24,9 @@ spring:
       timeout: 3000
 app:
   auth:
-    jwt:
-      secret-key: ${SECRET_KEY}
-      token-type: ${TOKEN_TYPE}
-      access-token-valid-time: ${ACCESS_TOKEN_VALID_TIME}
-      refresh-token-valid-time: ${REFRESH_TOKEN_VALID_TIME}
     oauth:
-      authorization-uri: ${OAUTH_AUTHORIZATION_URI}
-      authorized-redirect-uris: ${AUTHORIZED_REDIRECT_URIS}
+      authorization-uri: ${oauth.authorization-uri}
+      authorized-redirect-uris: ${oauth.authorized-redirect-uris}
 ---
 spring:
   config:
@@ -45,8 +40,8 @@ spring:
       ddl-auto: create
   datasource:
     url: jdbc:mysql://localhost:3306/brieflyz?createDatabaseIfNotExist=true
-    username: ${MYSQL_USERNAME}
-    password: ${MYSQL_ROOT_PASSWORD}
+    username: ${mysql.username}
+    password: ${mysql.root-password}
   security:
     oauth2:
       client:
@@ -81,15 +76,15 @@ spring:
     hikari:
       source:
         jdbc-url: jdbc:mysql://mysql-source:3306/brieflyz_auth?createDatabaseIfNotExist=true
-        username: ${MYSQL_USERNAME}
-        password: ${MYSQL_ROOT_PASSWORD}
+        username: ${mysql.username}
+        password: ${mysql.root-password}
         pool-name: auth-service-source-pool
         maximum-pool-size: 3
         minimum-idle: 1
       replica:
         jdbc-url: jdbc:mysql://mysql-replica:3306/brieflyz_auth?createDatabaseIfNotExist=true
-        username: ${MYSQL_USERNAME}
-        password: ${MYSQL_ROOT_PASSWORD}
+        username: ${mysql.username}
+        password: ${mysql.root-password}
         pool-name: auth-service-replica-pool
         maximum-pool-size: 5
         minimum-idle: 3

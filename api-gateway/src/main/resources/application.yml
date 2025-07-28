@@ -5,11 +5,6 @@ spring:
     name: api-gateway
   profiles:
     active: ${APPLICATION_PROFILE:local}
-app:
-  gateway:
-    jwt:
-      secret-key: ${SECRET_KEY}
-      token-type: ${TOKEN_TYPE}
 ---
 spring:
   config:

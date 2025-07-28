@@ -2,7 +2,7 @@ package io.brieflyz.api_gateway.filter
 
 import io.brieflyz.api_gateway.exception.JwtTokenNotExistException
 import io.brieflyz.api_gateway.exception.JwtTokenNotValidException
-import io.brieflyz.core.config.GatewayProperties
+import io.brieflyz.core.config.JwtProperties
 import io.brieflyz.core.utils.logger
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.lang.Strings
@@ -17,7 +17,7 @@ import javax.crypto.SecretKey
 
 @Component
 class AuthorizationHeaderFilter(
-    private val gatewayProperties: GatewayProperties
+    private val jwtProperties: JwtProperties
 ) : AbstractGatewayFilterFactory<AuthorizationHeaderFilter.Config>(Config::class.java) {
 
     private val log = logger()
@@ -26,7 +26,7 @@ class AuthorizationHeaderFilter(
 
     @PostConstruct
     fun initSecretKey() {
-        secretKey = Keys.hmacShaKeyFor(gatewayProperties.jwt?.secretKey?.toByteArray())
+        secretKey = Keys.hmacShaKeyFor(jwtProperties.secretKey.toByteArray())
     }
 
     override fun apply(config: Config?): GatewayFilter = OrderedGatewayFilter({ exchange, chain ->
@@ -53,7 +53,7 @@ class AuthorizationHeaderFilter(
     private fun resolveToken(token: String?): String? =
         token.takeIf { Strings.hasText(it) }?.let {
             val parts = it.split(" ")
-            val tokenType = gatewayProperties.jwt?.tokenType!!
+            val tokenType = jwtProperties.tokenType
             return if (parts.size == 2 && parts[0] == tokenType.trim()) parts[1] else null
         }
 
@@ -66,7 +66,7 @@ class AuthorizationHeaderFilter(
             true
 
         } catch (e: Exception) {
-            log.error(
+            log.warn(
                 """
                 [Invalid JWT Token]
                 Exception Class: ${e.javaClass.simpleName}
