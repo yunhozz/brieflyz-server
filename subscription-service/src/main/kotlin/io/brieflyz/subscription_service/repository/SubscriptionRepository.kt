@@ -1,6 +1,7 @@
-package io.brieflyz.subscription_service.infra.db
+package io.brieflyz.subscription_service.repository
 
 import io.brieflyz.subscription_service.model.entity.Subscription
+import io.brieflyz.subscription_service.repository.query.SubscriptionQueryRepository
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query

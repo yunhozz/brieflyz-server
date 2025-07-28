@@ -6,9 +6,6 @@ import io.brieflyz.subscription_service.common.constants.SubscriptionPlan
 import io.brieflyz.subscription_service.common.exception.AlreadyHaveSubscriptionException
 import io.brieflyz.subscription_service.common.exception.AlreadyHaveUnlimitedSubscriptionException
 import io.brieflyz.subscription_service.common.exception.SubscriptionNotFoundException
-import io.brieflyz.subscription_service.infra.db.PaymentDetailsRepository
-import io.brieflyz.subscription_service.infra.db.PaymentRepository
-import io.brieflyz.subscription_service.infra.db.SubscriptionRepository
 import io.brieflyz.subscription_service.model.dto.request.PaymentCreateRequest
 import io.brieflyz.subscription_service.model.dto.request.SubscriptionCreateRequest
 import io.brieflyz.subscription_service.model.dto.request.SubscriptionQueryRequest
@@ -19,6 +16,9 @@ import io.brieflyz.subscription_service.model.dto.response.SubscriptionSimpleQue
 import io.brieflyz.subscription_service.model.entity.Payment
 import io.brieflyz.subscription_service.model.entity.PaymentDetails
 import io.brieflyz.subscription_service.model.entity.Subscription
+import io.brieflyz.subscription_service.repository.PaymentDetailsRepository
+import io.brieflyz.subscription_service.repository.PaymentRepository
+import io.brieflyz.subscription_service.repository.SubscriptionRepository
 import io.brieflyz.subscription_service.service.component.PaymentDetailsFactory
 import org.springframework.data.domain.Pageable
 import org.springframework.data.repository.findByIdOrNull

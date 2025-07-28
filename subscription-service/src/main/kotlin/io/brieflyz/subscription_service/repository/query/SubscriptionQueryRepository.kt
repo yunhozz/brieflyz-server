@@ -1,4 +1,4 @@
-package io.brieflyz.subscription_service.infra.db
+package io.brieflyz.subscription_service.repository.query
 
 import io.brieflyz.subscription_service.model.dto.request.SubscriptionQueryRequest
 import io.brieflyz.subscription_service.model.dto.response.SubscriptionQueryResponse

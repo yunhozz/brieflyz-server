@@ -1,4 +1,4 @@
-package io.brieflyz.subscription_service.infra.db
+package io.brieflyz.subscription_service.repository.query
 
 import com.querydsl.core.types.OrderSpecifier
 import com.querydsl.jpa.impl.JPAQueryFactory
