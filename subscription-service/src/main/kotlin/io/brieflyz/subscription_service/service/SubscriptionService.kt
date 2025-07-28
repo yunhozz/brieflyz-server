@@ -37,15 +37,14 @@ class SubscriptionService(
     private val log = logger()
 
     @Transactional
-    fun createSubscription(memberId: Long, request: SubscriptionCreateRequest): Long {
-        // TODO: 구독하고자 하는 유저의 ID 조회
-        log.debug("Member ID: $memberId, Subscription Request: {}", request)
+    fun createSubscription(email: String, request: SubscriptionCreateRequest): Long {
+        log.debug("Member Email: $email, Subscription Request: {}", request)
         val paymentRequest = request.payment
-        val subscription = subscriptionRepository.findByMemberId(memberId)
+        val subscription = subscriptionRepository.findByEmail(email)
             ?.let { subscription ->
                 validateSubscriptionExist(subscription)
                 subscription.reSubscribe(SubscriptionPlan.of(request.plan))
-            } ?: request.toSubscription(memberId)
+            } ?: request.toSubscription(email)
 
         log.debug("Subscription Information : {}", subscription.toResponse())
 
@@ -60,7 +59,7 @@ class SubscriptionService(
 
         subscription.addPayCount()
 
-        log.info("Successfully created subscription for email: ${request.email}, plan: ${subscription.plan}")
+        log.info("Successfully created subscription for email: $email, plan: ${subscription.plan}")
 
         return subscriptionRepository.save(subscription).id
     }
@@ -144,9 +143,8 @@ class SubscriptionService(
             throw AlreadyHaveSubscriptionException("Email : ${subscription.email}, Plan : ${subscription.plan}")
     }
 
-    private fun SubscriptionCreateRequest.toSubscription(memberId: Long) = Subscription(
-        memberId,
-        email = this.email,
+    private fun SubscriptionCreateRequest.toSubscription(email: String) = Subscription(
+        email,
         country = this.country,
         city = this.city,
         plan = SubscriptionPlan.of(this.plan)
@@ -161,7 +159,6 @@ class SubscriptionService(
 
     private fun Subscription.toResponse() = SubscriptionResponse(
         id = this.id,
-        memberId = this.memberId,
         email = this.email,
         country = this.country,
         city = this.city,

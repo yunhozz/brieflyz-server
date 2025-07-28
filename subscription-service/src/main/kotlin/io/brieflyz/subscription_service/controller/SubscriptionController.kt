@@ -2,6 +2,7 @@ package io.brieflyz.subscription_service.controller
 
 import io.brieflyz.core.constants.SuccessStatus
 import io.brieflyz.core.dto.api.ApiResponse
+import io.brieflyz.subscription_service.common.annotation.JwtHeader
 import io.brieflyz.subscription_service.model.dto.request.SubscriptionCreateRequest
 import io.brieflyz.subscription_service.model.dto.response.SubscriptionQueryResponse
 import io.brieflyz.subscription_service.service.SubscriptionService
@@ -23,9 +24,12 @@ class SubscriptionController(
 ) {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    fun createSubscription(@RequestBody @Valid request: SubscriptionCreateRequest): ApiResponse<Long> {
-        // TODO: member ID 입력
-        val subscriptionId = subscriptionService.createSubscription(100L, request)
+    fun createSubscription(
+        @JwtHeader username: String,
+        @RequestBody @Valid request: SubscriptionCreateRequest
+    ): ApiResponse<Long> {
+        println("username = ${username}")
+        val subscriptionId = subscriptionService.createSubscription(username, request)
         return ApiResponse.success(SuccessStatus.SUBSCRIBE_SUCCESS, subscriptionId)
     }
 
