@@ -1,7 +1,7 @@
 package io.brieflyz.subscription_service.config
 
+import io.brieflyz.core.annotation.JwtSubject
 import io.brieflyz.core.config.JwtProperties
-import io.brieflyz.subscription_service.common.annotation.JwtSubject
 import io.jsonwebtoken.Claims
 import io.jsonwebtoken.JwtException
 import io.jsonwebtoken.Jwts
