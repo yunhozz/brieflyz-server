@@ -1,7 +1,8 @@
-package io.brieflyz.auth_service.config.security
+package io.brieflyz.auth_service.common.security
 
 import io.brieflyz.auth_service.common.constants.CookieName
 import io.brieflyz.auth_service.common.utils.CookieUtils
+import io.brieflyz.auth_service.common.utils.SerializationUtils
 import io.brieflyz.core.utils.logger
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
@@ -20,7 +21,7 @@ class OAuthAuthorizationRequestCookieRepository : AuthorizationRequestRepository
 
     override fun loadAuthorizationRequest(request: HttpServletRequest): OAuth2AuthorizationRequest? =
         CookieUtils.getCookie(request, CookieName.OAUTH2_AUTHORIZATION_REQUEST_COOKIE_NAME)?.let { cookie ->
-            CookieUtils.deserialize(cookie, OAuth2AuthorizationRequest::class.java)
+            SerializationUtils.deserialize(cookie.value, OAuth2AuthorizationRequest::class.java)
         }
 
     override fun saveAuthorizationRequest(
@@ -36,7 +37,7 @@ class OAuthAuthorizationRequestCookieRepository : AuthorizationRequestRepository
             CookieUtils.addCookie(
                 response,
                 name = CookieName.OAUTH2_AUTHORIZATION_REQUEST_COOKIE_NAME,
-                value = CookieUtils.serialize(authRequest),
+                value = SerializationUtils.serialize(authRequest),
                 maxAge = COOKIE_EXPIRE_MILLIS
             )
 

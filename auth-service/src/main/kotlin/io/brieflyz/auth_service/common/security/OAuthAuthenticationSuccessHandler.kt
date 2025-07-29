@@ -1,9 +1,9 @@
-package io.brieflyz.auth_service.config.security
+package io.brieflyz.auth_service.common.security
 
 import io.brieflyz.auth_service.common.constants.CookieName
-import io.brieflyz.auth_service.common.jwt.JwtProvider
-import io.brieflyz.auth_service.common.redis.RedisHandler
+import io.brieflyz.auth_service.common.infra.redis.RedisHandler
 import io.brieflyz.auth_service.common.utils.CookieUtils
+import io.brieflyz.auth_service.common.utils.SerializationUtils
 import io.brieflyz.core.config.AuthServiceProperties
 import io.brieflyz.core.utils.logger
 import jakarta.servlet.http.HttpServletRequest
@@ -48,7 +48,7 @@ class OAuthAuthenticationSuccessHandler(
         CookieUtils.addCookie(
             response,
             name = CookieName.ACCESS_TOKEN_COOKIE_NAME,
-            value = CookieUtils.serialize(tokens.accessToken),
+            value = SerializationUtils.serialize(tokens.accessToken),
             maxAge = tokens.accessTokenValidTime
         )
         redisHandler.save(authentication.name, tokens.refreshToken, tokens.refreshTokenValidTime)

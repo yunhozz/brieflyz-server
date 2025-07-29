@@ -1,4 +1,4 @@
-package io.brieflyz.auth_service.config.security
+package io.brieflyz.auth_service.common.security
 
 import io.brieflyz.core.utils.logger
 import jakarta.servlet.http.HttpServletRequest
