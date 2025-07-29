@@ -1,9 +1,10 @@
-package io.brieflyz.auth_service.config.security
+package io.brieflyz.auth_service.service
 
 import io.brieflyz.auth_service.common.constants.LoginType
 import io.brieflyz.auth_service.model.entity.Member
 import io.brieflyz.auth_service.model.security.UserDetailsAdapter
 import io.brieflyz.auth_service.repository.MemberRepository
+import io.brieflyz.auth_service.service.component.OAuthProfile
 import io.brieflyz.core.utils.logger
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest
@@ -25,7 +26,7 @@ class OAuthUserCustomService(
         val oAuth2User = delegate.loadUser(userRequest)
         val registration = userRequest.clientRegistration
 
-        val oAuthProfile = OAuthProfile.Companion.of(oAuth2User.attributes, registration)
+        val oAuthProfile = OAuthProfile.of(oAuth2User.attributes, registration)
         val email = oAuthProfile.email
         val nickname = oAuthProfile.provider + "_" + oAuthProfile.providerId
 
@@ -46,7 +47,7 @@ class OAuthUserCustomService(
 
         } ?: run {
             log.info("Create New Member with Social Profile with Nickname: $nickname")
-            val socialMember = Member.forSocial(email, nickname)
+            val socialMember = Member.Companion.forSocial(email, nickname)
             memberRepository.save(socialMember)
         }
 

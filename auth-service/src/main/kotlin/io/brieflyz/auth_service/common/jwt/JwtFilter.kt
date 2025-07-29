@@ -1,4 +1,4 @@
-package io.brieflyz.auth_service.common.security.jwt
+package io.brieflyz.auth_service.common.jwt
 
 import io.brieflyz.core.utils.logger
 import jakarta.servlet.FilterChain

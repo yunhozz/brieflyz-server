@@ -1,4 +1,4 @@
-package io.brieflyz.auth_service.common.security.jwt
+package io.brieflyz.auth_service.common.jwt
 
 import io.brieflyz.auth_service.service.CustomUserDetailsService
 import io.brieflyz.core.config.JwtProperties
@@ -29,6 +29,14 @@ class JwtProvider(
     fun initSecretKey() {
         secretKey = Keys.hmacShaKeyFor(jwtProperties.secretKey.toByteArray())
     }
+
+    data class JwtTokens(
+        val tokenType: String,
+        val accessToken: String,
+        val refreshToken: String,
+        val accessTokenValidTime: Long,
+        val refreshTokenValidTime: Long
+    )
 
     fun generateToken(username: String, rolesStr: String): JwtTokens {
         val now = Date()

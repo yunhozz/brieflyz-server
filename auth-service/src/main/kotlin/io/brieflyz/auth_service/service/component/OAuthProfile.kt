@@ -1,4 +1,4 @@
-package io.brieflyz.auth_service.config.security
+package io.brieflyz.auth_service.service.component
 
 import org.springframework.security.oauth2.client.registration.ClientRegistration
 
@@ -16,7 +16,7 @@ data class OAuthProfile private constructor(
             val userNameAttributeName = registration.providerDetails.userInfoEndpoint.userNameAttributeName
             val provider = registration.registrationId
 
-            return when (OAuthProvider.Companion.of(provider)) {
+            return when (OAuthProvider.of(provider)) {
                 OAuthProvider.GOOGLE -> ofGoogle(provider, userNameAttributeName, attributes)
                 OAuthProvider.KAKAO -> ofKakao(provider, userNameAttributeName, attributes)
                 OAuthProvider.NAVER -> ofNaver(provider, userNameAttributeName, attributes)
@@ -70,6 +70,20 @@ data class OAuthProfile private constructor(
                 userNameAttributeName,
                 attributes
             )
+        }
+    }
+
+    private enum class OAuthProvider(
+        private val provider: String
+    ) {
+        GOOGLE("google"),
+        KAKAO("kakao"),
+        NAVER("naver")
+        ;
+
+        companion object {
+            fun of(provider: String): OAuthProvider = entries.find { it.provider == provider }
+                ?: throw IllegalArgumentException("This provider $provider does not provide OAuth2.0")
         }
     }
 }
