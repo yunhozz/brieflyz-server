@@ -7,9 +7,7 @@ import io.brieflyz.subscription_service.model.dto.request.SubscriptionQueryReque
 import io.brieflyz.subscription_service.model.dto.response.QPaymentDetailsQueryResponse
 import io.brieflyz.subscription_service.model.dto.response.QPaymentQueryResponse
 import io.brieflyz.subscription_service.model.dto.response.QSubscriptionQueryResponse
-import io.brieflyz.subscription_service.model.dto.response.QSubscriptionSimpleQueryResponse
 import io.brieflyz.subscription_service.model.dto.response.SubscriptionQueryResponse
-import io.brieflyz.subscription_service.model.dto.response.SubscriptionSimpleQueryResponse
 import io.brieflyz.subscription_service.model.entity.QBankTransferPaymentDetails
 import io.brieflyz.subscription_service.model.entity.QCreditCardPaymentDetails
 import io.brieflyz.subscription_service.model.entity.QDigitalWalletPaymentDetails
@@ -104,14 +102,30 @@ class SubscriptionQueryRepositoryImpl(
         return subscriptionQuery
     }
 
+    override fun findListByMemberEmailQuery(email: String): List<SubscriptionQueryResponse> =
+        query
+            .select(
+                QSubscriptionQueryResponse(
+                    subscription.id,
+                    subscription.email,
+                    subscription.plan,
+                    subscription.payCount,
+                    subscription.updatedAt
+                )
+            )
+            .from(subscription)
+            .where(subscription.email.eq(email))
+            .orderBy(subscription.createdAt.desc())
+            .fetch()
+
     override fun findPageWithPaymentsQuery(
         request: SubscriptionQueryRequest,
         pageable: Pageable
-    ): Page<SubscriptionSimpleQueryResponse> {
+    ): Page<SubscriptionQueryResponse> {
         val (isDeleted, email, plan, paymentMethod, order) = request
         val subscriptionQueryList = query
             .select(
-                QSubscriptionSimpleQueryResponse(
+                QSubscriptionQueryResponse(
                     subscription.id,
                     subscription.email,
                     subscription.plan,

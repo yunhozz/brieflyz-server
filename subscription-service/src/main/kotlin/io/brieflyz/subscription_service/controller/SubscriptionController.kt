@@ -28,9 +28,15 @@ class SubscriptionController(
         @JwtSubject username: String,
         @RequestBody @Valid request: SubscriptionCreateRequest
     ): ApiResponse<Long> {
-        println("username = ${username}")
         val subscriptionId = subscriptionService.createSubscription(username, request)
         return ApiResponse.success(SuccessStatus.SUBSCRIBE_SUCCESS, subscriptionId)
+    }
+
+    @GetMapping
+    @ResponseStatus(HttpStatus.OK)
+    fun getMySubscriptionList(@JwtSubject username: String): ApiResponse<List<SubscriptionQueryResponse>> {
+        val subscriptionList = subscriptionService.getSubscriptionListByMemberEmail(username)
+        return ApiResponse.success(SuccessStatus.SUBSCRIPTION_INFO_READ_SUCCESS, subscriptionList)
     }
 
     @GetMapping("/{id}")

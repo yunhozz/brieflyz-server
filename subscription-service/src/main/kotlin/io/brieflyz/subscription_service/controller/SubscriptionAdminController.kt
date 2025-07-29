@@ -3,7 +3,7 @@ package io.brieflyz.subscription_service.controller
 import io.brieflyz.core.constants.SuccessStatus
 import io.brieflyz.core.dto.api.ApiResponse
 import io.brieflyz.subscription_service.model.dto.request.SubscriptionQueryRequest
-import io.brieflyz.subscription_service.model.dto.response.SubscriptionSimpleQueryResponse
+import io.brieflyz.subscription_service.model.dto.response.SubscriptionQueryResponse
 import io.brieflyz.subscription_service.service.SubscriptionService
 import org.springframework.data.domain.Pageable
 import org.springframework.http.HttpStatus
@@ -25,7 +25,7 @@ class SubscriptionAdminController(
     fun getSubscriptionPage(
         @ModelAttribute request: SubscriptionQueryRequest,
         pageable: Pageable
-    ): ApiResponse<List<SubscriptionSimpleQueryResponse>> {
+    ): ApiResponse<List<SubscriptionQueryResponse>> {
         val subscriptionPage = subscriptionService.getSubscriptionPageByQuery(request, pageable)
         return ApiResponse.success(SuccessStatus.SUBSCRIPTION_INFO_READ_SUCCESS, subscriptionPage)
     }

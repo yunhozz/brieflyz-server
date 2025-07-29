@@ -7,26 +7,28 @@ import io.brieflyz.subscription_service.common.constants.SubscriptionPlan
 import java.time.LocalDateTime
 import java.time.ZonedDateTime
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 data class SubscriptionQueryResponse @QueryProjection constructor(
     val id: Long,
     val email: String,
-    val country: String,
-    val city: String,
+    val country: String?,
+    val city: String?,
     val plan: SubscriptionPlan,
     val payCount: Int,
-    val createdAt: LocalDateTime,
-    val updatedAt: LocalDateTime
+    val createdAt: LocalDateTime?,
+    val updatedAt: LocalDateTime?
 ) {
     var payments: List<PaymentQueryResponse>? = null
-}
 
-data class SubscriptionSimpleQueryResponse @QueryProjection constructor(
-    val id: Long,
-    val email: String,
-    val plan: SubscriptionPlan,
-    val payCount: Int,
-    val updatedAt: LocalDateTime
-)
+    @QueryProjection
+    constructor(
+        id: Long,
+        email: String,
+        plan: SubscriptionPlan,
+        payCount: Int,
+        updatedAt: LocalDateTime
+    ) : this(id, email, null, null, plan, payCount, null, updatedAt)
+}
 
 data class PaymentQueryResponse @QueryProjection constructor(
     val id: Long,

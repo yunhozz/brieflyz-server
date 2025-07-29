@@ -12,7 +12,6 @@ import io.brieflyz.subscription_service.model.dto.request.SubscriptionQueryReque
 import io.brieflyz.subscription_service.model.dto.response.PaymentResponse
 import io.brieflyz.subscription_service.model.dto.response.SubscriptionQueryResponse
 import io.brieflyz.subscription_service.model.dto.response.SubscriptionResponse
-import io.brieflyz.subscription_service.model.dto.response.SubscriptionSimpleQueryResponse
 import io.brieflyz.subscription_service.model.entity.Payment
 import io.brieflyz.subscription_service.model.entity.PaymentDetails
 import io.brieflyz.subscription_service.model.entity.Subscription
@@ -70,10 +69,14 @@ class SubscriptionService(
             ?: throw SubscriptionNotFoundException("Subscription ID : $id")
 
     @Transactional(readOnly = true)
+    fun getSubscriptionListByMemberEmail(email: String): List<SubscriptionQueryResponse> =
+        subscriptionRepository.findListByMemberEmailQuery(email)
+
+    @Transactional(readOnly = true)
     fun getSubscriptionPageByQuery(
         request: SubscriptionQueryRequest,
         pageable: Pageable
-    ): List<SubscriptionSimpleQueryResponse> {
+    ): List<SubscriptionQueryResponse> {
         val subscriptionPage = subscriptionRepository.findPageWithPaymentsQuery(request, pageable)
         val pageableInfo = subscriptionPage.pageable
 
