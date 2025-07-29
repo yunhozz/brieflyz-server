@@ -2,13 +2,10 @@ package io.brieflyz.api_gateway.filter
 
 import io.brieflyz.api_gateway.exception.JwtTokenNotExistException
 import io.brieflyz.api_gateway.exception.JwtTokenNotValidException
-import io.brieflyz.core.config.JwtProperties
 import io.brieflyz.core.utils.logger
 import io.jsonwebtoken.Claims
 import io.jsonwebtoken.Jws
 import io.jsonwebtoken.Jwts
-import io.jsonwebtoken.security.Keys
-import jakarta.annotation.PostConstruct
 import org.springframework.cloud.gateway.filter.GatewayFilter
 import org.springframework.cloud.gateway.filter.OrderedGatewayFilter
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory
@@ -18,17 +15,10 @@ import javax.crypto.SecretKey
 
 @Component
 class AuthorizationHeaderFilter(
-    private val jwtProperties: JwtProperties
+    private val secretKey: SecretKey
 ) : AbstractGatewayFilterFactory<AuthorizationHeaderFilter.Config>(Config::class.java) {
 
     private val log = logger()
-
-    private lateinit var secretKey: SecretKey
-
-    @PostConstruct
-    fun initSecretKey() {
-        secretKey = Keys.hmacShaKeyFor(jwtProperties.secretKey.toByteArray())
-    }
 
     override fun apply(config: Config?): GatewayFilter = OrderedGatewayFilter({ exchange, chain ->
         val request = exchange.request
@@ -39,7 +29,6 @@ class AuthorizationHeaderFilter(
         parsedToken?.let { token ->
             log.debug("Parsed Token: $token")
             if (!isTokenValid(token)) throw JwtTokenNotValidException()
-
             chain.filter(exchange)
 
         } ?: throw JwtTokenNotExistException()

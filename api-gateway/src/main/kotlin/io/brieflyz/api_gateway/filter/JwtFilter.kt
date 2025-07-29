@@ -6,8 +6,6 @@ import io.jsonwebtoken.Claims
 import io.jsonwebtoken.Jws
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.lang.Strings
-import io.jsonwebtoken.security.Keys
-import jakarta.annotation.PostConstruct
 import org.springframework.http.HttpHeaders
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.authority.SimpleGrantedAuthority
@@ -22,17 +20,11 @@ import javax.crypto.SecretKey
 
 @Component
 class JwtFilter(
-    private val jwtProperties: JwtProperties
+    private val jwtProperties: JwtProperties,
+    private val secretKey: SecretKey
 ) : WebFilter {
 
     private val log = logger()
-
-    private lateinit var secretKey: SecretKey
-
-    @PostConstruct
-    fun initSecretKey() {
-        secretKey = Keys.hmacShaKeyFor(jwtProperties.secretKey.toByteArray())
-    }
 
     override fun filter(exchange: ServerWebExchange, chain: WebFilterChain): Mono<Void?> {
         val request = exchange.request
@@ -50,15 +42,17 @@ class JwtFilter(
             val userDetails = CustomUserDetails(claims.subject, authorities)
             val authentication = UsernamePasswordAuthenticationToken(userDetails, "", userDetails.authorities)
 
-            val requestWithToken = request.mutate()
-                .header(HttpHeaders.AUTHORIZATION, token)
-                .build()
             val mutatedExchange = exchange.mutate()
-                .request(requestWithToken)
+                .request(
+                    request.mutate()
+                        .header(HttpHeaders.AUTHORIZATION, token)
+                        .build()
+                )
                 .build()
 
-            chain.filter(mutatedExchange)
-                .contextWrite(ReactiveSecurityContextHolder.withAuthentication(authentication))
+            val securityContext = ReactiveSecurityContextHolder.withAuthentication(authentication)
+
+            chain.filter(mutatedExchange).contextWrite(securityContext)
 
         } ?: return chain.filter(exchange)
     }
@@ -70,12 +64,13 @@ class JwtFilter(
             return if (parts.size == 2 && parts[0] == tokenType.trim()) parts[1] else null
         }
 
-    private fun createClaimsJws(token: String): Jws<Claims> = Jwts.parserBuilder()
-        .setSigningKey(secretKey)
-        .build()
-        .parseClaimsJws(token)
+    private fun createClaimsJws(token: String): Jws<Claims> =
+        Jwts.parserBuilder()
+            .setSigningKey(secretKey)
+            .build()
+            .parseClaimsJws(token)
 
-    class CustomUserDetails(
+    data class CustomUserDetails(
         private val username: String,
         private val authorities: List<String>
     ) : UserDetails {

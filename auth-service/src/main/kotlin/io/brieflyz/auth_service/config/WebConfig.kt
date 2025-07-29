@@ -1,12 +1,9 @@
 package io.brieflyz.auth_service.config
 
 import io.brieflyz.core.annotation.JwtSubject
-import io.brieflyz.core.config.JwtProperties
 import io.jsonwebtoken.Claims
 import io.jsonwebtoken.JwtException
 import io.jsonwebtoken.Jwts
-import io.jsonwebtoken.security.Keys
-import jakarta.annotation.PostConstruct
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.MethodParameter
 import org.springframework.http.HttpHeaders
@@ -30,15 +27,8 @@ class WebConfig(
 
 @Component
 class JwtHeaderResolver(
-    private val jwtProperties: JwtProperties
+    private val secretKey: SecretKey
 ) : HandlerMethodArgumentResolver {
-
-    private lateinit var secretKey: SecretKey
-
-    @PostConstruct
-    fun initSecretKey() {
-        secretKey = Keys.hmacShaKeyFor(jwtProperties.secretKey.toByteArray())
-    }
 
     override fun supportsParameter(parameter: MethodParameter): Boolean =
         parameter.hasParameterAnnotation(JwtSubject::class.java)
