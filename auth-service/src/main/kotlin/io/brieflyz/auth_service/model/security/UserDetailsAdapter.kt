@@ -7,7 +7,6 @@ class UserDetailsAdapter(
     attributes: Map<String, Any>? = null
 ) : CustomUserDetails(
     member.email,
-    member.password,
-    member.roles,
+    member.roles.split("|"),
     attributes
 )

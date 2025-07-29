@@ -3,7 +3,6 @@ package io.brieflyz.auth_service.config
 import io.brieflyz.auth_service.config.security.OAuthAuthenticationFailureHandler
 import io.brieflyz.auth_service.config.security.OAuthAuthenticationSuccessHandler
 import io.brieflyz.auth_service.config.security.OAuthAuthorizationRequestCookieRepository
-import io.brieflyz.auth_service.service.CustomUserDetailsService
 import io.brieflyz.auth_service.service.OAuthUserCustomService
 import io.brieflyz.core.config.AuthServiceProperties
 import org.springframework.context.annotation.Bean
@@ -17,7 +16,6 @@ import org.springframework.security.web.SecurityFilterChain
 @Configuration
 @EnableWebSecurity
 class SecurityConfig(
-    private val userDetailsService: CustomUserDetailsService,
     private val oAuthAuthenticationSuccessHandler: OAuthAuthenticationSuccessHandler,
     private val oAuthAuthenticationFailureHandler: OAuthAuthenticationFailureHandler,
     private val oAuthUserCustomService: OAuthUserCustomService,
@@ -35,7 +33,6 @@ class SecurityConfig(
         .httpBasic { it.disable() }
         .formLogin { it.disable() }
         .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
-        .userDetailsService(userDetailsService)
         .oauth2Login {
             it.authorizationEndpoint { cfg ->
                 cfg.baseUri(authServiceProperties.oauth?.authorizationUri)

@@ -1,6 +1,6 @@
 package io.brieflyz.auth_service.common.jwt
 
-import io.brieflyz.auth_service.service.CustomUserDetailsService
+import io.brieflyz.auth_service.model.security.CustomUserDetails
 import io.brieflyz.core.config.JwtProperties
 import io.brieflyz.core.utils.logger
 import io.jsonwebtoken.Claims
@@ -18,7 +18,6 @@ import javax.crypto.SecretKey
 
 @Component
 class JwtProvider(
-    private val userDetailsService: CustomUserDetailsService,
     private val jwtProperties: JwtProperties
 ) {
     private val log = logger()
@@ -61,7 +60,8 @@ class JwtProvider(
 
     fun getAuthentication(token: String): Authentication {
         val claims = createClaimsJws(token).body
-        val userDetails = userDetailsService.loadUserByUsername(claims.subject)
+        val roles = claims["roles"] as List<String>
+        val userDetails = CustomUserDetails(claims.subject, roles)
 
         log.debug(
             """

@@ -5,13 +5,12 @@ import io.brieflyz.auth_service.common.utils.CookieUtils
 import io.brieflyz.auth_service.model.dto.MemberResponseDTO
 import io.brieflyz.auth_service.model.dto.TokenResponseDTO
 import io.brieflyz.auth_service.service.MemberService
+import io.brieflyz.core.annotation.JwtSubject
 import io.brieflyz.core.constants.SuccessStatus
 import io.brieflyz.core.dto.api.ApiResponse
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import org.springframework.http.HttpStatus
-import org.springframework.security.core.annotation.AuthenticationPrincipal
-import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -41,11 +40,8 @@ class MemberController(
 
     @PostMapping("/token")
     @ResponseStatus(HttpStatus.CREATED)
-    fun refreshToken(
-        @AuthenticationPrincipal userDetails: UserDetails,
-        response: HttpServletResponse
-    ): ApiResponse<TokenResponseDTO> {
-        val token = memberService.refreshToken(userDetails.username)
+    fun refreshToken(@JwtSubject username: String, response: HttpServletResponse): ApiResponse<TokenResponseDTO> {
+        val token = memberService.refreshToken(username)
         CookieUtils.addCookie(
             response,
             name = CookieName.ACCESS_TOKEN_COOKIE_NAME,
@@ -58,24 +54,24 @@ class MemberController(
     @PostMapping("/logout")
     @ResponseStatus(HttpStatus.OK)
     fun signOut(
-        @AuthenticationPrincipal userDetails: UserDetails,
+        @JwtSubject username: String,
         request: HttpServletRequest,
         response: HttpServletResponse
     ): ApiResponse<Any> {
         CookieUtils.deleteCookie(request, response, CookieName.ACCESS_TOKEN_COOKIE_NAME)
-        memberService.deleteRefreshToken(userDetails.username)
+        memberService.deleteRefreshToken(username)
         return ApiResponse.success(SuccessStatus.LOGOUT_SUCCESS)
     }
 
     @DeleteMapping("/withdraw")
     @ResponseStatus(HttpStatus.OK)
     fun withdraw(
-        @AuthenticationPrincipal userDetails: UserDetails,
+        @JwtSubject username: String,
         request: HttpServletRequest,
         response: HttpServletResponse
     ): ApiResponse<Any> {
         CookieUtils.deleteAllCookies(request, response)
-        memberService.withdraw(userDetails.username)
+        memberService.withdraw(username)
         return ApiResponse.success(SuccessStatus.USER_WITHDRAW_SUCCESS)
     }
 }
