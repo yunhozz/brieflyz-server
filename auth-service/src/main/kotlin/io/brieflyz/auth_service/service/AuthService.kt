@@ -5,8 +5,8 @@ import io.brieflyz.auth_service.common.exception.PasswordNotMatchException
 import io.brieflyz.auth_service.common.exception.UserAlreadyExistsException
 import io.brieflyz.auth_service.common.exception.UserNotFoundException
 import io.brieflyz.auth_service.common.exception.UserRegisteredBySocialException
-import io.brieflyz.auth_service.common.jwt.JwtProvider
-import io.brieflyz.auth_service.common.redis.RedisHandler
+import io.brieflyz.auth_service.common.infra.redis.RedisHandler
+import io.brieflyz.auth_service.common.security.JwtProvider
 import io.brieflyz.auth_service.model.dto.SignInRequestDTO
 import io.brieflyz.auth_service.model.dto.SignUpRequestDTO
 import io.brieflyz.auth_service.model.dto.TokenResponseDTO

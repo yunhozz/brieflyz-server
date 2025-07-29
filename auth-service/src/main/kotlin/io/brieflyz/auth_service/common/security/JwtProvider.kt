@@ -1,4 +1,4 @@
-package io.brieflyz.auth_service.common.jwt
+package io.brieflyz.auth_service.common.security
 
 import io.brieflyz.auth_service.model.security.CustomUserDetails
 import io.brieflyz.core.config.JwtProperties
@@ -8,8 +8,6 @@ import io.jsonwebtoken.Jws
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.SignatureAlgorithm
 import io.jsonwebtoken.io.Encoders
-import io.jsonwebtoken.security.Keys
-import jakarta.annotation.PostConstruct
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.Authentication
 import org.springframework.stereotype.Component
@@ -18,16 +16,10 @@ import javax.crypto.SecretKey
 
 @Component
 class JwtProvider(
-    private val jwtProperties: JwtProperties
+    private val jwtProperties: JwtProperties,
+    private val secretKey: SecretKey
 ) {
     private val log = logger()
-
-    private lateinit var secretKey: SecretKey
-
-    @PostConstruct
-    fun initSecretKey() {
-        secretKey = Keys.hmacShaKeyFor(jwtProperties.secretKey.toByteArray())
-    }
 
     data class JwtTokens(
         val tokenType: String,

@@ -2,6 +2,7 @@ package io.brieflyz.auth_service.controller
 
 import io.brieflyz.auth_service.common.constants.CookieName
 import io.brieflyz.auth_service.common.utils.CookieUtils
+import io.brieflyz.auth_service.common.utils.SerializationUtils
 import io.brieflyz.auth_service.model.dto.SignInRequestDTO
 import io.brieflyz.auth_service.model.dto.SignUpRequestDTO
 import io.brieflyz.auth_service.model.dto.TokenResponseDTO
@@ -39,7 +40,7 @@ class AuthController(
         CookieUtils.addCookie(
             response,
             name = CookieName.ACCESS_TOKEN_COOKIE_NAME,
-            value = CookieUtils.serialize(token.accessToken),
+            value = SerializationUtils.serialize(token.accessToken),
             maxAge = token.accessTokenValidTime
         )
         return ApiResponse.success(SuccessStatus.SIGN_IN_SUCCESS, token)

@@ -7,11 +7,7 @@ import jakarta.servlet.http.HttpServletResponse
 import org.springframework.boot.web.server.Cookie.SameSite
 import org.springframework.http.HttpHeaders
 import org.springframework.http.ResponseCookie
-import org.springframework.util.SerializationUtils
-import java.io.ByteArrayInputStream
-import java.io.ObjectInputStream
 import java.time.Duration
-import java.util.Base64
 
 object CookieUtils {
     fun getCookie(request: HttpServletRequest, name: String): Cookie? =
@@ -45,20 +41,6 @@ object CookieUtils {
                     maxAge = 0
                     response.addCookie(this)
                 }
-            }
-        }
-    }
-
-    fun serialize(obj: Any): String {
-        val bytes = SerializationUtils.serialize(obj)
-        return Base64.getUrlEncoder().encodeToString(bytes)
-    }
-
-    fun <T> deserialize(cookie: Cookie, clazz: Class<T>): T {
-        val bytes = Base64.getUrlDecoder().decode(cookie.value)
-        ByteArrayInputStream(bytes).use { bais ->
-            ObjectInputStream(bais).use { ois ->
-                return clazz.cast(ois.readObject())
             }
         }
     }
