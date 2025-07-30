@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component
 import javax.crypto.SecretKey
 
 @Component
-class JwtComponent(
+class JwtManager(
     val jwtProperties: JwtProperties
 ) : InitializingBean {
 

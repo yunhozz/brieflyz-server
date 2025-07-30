@@ -1,6 +1,6 @@
 package io.brieflyz.api_gateway.filter
 
-import io.brieflyz.core.component.JwtComponent
+import io.brieflyz.core.component.JwtManager
 import io.brieflyz.core.utils.logger
 import org.springframework.http.HttpHeaders
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
@@ -15,7 +15,7 @@ import reactor.core.publisher.Mono
 
 @Component
 class JwtFilter(
-    private val jwtComponent: JwtComponent
+    private val jwtManager: JwtManager
 ) : WebFilter {
 
     private val log = logger()
@@ -27,8 +27,8 @@ class JwtFilter(
         val headerToken = request.headers.getFirst(HttpHeaders.AUTHORIZATION)
         log.debug("Header Token: $headerToken")
 
-        return jwtComponent.resolveToken(headerToken)?.let { token ->
-            val claims = jwtComponent.createClaimsJws(token).body
+        return jwtManager.resolveToken(headerToken)?.let { token ->
+            val claims = jwtManager.createClaimsJws(token).body
             val authorities = claims["roles"] as List<String>
 
             log.debug("claims = {}", claims)

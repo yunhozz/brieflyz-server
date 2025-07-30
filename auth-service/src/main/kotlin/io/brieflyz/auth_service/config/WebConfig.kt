@@ -1,7 +1,7 @@
 package io.brieflyz.auth_service.config
 
 import io.brieflyz.core.annotation.JwtSubject
-import io.brieflyz.core.component.JwtComponent
+import io.brieflyz.core.component.JwtManager
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.MethodParameter
 import org.springframework.http.HttpHeaders
@@ -24,7 +24,7 @@ class WebConfig(
 
 @Component
 class JwtHeaderResolver(
-    private val jwtComponent: JwtComponent
+    private val jwtManager: JwtManager
 ) : HandlerMethodArgumentResolver {
 
     override fun supportsParameter(parameter: MethodParameter): Boolean =
@@ -37,7 +37,7 @@ class JwtHeaderResolver(
         binderFactory: WebDataBinderFactory?
     ): Any? {
         val token = webRequest.getHeader(HttpHeaders.AUTHORIZATION) ?: return null
-        val claims = jwtComponent.createClaimsJws(token).body
+        val claims = jwtManager.createClaimsJws(token).body
         return claims.subject
     }
 }
