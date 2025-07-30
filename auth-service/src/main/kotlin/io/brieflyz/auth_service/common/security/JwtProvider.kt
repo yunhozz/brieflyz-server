@@ -1,10 +1,8 @@
 package io.brieflyz.auth_service.common.security
 
 import io.brieflyz.auth_service.model.security.CustomUserDetails
-import io.brieflyz.core.config.JwtProperties
+import io.brieflyz.core.component.JwtComponent
 import io.brieflyz.core.utils.logger
-import io.jsonwebtoken.Claims
-import io.jsonwebtoken.Jws
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.SignatureAlgorithm
 import io.jsonwebtoken.io.Encoders
@@ -16,8 +14,7 @@ import javax.crypto.SecretKey
 
 @Component
 class JwtProvider(
-    private val jwtProperties: JwtProperties,
-    private val secretKey: SecretKey
+    private val jwtComponent: JwtComponent
 ) {
     private val log = logger()
 
@@ -33,9 +30,11 @@ class JwtProvider(
         val now = Date()
         val roles = rolesStr.split("|")
 
-        val (_, tokenType, accessTokenValidTime, refreshTokenValidTime) = jwtProperties
-        val accessToken = createToken(username, roles, now, accessTokenValidTime)
-        val refreshToken = createToken(username, roles, now, refreshTokenValidTime)
+        val secretKey = jwtComponent.getEncryptedSecretKey()
+        val (_, tokenType, accessTokenValidTime, refreshTokenValidTime) = jwtComponent.jwtProperties
+
+        val accessToken = createToken(secretKey, username, roles, now, accessTokenValidTime)
+        val refreshToken = createToken(secretKey, username, roles, now, refreshTokenValidTime)
 
         log.debug("secret key: ${Encoders.BASE64URL.encode(secretKey.encoded)}")
         log.debug("access token: $accessToken")
@@ -51,7 +50,7 @@ class JwtProvider(
     }
 
     fun getAuthentication(token: String): Authentication {
-        val claims = createClaimsJws(token).body
+        val claims = jwtComponent.createClaimsJws(token).body
         val roles = claims["roles"] as List<String>
         val userDetails = CustomUserDetails(claims.subject, roles)
 
@@ -66,19 +65,18 @@ class JwtProvider(
         return UsernamePasswordAuthenticationToken(userDetails, "", userDetails.authorities)
     }
 
-    private fun createToken(username: String, roles: List<String>, iat: Date, tokenValidTime: Long): String =
-        Jwts.builder()
-            .setHeaderParam("typ", "JWT")
-            .setSubject(username)
-            .claim("roles", roles)
-            .setIssuedAt(iat)
-            .setExpiration(Date(iat.time + tokenValidTime))
-            .signWith(secretKey, SignatureAlgorithm.HS256)
-            .compact()
-
-    private fun createClaimsJws(token: String): Jws<Claims> =
-        Jwts.parserBuilder()
-            .setSigningKey(secretKey)
-            .build()
-            .parseClaimsJws(token)
+    private fun createToken(
+        secretKey: SecretKey,
+        username: String,
+        roles: List<String>,
+        iat: Date,
+        tokenValidTime: Long
+    ): String = Jwts.builder()
+        .setHeaderParam("typ", "JWT")
+        .setSubject(username)
+        .claim("roles", roles)
+        .setIssuedAt(iat)
+        .setExpiration(Date(iat.time + tokenValidTime))
+        .signWith(secretKey, SignatureAlgorithm.HS256)
+        .compact()
 }

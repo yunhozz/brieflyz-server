@@ -1,11 +1,7 @@
 package io.brieflyz.api_gateway.filter
 
-import io.brieflyz.core.config.JwtProperties
+import io.brieflyz.core.component.JwtComponent
 import io.brieflyz.core.utils.logger
-import io.jsonwebtoken.Claims
-import io.jsonwebtoken.Jws
-import io.jsonwebtoken.Jwts
-import io.jsonwebtoken.lang.Strings
 import org.springframework.http.HttpHeaders
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.authority.SimpleGrantedAuthority
@@ -16,12 +12,10 @@ import org.springframework.web.server.ServerWebExchange
 import org.springframework.web.server.WebFilter
 import org.springframework.web.server.WebFilterChain
 import reactor.core.publisher.Mono
-import javax.crypto.SecretKey
 
 @Component
 class JwtFilter(
-    private val jwtProperties: JwtProperties,
-    private val secretKey: SecretKey
+    private val jwtComponent: JwtComponent
 ) : WebFilter {
 
     private val log = logger()
@@ -33,8 +27,8 @@ class JwtFilter(
         val headerToken = request.headers.getFirst(HttpHeaders.AUTHORIZATION)
         log.debug("Header Token: $headerToken")
 
-        return resolveToken(headerToken)?.let { token ->
-            val claims = createClaimsJws(token).body
+        return jwtComponent.resolveToken(headerToken)?.let { token ->
+            val claims = jwtComponent.createClaimsJws(token).body
             val authorities = claims["roles"] as List<String>
 
             log.debug("claims = {}", claims)
@@ -56,19 +50,6 @@ class JwtFilter(
 
         } ?: return chain.filter(exchange)
     }
-
-    private fun resolveToken(token: String?): String? =
-        token.takeIf { Strings.hasText(it) }?.let {
-            val parts = it.split(" ")
-            val tokenType = jwtProperties.tokenType
-            return if (parts.size == 2 && parts[0] == tokenType.trim()) parts[1] else null
-        }
-
-    private fun createClaimsJws(token: String): Jws<Claims> =
-        Jwts.parserBuilder()
-            .setSigningKey(secretKey)
-            .build()
-            .parseClaimsJws(token)
 
     data class CustomUserDetails(
         private val username: String,

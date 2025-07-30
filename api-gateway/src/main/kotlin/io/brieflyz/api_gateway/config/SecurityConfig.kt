@@ -3,8 +3,6 @@ package io.brieflyz.api_gateway.config
 import io.brieflyz.api_gateway.exception.JwtAccessDeniedHandler
 import io.brieflyz.api_gateway.exception.JwtAuthenticationEntryPoint
 import io.brieflyz.api_gateway.filter.JwtFilter
-import io.brieflyz.core.config.JwtProperties
-import io.jsonwebtoken.security.Keys
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.http.HttpMethod
@@ -16,17 +14,10 @@ import org.springframework.security.web.server.SecurityWebFilterChain
 import org.springframework.web.cors.CorsConfiguration
 import org.springframework.web.cors.reactive.CorsConfigurationSource
 import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource
-import javax.crypto.SecretKey
 
 @Configuration
 @EnableWebFluxSecurity
 class SecurityConfig {
-
-    @Bean
-    fun secretKey(jwtProperties: JwtProperties): SecretKey {
-        val secretKeyBytes = jwtProperties.secretKey.toByteArray()
-        return Keys.hmacShaKeyFor(secretKeyBytes)
-    }
 
     @Bean
     fun springSecurityFilterChain(

@@ -1,9 +1,7 @@
 package io.brieflyz.auth_service.config
 
 import io.brieflyz.core.annotation.JwtSubject
-import io.jsonwebtoken.Claims
-import io.jsonwebtoken.JwtException
-import io.jsonwebtoken.Jwts
+import io.brieflyz.core.component.JwtComponent
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.MethodParameter
 import org.springframework.http.HttpHeaders
@@ -13,7 +11,6 @@ import org.springframework.web.context.request.NativeWebRequest
 import org.springframework.web.method.support.HandlerMethodArgumentResolver
 import org.springframework.web.method.support.ModelAndViewContainer
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
-import javax.crypto.SecretKey
 
 @Configuration
 class WebConfig(
@@ -27,7 +24,7 @@ class WebConfig(
 
 @Component
 class JwtHeaderResolver(
-    private val secretKey: SecretKey
+    private val jwtComponent: JwtComponent
 ) : HandlerMethodArgumentResolver {
 
     override fun supportsParameter(parameter: MethodParameter): Boolean =
@@ -40,16 +37,7 @@ class JwtHeaderResolver(
         binderFactory: WebDataBinderFactory?
     ): Any? {
         val token = webRequest.getHeader(HttpHeaders.AUTHORIZATION) ?: return null
-        return parseToken(token)?.subject
-    }
-
-    private fun parseToken(token: String): Claims? = try {
-        Jwts.parserBuilder()
-            .setSigningKey(secretKey)
-            .build()
-            .parseClaimsJws(token)
-            .body
-    } catch (e: JwtException) {
-        throw JwtException("JWT 토큰 파싱 오류: ${e.localizedMessage}", e)
+        val claims = jwtComponent.createClaimsJws(token).body
+        return claims.subject
     }
 }

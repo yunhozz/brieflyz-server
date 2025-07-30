@@ -5,8 +5,6 @@ import io.brieflyz.auth_service.common.security.OAuthAuthenticationSuccessHandle
 import io.brieflyz.auth_service.common.security.OAuthAuthorizationRequestCookieRepository
 import io.brieflyz.auth_service.service.OAuthUserCustomService
 import io.brieflyz.core.config.AuthServiceProperties
-import io.brieflyz.core.config.JwtProperties
-import io.jsonwebtoken.security.Keys
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
@@ -14,17 +12,10 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.web.SecurityFilterChain
-import javax.crypto.SecretKey
 
 @Configuration
 @EnableWebSecurity
 class SecurityConfig {
-
-    @Bean
-    fun secretKey(jwtProperties: JwtProperties): SecretKey {
-        val secretKeyBytes = jwtProperties.secretKey.toByteArray()
-        return Keys.hmacShaKeyFor(secretKeyBytes)
-    }
 
     @Bean
     fun passwordEncoder(): BCryptPasswordEncoder = BCryptPasswordEncoder()

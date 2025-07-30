@@ -2,35 +2,9 @@ package io.brieflyz.core.config
 
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.boot.context.properties.EnableConfigurationProperties
-import org.springframework.context.annotation.Bean
-import org.springframework.context.annotation.Configuration
-
-@Configuration
-@EnableConfigurationProperties(
-    JwtProperties::class,
-    AuthServiceProperties::class,
-    SubscriptionServiceProperties::class
-)
-class AppConfig {
-    @Bean
-    fun jwtProperties() = JwtProperties()
-
-    @Bean
-    fun authServiceProperties() = AuthServiceProperties()
-
-    @Bean
-    fun subscriptionServiceProperties() = SubscriptionServiceProperties()
-}
-
-@ConfigurationProperties(prefix = "jwt")
-data class JwtProperties(
-    val secretKey: String = "",
-    val tokenType: String = "",
-    val accessTokenValidTime: Long = 0,
-    val refreshTokenValidTime: Long = 0
-)
 
 @ConfigurationProperties(prefix = "app.auth")
+@EnableConfigurationProperties(AuthServiceProperties::class)
 data class AuthServiceProperties(
     val oauth: OAuthProperties? = null,
     val kafka: KafkaProperties? = null,
@@ -48,6 +22,7 @@ data class AuthServiceProperties(
 }
 
 @ConfigurationProperties(prefix = "app.subscription")
+@EnableConfigurationProperties(SubscriptionServiceProperties::class)
 data class SubscriptionServiceProperties(
     val kafka: KafkaProperties? = null
 ) {
@@ -56,3 +31,12 @@ data class SubscriptionServiceProperties(
         val replicationFactor: Short = 0
     )
 }
+
+@ConfigurationProperties(prefix = "jwt")
+@EnableConfigurationProperties(JwtProperties::class)
+data class JwtProperties(
+    val secretKey: String = "",
+    val tokenType: String = "",
+    val accessTokenValidTime: Long = 0,
+    val refreshTokenValidTime: Long = 0
+)
