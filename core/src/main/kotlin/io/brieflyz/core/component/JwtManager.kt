@@ -4,6 +4,7 @@ import io.brieflyz.core.config.JwtProperties
 import io.brieflyz.core.utils.logger
 import io.jsonwebtoken.Claims
 import io.jsonwebtoken.Jws
+import io.jsonwebtoken.JwtException
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.lang.Strings
 import io.jsonwebtoken.security.Keys
@@ -51,8 +52,12 @@ class JwtManager(
         }
 
     fun createClaimsJws(token: String): Jws<Claims> =
-        Jwts.parserBuilder()
-            .setSigningKey(secretKey)
-            .build()
-            .parseClaimsJws(token)
+        try {
+            Jwts.parserBuilder()
+                .setSigningKey(secretKey)
+                .build()
+                .parseClaimsJws(token)
+        } catch (e: Exception) {
+            throw JwtException("JWT 토큰 파싱 오류: ${e.message}", e)
+        }
 }

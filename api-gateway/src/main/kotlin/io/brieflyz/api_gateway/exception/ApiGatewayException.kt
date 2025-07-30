@@ -7,3 +7,4 @@ sealed class ApiGatewayException(val status: ErrorStatus, msg: String) :
 
 class JwtTokenNotExistException : ApiGatewayException(ErrorStatus.FORBIDDEN, "")
 class JwtTokenNotValidException : ApiGatewayException(ErrorStatus.UNAUTHORIZED, "")
+class JwtParsingException(msg: String) : ApiGatewayException(ErrorStatus.UNAUTHORIZED, msg)
