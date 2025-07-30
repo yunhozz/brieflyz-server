@@ -28,6 +28,30 @@ subprojects {
     apply(plugin = "org.springframework.boot")
     apply(plugin = "io.spring.dependency-management")
 
+    dependencies {
+        implementation(project(":core"))
+        // Spring Boot
+        implementation("org.springframework.boot:spring-boot-starter-actuator")
+        developmentOnly("org.springframework.boot:spring-boot-devtools")
+        // Kafka
+        implementation("org.springframework.kafka:spring-kafka")
+        // JWT
+        implementation("io.jsonwebtoken:jjwt-api:0.11.5")
+        runtimeOnly("io.jsonwebtoken:jjwt-impl:0.11.5")
+        runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.11.5")
+        // Jackson
+        implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
+        implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
+        // Kotlin
+        implementation("org.jetbrains.kotlin:kotlin-reflect")
+        implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
+        // Test
+        testImplementation("org.springframework.boot:spring-boot-starter-test")
+        testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
+        testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test")
+        testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    }
+
     extra["springCloudVersion"] = "2025.0.0"
 
     java {
