@@ -6,7 +6,7 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.kafka.core.KafkaAdmin.NewTopics
 
 @Configuration
-class KafkaConfig(
+class KafkaTopicConfig(
     private val authServiceProperties: AuthServiceProperties
 ) {
     @Bean
