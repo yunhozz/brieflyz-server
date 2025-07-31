@@ -1,0 +1,31 @@
+package io.brieflyz.core.component
+
+import io.brieflyz.core.dto.kafka.KafkaMessage
+import io.brieflyz.core.utils.logger
+import org.springframework.kafka.core.KafkaTemplate
+import org.springframework.stereotype.Component
+
+@Component
+class KafkaSender(
+    private val kafkaTemplate: KafkaTemplate<String, KafkaMessage>
+) {
+    private val log = logger()
+
+    fun send(topic: String, message: KafkaMessage) {
+        kafkaTemplate.send(topic, message).thenAccept { result ->
+            val metadata = result.recordMetadata
+            log.debug(
+                """
+                    [Kafka Send Success]
+                    Topic: ${metadata.topic()}
+                    Partition: ${metadata.partition()}
+                    Offset: ${metadata.offset()}
+                    Producer Record: ${result.producerRecord}
+                """.trimIndent()
+            )
+        }.exceptionally { ex ->
+            log.error("Unable to send message due to : ${ex.message}", ex)
+            null
+        }
+    }
+}

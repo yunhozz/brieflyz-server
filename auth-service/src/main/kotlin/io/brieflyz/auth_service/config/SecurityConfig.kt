@@ -1,10 +1,9 @@
 package io.brieflyz.auth_service.config
 
-import io.brieflyz.auth_service.infra.security.oauth.OAuthAuthenticationFailureHandler
-import io.brieflyz.auth_service.infra.security.oauth.OAuthAuthenticationSuccessHandler
-import io.brieflyz.auth_service.infra.security.oauth.OAuthAuthorizationRequestCookieRepository
-import io.brieflyz.auth_service.infra.security.oauth.OAuthUserCustomService
-import io.brieflyz.auth_service.infra.security.user.CustomUserDetailsService
+import io.brieflyz.auth_service.common.security.OAuthAuthenticationFailureHandler
+import io.brieflyz.auth_service.common.security.OAuthAuthenticationSuccessHandler
+import io.brieflyz.auth_service.common.security.OAuthAuthorizationRequestCookieRepository
+import io.brieflyz.auth_service.service.OAuthUserCustomService
 import io.brieflyz.core.config.AuthServiceProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -16,32 +15,32 @@ import org.springframework.security.web.SecurityFilterChain
 
 @Configuration
 @EnableWebSecurity
-class SecurityConfig(
-    private val userDetailsService: CustomUserDetailsService,
-    private val oAuthAuthenticationSuccessHandler: OAuthAuthenticationSuccessHandler,
-    private val oAuthAuthenticationFailureHandler: OAuthAuthenticationFailureHandler,
-    private val oAuthUserCustomService: OAuthUserCustomService,
-    private val oAuthAuthorizationRequestCookieRepository: OAuthAuthorizationRequestCookieRepository,
-    private val authServiceProperties: AuthServiceProperties
-) {
+class SecurityConfig {
+
     @Bean
     fun passwordEncoder(): BCryptPasswordEncoder = BCryptPasswordEncoder()
 
     @Bean
-    fun securityFilterChain(http: HttpSecurity): SecurityFilterChain = http
+    fun securityFilterChain(
+        http: HttpSecurity,
+        authServiceProperties: AuthServiceProperties,
+        oAuthUserCustomService: OAuthUserCustomService,
+        oAuthAuthorizationRequestCookieRepository: OAuthAuthorizationRequestCookieRepository,
+        oAuthAuthenticationSuccessHandler: OAuthAuthenticationSuccessHandler,
+        oAuthAuthenticationFailureHandler: OAuthAuthenticationFailureHandler
+    ): SecurityFilterChain = http
         .cors { it.disable() }
         .csrf { it.disable() }
         .headers { it.frameOptions { cfg -> cfg.sameOrigin() } }
         .httpBasic { it.disable() }
         .formLogin { it.disable() }
         .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
-        .userDetailsService(userDetailsService)
         .oauth2Login {
+            it.userInfoEndpoint { cfg -> cfg.userService(oAuthUserCustomService) }
             it.authorizationEndpoint { cfg ->
                 cfg.baseUri(authServiceProperties.oauth?.authorizationUri)
                 cfg.authorizationRequestRepository(oAuthAuthorizationRequestCookieRepository)
             }
-            it.userInfoEndpoint { cfg -> cfg.userService(oAuthUserCustomService) }
             it.successHandler(oAuthAuthenticationSuccessHandler)
             it.failureHandler(oAuthAuthenticationFailureHandler)
         }

@@ -2,11 +2,11 @@ package io.brieflyz.auth_service.service
 
 import io.brieflyz.auth_service.common.exception.RefreshTokenNotFoundException
 import io.brieflyz.auth_service.common.exception.UserNotFoundException
-import io.brieflyz.auth_service.infra.db.MemberRepository
-import io.brieflyz.auth_service.infra.redis.RedisHandler
-import io.brieflyz.auth_service.infra.security.jwt.JwtProvider
+import io.brieflyz.auth_service.common.infra.redis.RedisHandler
+import io.brieflyz.auth_service.common.security.JwtProvider
 import io.brieflyz.auth_service.model.dto.MemberResponseDTO
 import io.brieflyz.auth_service.model.dto.TokenResponseDTO
+import io.brieflyz.auth_service.repository.MemberRepository
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional

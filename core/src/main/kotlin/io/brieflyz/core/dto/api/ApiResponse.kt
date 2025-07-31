@@ -1,9 +1,9 @@
 package io.brieflyz.core.dto.api
 
 import com.fasterxml.jackson.annotation.JsonInclude
-import io.brieflyz.core.constants.ApiResponseCode
-import io.brieflyz.core.constants.ErrorCode
-import io.brieflyz.core.constants.SuccessCode
+import io.brieflyz.core.constants.ApiStatus
+import io.brieflyz.core.constants.ErrorStatus
+import io.brieflyz.core.constants.SuccessStatus
 import org.springframework.validation.BindingResult
 import java.time.LocalDateTime
 
@@ -12,25 +12,25 @@ data class ApiResponse<T> private constructor(
     val body: ApiBody<T>
 ) {
     companion object {
-        fun <T : Any> success(successCode: SuccessCode, data: T? = null): ApiResponse<T> {
-            val header = ApiHeader.of(successCode, true)
-            val body = ApiBody.of(successCode.message, data)
+        fun <T : Any> success(successStatus: SuccessStatus, data: T? = null): ApiResponse<T> {
+            val header = ApiHeader.of(successStatus, true)
+            val body = ApiBody.of(successStatus.message, data)
             return ApiResponse(header, body)
         }
 
-        fun fail(errorCode: ErrorCode, errorData: ErrorData): ApiResponse<ErrorData> {
-            val header = ApiHeader.of(errorCode, false)
-            val body = ApiBody.of(errorCode.message, errorData)
+        fun fail(errorStatus: ErrorStatus, errorData: ErrorData): ApiResponse<ErrorData> {
+            val header = ApiHeader.of(errorStatus, false)
+            val body = ApiBody.of(errorStatus.message, errorData)
             return ApiResponse(header, body)
         }
     }
 
     data class ApiHeader private constructor(
-        val code: ApiResponseCode,
+        val code: Int,
         val success: Boolean
     ) {
         companion object {
-            internal fun of(code: ApiResponseCode, success: Boolean) = ApiHeader(code, success)
+            internal fun of(status: ApiStatus, success: Boolean) = ApiHeader(status.statusCode, success)
         }
     }
 
@@ -48,12 +48,13 @@ data class ApiResponse<T> private constructor(
 @JsonInclude(JsonInclude.Include.NON_NULL)
 data class ErrorData private constructor(
     val timestamp: LocalDateTime,
-    val exception: String?,
+    val description: String,
+    val location: String?,
     val fieldErrors: List<FieldError>?
 ) {
     companion object {
         fun of(ex: Exception, fieldErrors: List<FieldError>? = null) =
-            ErrorData(LocalDateTime.now(), ex::class.qualifiedName, fieldErrors)
+            ErrorData(LocalDateTime.now(), ex.localizedMessage, ex::class.qualifiedName, fieldErrors)
     }
 
     data class FieldError private constructor(

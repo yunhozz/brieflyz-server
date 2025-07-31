@@ -29,10 +29,6 @@ import org.springframework.util.backoff.FixedBackOff
 class KafkaConfig(
     private val kafkaProperties: KafkaProperties
 ) {
-    companion object {
-        const val AUTO_OFFSET_RESET = "earliest"
-    }
-
     @Bean
     fun kafkaTemplate(): KafkaTemplate<String, KafkaMessage> = KafkaTemplate(kafkaProducerFactory())
 
@@ -61,15 +57,20 @@ class KafkaConfig(
     fun kafkaProducerProperties() = mapOf(
         ProducerConfig.BOOTSTRAP_SERVERS_CONFIG to kafkaProperties.bootstrapServers,
         ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG to StringSerializer::class.java,
-        ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG to JsonSerializer::class.java
+        ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG to JsonSerializer::class.java,
+        ProducerConfig.ACKS_CONFIG to "all",
+        ProducerConfig.RETRIES_CONFIG to 10,
+        ProducerConfig.RETRY_BACKOFF_MS_CONFIG to 1000
     )
 
     @Bean
     fun kafkaConsumerProperties() = mapOf(
         ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG to kafkaProperties.bootstrapServers,
+        ConsumerConfig.GROUP_ID_CONFIG to kafkaProperties.consumer.groupId,
         ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG to StringDeserializer::class.java,
         ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG to JsonDeserializer::class.java,
-        ConsumerConfig.AUTO_OFFSET_RESET_CONFIG to AUTO_OFFSET_RESET,
-        ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG to false
+        ConsumerConfig.AUTO_OFFSET_RESET_CONFIG to "earliest",
+        ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG to false,
+        JsonDeserializer.TRUSTED_PACKAGES to "io.brieflyz.core.*"
     )
 }

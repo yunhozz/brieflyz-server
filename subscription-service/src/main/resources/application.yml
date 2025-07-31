@@ -1,0 +1,45 @@
+server:
+  port: 8070
+spring:
+  application:
+    name: subscription-service
+  profiles:
+    active: ${APPLICATION_PROFILE:local}
+  jpa:
+    open-in-view: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        show_sql: true
+        format_sql: true
+        default_batch_fetch_size: 100
+        query.in_clause_parameter_padding: true
+  kafka:
+    consumer:
+      group-id: subscription-service-group
+  data:
+    redis:
+      connect-timeout: 3000
+      timeout: 3000
+---
+spring:
+  config:
+    activate:
+      on-profile: local
+  cloud:
+    config:
+      enabled: false
+  jpa:
+    hibernate:
+      ddl-auto: create
+  datasource:
+    url: jdbc:mysql://localhost:3306/brieflyz?createDatabaseIfNotExist=true
+    username: ${mysql.username}
+    password: ${mysql.root-password}
+  kafka:
+    bootstrap-servers: localhost:9092
+app:
+  subscription:
+    kafka:
+      num-of-partitions: 3
+      replication-factor: 1

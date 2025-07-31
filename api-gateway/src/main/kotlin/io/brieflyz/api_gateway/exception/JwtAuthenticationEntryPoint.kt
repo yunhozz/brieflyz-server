@@ -1,7 +1,7 @@
 package io.brieflyz.api_gateway.exception
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import io.brieflyz.core.constants.ErrorCode
+import io.brieflyz.core.constants.ErrorStatus
 import io.brieflyz.core.dto.api.ApiResponse
 import io.brieflyz.core.dto.api.ErrorData
 import io.brieflyz.core.utils.logger
@@ -39,11 +39,11 @@ class JwtAuthenticationEntryPoint(
             ex.message
         )
 
-        val errorCode = ErrorCode.UNAUTHORIZED
-        val apiResponse = ApiResponse.fail(errorCode, ErrorData.of(ex))
+        val status = ErrorStatus.UNAUTHORIZED
+        val apiResponse = ApiResponse.fail(status, ErrorData.of(ex))
 
         response.headers.contentType = MediaType(MediaType.APPLICATION_JSON, StandardCharsets.UTF_8)
-        response.statusCode = HttpStatusCode.valueOf(errorCode.status)
+        response.statusCode = HttpStatusCode.valueOf(status.statusCode)
 
         return response.writeWith(
             Jackson2JsonEncoder(objectMapper).encode(
