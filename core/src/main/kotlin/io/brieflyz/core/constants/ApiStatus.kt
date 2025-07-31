@@ -30,12 +30,12 @@ enum class SuccessStatus(
     SIGN_IN_SUCCESS(201 created "로그인 성공"),
     TOKEN_REFRESH_SUCCESS(201 created "토큰 재발급 성공"),
     SUBSCRIBE_SUCCESS(201 created "구독 성공"),
-    SUBSCRIPTION_UPDATE_SUCCESS(201 created "구독 정보 수정 성공"),
 
     // 204 No Content
     LOGOUT_SUCCESS(204 noContent "로그아웃 성공"),
     USER_WITHDRAW_SUCCESS(204 noContent "회원 탈퇴 성공"),
-    SUBSCRIBE_CANCEL_SUCCESS(204 noContent "구독 취소 성공")
+    SUBSCRIBE_CANCEL_SUCCESS(204 noContent "구독 취소 성공"),
+    SUBSCRIBE_DELETE_SUCCESS(204 noContent "구독 삭제 성공")
     ;
 
     constructor(status: ApiStatusBuilder.ApiStatus) : this(status.statusCode, status.message)
@@ -68,7 +68,6 @@ enum class ErrorStatus(
     // 409 Conflict
     USER_ALREADY_EXIST(409 conflict "유저 정보가 이미 존재합니다."),
     USER_REGISTERED_BY_SOCIAL_LOGIN(409 conflict "소셜 로그인 가입 계정입니다. 소셜 로그인을 이용해주세요."),
-    SUBSCRIPTION_PLAN_IDENTICAL(409 conflict "이미 동일한 구독 플랜에 가입되어 있습니다."),
     ALREADY_HAVE_SUBSCRIPTION(409 conflict "이미 구독 상태입니다."),
     ALREADY_HAVE_UNLIMITED_SUBSCRIPTION(409 conflict "이미 무제한 구독 중입니다."),
 

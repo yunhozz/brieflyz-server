@@ -34,6 +34,6 @@ class SubscriptionAdminController(
     @ResponseStatus(HttpStatus.OK)
     fun deleteSubscription(@PathVariable id: Long): ApiResponse<Void> {
         subscriptionService.hardDeleteSubscriptionById(id)
-        return ApiResponse.success(SuccessStatus.SUBSCRIBE_CANCEL_SUCCESS)
+        return ApiResponse.success(SuccessStatus.SUBSCRIBE_DELETE_SUCCESS)
     }
 }
