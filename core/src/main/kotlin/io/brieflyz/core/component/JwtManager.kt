@@ -35,12 +35,14 @@ class JwtManager(
             return if (parts.size == 2 && parts[0] == tokenType.trim()) parts[1] else null
         }
 
-    fun isTokenValid(token: String): Boolean =
+    fun createClaimsJws(token: String): Jws<Claims>? =
         try {
-            createClaimsJws(token)
-            true
+            Jwts.parserBuilder()
+                .setSigningKey(secretKey)
+                .build()
+                .parseClaimsJws(token)
 
-        } catch (e: Exception) {
+        } catch (e: JwtException) {
             log.warn(
                 """
                 [Invalid JWT Token]
@@ -48,16 +50,6 @@ class JwtManager(
                 Message: ${e.message}
             """.trimIndent()
             )
-            false
-        }
-
-    fun createClaimsJws(token: String): Jws<Claims> =
-        try {
-            Jwts.parserBuilder()
-                .setSigningKey(secretKey)
-                .build()
-                .parseClaimsJws(token)
-        } catch (e: Exception) {
-            throw JwtException("JWT 토큰 파싱 오류: ${e.message}", e)
+            null
         }
 }

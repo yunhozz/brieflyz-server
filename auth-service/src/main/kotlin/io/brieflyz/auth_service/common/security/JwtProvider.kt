@@ -1,5 +1,6 @@
 package io.brieflyz.auth_service.common.security
 
+import io.brieflyz.auth_service.common.exception.JwtTokenNotValidException
 import io.brieflyz.auth_service.model.security.CustomUserDetails
 import io.brieflyz.core.component.JwtManager
 import io.brieflyz.core.utils.logger
@@ -50,7 +51,8 @@ class JwtProvider(
     }
 
     fun getAuthentication(token: String): Authentication {
-        val claims = jwtManager.createClaimsJws(token).body
+        val claims = jwtManager.createClaimsJws(token)?.body
+            ?: throw JwtTokenNotValidException()
         val roles = claims["roles"] as List<String>
         val userDetails = CustomUserDetails(claims.subject, roles)
 

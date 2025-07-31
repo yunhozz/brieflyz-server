@@ -37,7 +37,7 @@ class JwtHeaderResolver(
         binderFactory: WebDataBinderFactory?
     ): Any? {
         val token = webRequest.getHeader(HttpHeaders.AUTHORIZATION) ?: return null
-        val claims = jwtManager.createClaimsJws(token).body
-        return claims.subject
+        val claims = jwtManager.createClaimsJws(token)?.body
+        return claims?.subject
     }
 }

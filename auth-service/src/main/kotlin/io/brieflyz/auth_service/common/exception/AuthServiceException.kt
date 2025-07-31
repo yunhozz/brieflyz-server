@@ -11,3 +11,4 @@ class UserRegisteredBySocialException : AuthServiceException(ErrorStatus.USER_RE
 class PasswordNotMatchException : AuthServiceException(ErrorStatus.PASSWORD_NOT_MATCH, "")
 class RefreshTokenNotFoundException : AuthServiceException(ErrorStatus.REFRESH_TOKEN_NOT_FOUND, "")
 class RedisKeyNotExistsException(msg: String) : AuthServiceException(ErrorStatus.REDIS_KEY_NOT_FOUND, msg)
+class JwtTokenNotValidException : AuthServiceException(ErrorStatus.UNAUTHORIZED, "")

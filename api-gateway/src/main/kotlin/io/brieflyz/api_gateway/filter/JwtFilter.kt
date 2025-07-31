@@ -1,9 +1,8 @@
 package io.brieflyz.api_gateway.filter
 
-import io.brieflyz.api_gateway.exception.JwtParsingException
+import io.brieflyz.api_gateway.exception.JwtTokenNotValidException
 import io.brieflyz.core.component.JwtManager
 import io.brieflyz.core.utils.logger
-import io.jsonwebtoken.JwtException
 import org.springframework.http.HttpHeaders
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.authority.SimpleGrantedAuthority
@@ -30,11 +29,8 @@ class JwtFilter(
         log.debug("Header Token: $headerToken")
 
         return jwtManager.resolveToken(headerToken)?.let { token ->
-            val claims = try {
-                jwtManager.createClaimsJws(token).body
-            } catch (e: JwtException) {
-                throw JwtParsingException(e.localizedMessage)
-            }
+            val claims = jwtManager.createClaimsJws(token)?.body
+                ?: throw JwtTokenNotValidException()
             val authorities = claims["roles"] as List<String>
 
             log.debug("claims = {}", claims)
@@ -64,7 +60,8 @@ class JwtFilter(
         override fun getUsername() = username
         override fun getPassword() = null
         override fun getAuthorities() = authorities
-            .map { auth -> SimpleGrantedAuthority(auth) }.toMutableSet()
+            .map { auth -> SimpleGrantedAuthority(auth) }
+            .toMutableSet()
 
         override fun isAccountNonExpired() = true
         override fun isAccountNonLocked() = true
