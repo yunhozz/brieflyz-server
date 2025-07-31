@@ -1,11 +1,20 @@
 package io.brieflyz.subscription_service.service
 
-import io.brieflyz.subscription_service.common.constants.SubscriptionInterval
+import io.brieflyz.subscription_service.common.constants.SubscriptionPlan
+import io.brieflyz.subscription_service.common.exception.AlreadyHaveSubscriptionException
+import io.brieflyz.subscription_service.common.exception.AlreadyHaveUnlimitedSubscriptionException
 import io.brieflyz.subscription_service.common.exception.SubscriptionNotFoundException
-import io.brieflyz.subscription_service.infra.db.SubscriptionRepository
-import io.brieflyz.subscription_service.model.dto.CreateSubscriptionRequest
-import io.brieflyz.subscription_service.model.dto.UpdateSubscriptionRequest
+import io.brieflyz.subscription_service.model.dto.request.CreditCardDetailsRequest
+import io.brieflyz.subscription_service.model.dto.request.PaymentCreateRequest
+import io.brieflyz.subscription_service.model.dto.request.SubscriptionCreateRequest
+import io.brieflyz.subscription_service.model.dto.request.SubscriptionQueryRequest
+import io.brieflyz.subscription_service.model.dto.response.SubscriptionQueryResponse
+import io.brieflyz.subscription_service.model.entity.Payment
+import io.brieflyz.subscription_service.model.entity.PaymentDetails
 import io.brieflyz.subscription_service.model.entity.Subscription
+import io.brieflyz.subscription_service.repository.PaymentDetailsRepository
+import io.brieflyz.subscription_service.repository.PaymentRepository
+import io.brieflyz.subscription_service.repository.SubscriptionRepository
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -18,6 +27,8 @@ import org.mockito.InjectMocks
 import org.mockito.Mock
 import org.mockito.Mockito.spy
 import org.mockito.junit.jupiter.MockitoExtension
+import org.springframework.data.domain.PageImpl
+import org.springframework.data.domain.PageRequest
 import java.time.LocalDateTime
 import java.util.Optional
 import kotlin.test.assertEquals
@@ -32,220 +43,289 @@ class SubscriptionServiceMockTest {
     @Mock
     private lateinit var subscriptionRepository: SubscriptionRepository
 
-    private fun createMockSubscription(id: Long) = mock(Subscription::class.java).apply {
-        given(this.id).willReturn(id)
-        given(this.memberId).willReturn(1L)
-        given(this.email).willReturn("test@example.com")
-        given(this.subscriptionInterval).willReturn(SubscriptionInterval.ONE_YEAR)
-        given(this.deleted).willReturn(false)
-        given(this.createdAt).willReturn(LocalDateTime.now())
-        given(this.updatedAt).willReturn(LocalDateTime.now())
+    @Mock
+    private lateinit var paymentRepository: PaymentRepository
+
+    @Mock
+    private lateinit var paymentDetailsRepository: PaymentDetailsRepository
+
+    private inline fun <reified T> T.setId(id: Long) {
+        val field = this!!::class.java.getDeclaredField("id")
+        field.isAccessible = true
+        field.setLong(this, id)
     }
+
+    private fun createSubscription(
+        id: Long,
+        email: String = "test@example.com",
+        plan: SubscriptionPlan = SubscriptionPlan.ONE_YEAR
+    ): Subscription {
+        val subscription = Subscription(email, "Korea", "Seoul", plan)
+        subscription.setId(id)
+        return subscription
+    }
+
+    private fun createPaymentRequest() = PaymentCreateRequest(
+        charge = 29.99,
+        method = "CREDIT_CARD",
+        details = CreditCardDetailsRequest(
+            cardNumber = "1234-5678-9012-3456",
+            expirationDate = "12/25",
+            cvc = "123"
+        )
+    )
+
+    private fun createSubscriptionRequest(plan: String = "ONE_YEAR") = SubscriptionCreateRequest(
+        country = "Korea",
+        city = "Seoul",
+        plan = plan,
+        payment = createPaymentRequest()
+    )
 
     @Nested
     inner class CreateSubscriptionTest {
         @Test
-        @DisplayName("구독 생성 성공")
-        fun createSubscriptionSuccess() {
+        @DisplayName("새로운 구독 생성 성공")
+        fun createNewSubscriptionSuccess() {
             // given
-            val memberId = 1L
+            val subscriptionId = 1L
             val email = "test@example.com"
-            val subscriptionInterval = "one year"
+            val request = createSubscriptionRequest()
+            val subscription = createSubscription(subscriptionId, email)
+            val paymentDetails = mock(PaymentDetails::class.java)
+            val payment = mock(Payment::class.java)
 
-            val request = CreateSubscriptionRequest(memberId, email, subscriptionInterval)
-            val subscription = mock(Subscription::class.java)
-
-            given(subscriptionRepository.save(any(Subscription::class.java)))
-                .willReturn(subscription)
+            given(subscriptionRepository.findByEmail(email)).willReturn(null)
+            given(subscriptionRepository.save(any(Subscription::class.java))).willReturn(subscription)
+            given(paymentRepository.save(any(Payment::class.java))).willReturn(payment)
+            given(paymentDetailsRepository.save(any(PaymentDetails::class.java))).willReturn(paymentDetails)
 
             // when
-            val result = subscriptionService.createSubscription(request)
+            val result = subscriptionService.createSubscription(email, request)
 
             // then
+            assertEquals(subscriptionId, result)
+            then(subscriptionRepository).should().findByEmail(email)
             then(subscriptionRepository).should().save(any(Subscription::class.java))
+            then(paymentRepository).should().save(any(Payment::class.java))
+            then(paymentDetailsRepository).should().save(any(PaymentDetails::class.java))
+        }
+
+        @Test
+        @DisplayName("기존 구독자 재구독 성공")
+        fun reSubscribeSuccess() {
+            // given
+            val subscriptionId = 100L
+            val email = "test@example.com"
+            val request = createSubscriptionRequest()
+
+            val existingSubscription = spy(createSubscription(subscriptionId, email, SubscriptionPlan.of(request.plan)))
+            val paymentDetails = mock(PaymentDetails::class.java)
+            val payment = mock(Payment::class.java)
+
+            given(subscriptionRepository.findByEmail(email)).willReturn(existingSubscription)
+            given(existingSubscription.isActivated()).willReturn(false)
+            given(existingSubscription.isSubscriptionPlanEquals(SubscriptionPlan.UNLIMITED)).willReturn(false)
+
+            given(subscriptionRepository.save(any(Subscription::class.java))).willReturn(existingSubscription)
+            given(paymentRepository.save(any(Payment::class.java))).willReturn(payment)
+            given(paymentDetailsRepository.save(any(PaymentDetails::class.java))).willReturn(paymentDetails)
+
+            // when
+            val result = subscriptionService.createSubscription(email, request)
+
+            // then
+            assertEquals(subscriptionId, result)
+            then(existingSubscription).should().reSubscribe(SubscriptionPlan.ONE_YEAR)
+            then(existingSubscription).should().addPayCount()
+        }
+
+        @Test
+        @DisplayName("무제한 구독자가 있을 때 예외 발생")
+        fun createSubscriptionFailWithUnlimitedSubscription() {
+            // given
+            val email = "test@example.com"
+            val request = createSubscriptionRequest()
+            val existingSubscription = spy(createSubscription(1L, email, SubscriptionPlan.UNLIMITED))
+
+            given(subscriptionRepository.findByEmail(email)).willReturn(existingSubscription)
+            given(existingSubscription.isSubscriptionPlanEquals(SubscriptionPlan.UNLIMITED)).willReturn(true)
+
+            // when & then
+            assertFailsWith<AlreadyHaveUnlimitedSubscriptionException> {
+                subscriptionService.createSubscription(email, request)
+            }
+        }
+
+        @Test
+        @DisplayName("활성화된 구독이 있을 때 예외 발생")
+        fun createSubscriptionFailWithActiveSubscription() {
+            // given
+            val email = "test@example.com"
+            val request = createSubscriptionRequest()
+            val existingSubscription = spy(createSubscription(1L, email))
+
+            given(subscriptionRepository.findByEmail(email)).willReturn(existingSubscription)
+            given(existingSubscription.isSubscriptionPlanEquals(SubscriptionPlan.UNLIMITED)).willReturn(false)
+            given(existingSubscription.isActivated()).willReturn(true)
+
+            // when & then
+            assertFailsWith<AlreadyHaveSubscriptionException> {
+                subscriptionService.createSubscription(email, request)
+            }
         }
     }
 
     @Nested
     inner class GetSubscriptionTest {
         @Test
-        @DisplayName("구독 조회 성공")
-        fun getSubscriptionSuccess() {
+        @DisplayName("ID로 구독 조회 성공")
+        fun getSubscriptionByIdSuccess() {
             // given
             val subscriptionId = 100L
-            val subscription = createMockSubscription(subscriptionId)
+            val queryResponse = mock(SubscriptionQueryResponse::class.java)
 
-            given(subscriptionRepository.findById(subscriptionId))
-                .willReturn(Optional.of(subscription))
+            given(subscriptionRepository.findWithPaymentsByIdQuery(subscriptionId)).willReturn(queryResponse)
 
             // when
-            val result = subscriptionService.getSubscription(subscriptionId)
+            val result = subscriptionService.getSubscriptionDetailsById(subscriptionId)
 
             // then
-            assertEquals(subscriptionId, result.id)
-            assertEquals(1L, result.memberId)
-            assertEquals("test@example.com", result.email)
-            assertEquals(SubscriptionInterval.ONE_YEAR.name, result.subscriptionInterval)
-            then(subscriptionRepository).should().findById(subscriptionId)
+            assertEquals(queryResponse, result)
+            then(subscriptionRepository).should().findWithPaymentsByIdQuery(subscriptionId)
         }
 
         @Test
         @DisplayName("구독이 존재하지 않을 때 예외 발생")
-        fun getSubscriptionFail() {
+        fun getSubscriptionByIdFail() {
             // given
             val subscriptionId = 999L
-            given(subscriptionRepository.findById(subscriptionId))
-                .willReturn(Optional.empty())
+
+            given(subscriptionRepository.findWithPaymentsByIdQuery(subscriptionId)).willReturn(null)
 
             // when & then
             val exception = assertFailsWith<SubscriptionNotFoundException> {
-                subscriptionService.getSubscription(subscriptionId)
+                subscriptionService.getSubscriptionDetailsById(subscriptionId)
             }
-            assertEquals("해당 구독 정보를 찾을 수 없습니다. Subscription ID: $subscriptionId", exception.message)
-            then(subscriptionRepository).should().findById(subscriptionId)
+            assertEquals("해당 구독 정보를 찾을 수 없습니다. Subscription ID : $subscriptionId", exception.message)
+            then(subscriptionRepository).should().findWithPaymentsByIdQuery(subscriptionId)
         }
 
         @Test
-        @DisplayName("memberId로 구독 목록 조회")
-        fun getSubscriptionsByMemberId() {
-            // given
-            val memberId = 1L
-            val subscriptions = listOf(
-                createMockSubscription(1L),
-                createMockSubscription(2L)
-            )
-
-            given(subscriptionRepository.findByMemberIdOrEmail(memberId, null))
-                .willReturn(subscriptions)
-
-            // when
-            val result = subscriptionService.getSubscriptionsByMemberIdOrEmail(memberId, null)
-
-            // then
-            assertEquals(2, result.size)
-            assertEquals(1L, result[0].id)
-            assertEquals(2L, result[1].id)
-            then(subscriptionRepository).should().findByMemberIdOrEmail(memberId, null)
-        }
-
-        @Test
-        @DisplayName("email로 구독 목록 조회")
+        @DisplayName("이메일로 구독 목록 조회")
         fun getSubscriptionsByEmail() {
             // given
             val email = "test@example.com"
-            val subscriptions = listOf(createMockSubscription(1L))
+            val subscriptions = listOf(
+                mock(SubscriptionQueryResponse::class.java),
+                mock(SubscriptionQueryResponse::class.java)
+            )
 
-            given(subscriptionRepository.findByMemberIdOrEmail(null, email))
-                .willReturn(subscriptions)
+            given(subscriptionRepository.findListByMemberEmailQuery(email)).willReturn(subscriptions)
 
             // when
-            val result = subscriptionService.getSubscriptionsByMemberIdOrEmail(null, email)
+            val result = subscriptionService.getSubscriptionListByMemberEmail(email)
+
+            // then
+            assertEquals(2, result.size)
+            then(subscriptionRepository).should().findListByMemberEmailQuery(email)
+        }
+
+        @Test
+        @DisplayName("쿼리 조건으로 구독 페이지 조회")
+        fun getSubscriptionPageByQuery() {
+            // given
+            val request = mock(SubscriptionQueryRequest::class.java)
+            val pageable = PageRequest.of(0, 10)
+            val subscriptions = listOf(mock(SubscriptionQueryResponse::class.java))
+            val page = PageImpl(subscriptions, pageable, 1)
+
+            given(subscriptionRepository.findPageWithPaymentsQuery(request, pageable)).willReturn(page)
+
+            // when
+            val result = subscriptionService.getSubscriptionPageByQuery(request, pageable)
 
             // then
             assertEquals(1, result.size)
-            assertEquals(1L, result[0].id)
-            then(subscriptionRepository).should().findByMemberIdOrEmail(null, email)
+            then(subscriptionRepository).should().findPageWithPaymentsQuery(request, pageable)
         }
     }
 
     @Nested
-    inner class UpdateSubscriptionTest {
+    inner class CancelSubscriptionTest {
         @Test
-        @DisplayName("구독 주기 업데이트 성공")
-        fun updateSubscriptionSuccess() {
+        @DisplayName("구독 취소 성공")
+        fun cancelSubscriptionSuccess() {
             // given
-            val subscriptionId = 100L
-            val request = UpdateSubscriptionRequest(subscriptionInterval = "one month")
-            val subscription = spy(
-                Subscription(
-                    memberId = 1L,
-                    email = "test@example.com",
-                    subscriptionInterval = SubscriptionInterval.ONE_YEAR
-                )
-            )
+            val subscriptionId = 1L
+            val subscription = spy(createSubscription(subscriptionId))
 
-            given(subscriptionRepository.findById(subscriptionId))
-                .willReturn(Optional.of(subscription))
+            given(subscriptionRepository.findById(subscriptionId)).willReturn(Optional.of(subscription))
+            given(subscription.isActivated()).willReturn(true)
 
             // when
-            val result = subscriptionService.updateSubscription(subscriptionId, request)
+            val result = subscriptionService.cancelSubscriptionById(subscriptionId)
 
             // then
-            assertEquals(SubscriptionInterval.ONE_MONTH, subscription.subscriptionInterval)
+            assertEquals(subscriptionId, result)
+            then(subscription).should().delete()
             then(subscriptionRepository).should().findById(subscriptionId)
         }
 
         @Test
         @DisplayName("구독이 존재하지 않을 때 예외 발생")
-        fun updateSubscriptionFail() {
+        fun cancelSubscriptionFail() {
             // given
             val subscriptionId = 999L
-            val request = UpdateSubscriptionRequest(subscriptionInterval = "MONTHLY")
-
-            given(subscriptionRepository.findById(subscriptionId))
-                .willReturn(Optional.empty())
+            given(subscriptionRepository.findById(subscriptionId)).willReturn(Optional.empty())
 
             // when & then
             val exception = assertFailsWith<SubscriptionNotFoundException> {
-                subscriptionService.updateSubscription(subscriptionId, request)
+                subscriptionService.cancelSubscriptionById(subscriptionId)
             }
             assertEquals("해당 구독 정보를 찾을 수 없습니다. Subscription ID: $subscriptionId", exception.message)
             then(subscriptionRepository).should().findById(subscriptionId)
+        }
+
+        @Test
+        @DisplayName("비활성화된 구독 취소 시 예외 발생")
+        fun cancelInactiveSubscriptionFail() {
+            // given
+            val subscriptionId = 1L
+            val subscription = spy(createSubscription(subscriptionId))
+
+            given(subscriptionRepository.findById(subscriptionId)).willReturn(Optional.of(subscription))
+            given(subscription.isActivated()).willReturn(false)
+
+            // when & then
+            val exception = assertFailsWith<SubscriptionNotFoundException> {
+                subscriptionService.cancelSubscriptionById(subscriptionId)
+            }
+            assertEquals("해당 구독 정보를 찾을 수 없습니다. Subscription ID: $subscriptionId", exception.message)
         }
     }
 
     @Nested
     inner class DeleteSubscriptionTest {
         @Test
-        @DisplayName("소프트 삭제 성공")
-        fun deleteSubscriptionSuccess() {
-            // given
-            val subscriptionId = 1L
-            val subscription = spy(Subscription::class.java)
-
-            given(subscriptionRepository.findById(subscriptionId))
-                .willReturn(Optional.of(subscription))
-
-            // when
-            subscriptionService.deleteSubscription(subscriptionId)
-
-            // then
-            then(subscriptionRepository).should().findById(subscriptionId)
-            then(subscription).should().delete()
-        }
-
-        @Test
-        @DisplayName("구독이 존재하지 않을 때 예외 발생")
-        fun deleteSubscriptionFail() {
-            // given
-            val subscriptionId = 999L
-            given(subscriptionRepository.findById(subscriptionId))
-                .willReturn(Optional.empty())
-
-            // when & then
-            val exception = assertFailsWith<SubscriptionNotFoundException> {
-                subscriptionService.deleteSubscription(subscriptionId)
-            }
-            assertEquals("해당 구독 정보를 찾을 수 없습니다. Subscription ID: $subscriptionId", exception.message)
-            then(subscriptionRepository).should().findById(subscriptionId)
-        }
-
-        @Test
         @DisplayName("하드 삭제 성공")
         fun hardDeleteSubscriptionSuccess() {
             // given
             val subscriptionId = 1L
-            val subscription = spy(Subscription::class.java)
+            val subscription = createSubscription(subscriptionId)
+            val payments = listOf(mock(Payment::class.java), mock(Payment::class.java))
 
-            given(subscriptionRepository.findById(subscriptionId))
-                .willReturn(Optional.of(subscription))
+            given(subscriptionRepository.findById(subscriptionId)).willReturn(Optional.of(subscription))
+            given(paymentRepository.findAllBySubscription(subscription)).willReturn(payments)
 
             // when
-            subscriptionService.hardDeleteSubscription(subscriptionId)
+            subscriptionService.hardDeleteSubscriptionById(subscriptionId)
 
             // then
             then(subscriptionRepository).should().findById(subscriptionId)
+            then(paymentRepository).should().findAllBySubscription(subscription)
             then(subscriptionRepository).should().delete(subscription)
+            then(paymentRepository).should().deleteAllInBatch(payments)
         }
 
         @Test
@@ -253,15 +333,45 @@ class SubscriptionServiceMockTest {
         fun hardDeleteSubscriptionFail() {
             // given
             val subscriptionId = 999L
-            given(subscriptionRepository.findById(subscriptionId))
-                .willReturn(Optional.empty())
+            given(subscriptionRepository.findById(subscriptionId)).willReturn(Optional.empty())
 
             // when & then
             val exception = assertFailsWith<SubscriptionNotFoundException> {
-                subscriptionService.hardDeleteSubscription(subscriptionId)
+                subscriptionService.hardDeleteSubscriptionById(subscriptionId)
             }
             assertEquals("해당 구독 정보를 찾을 수 없습니다. Subscription ID: $subscriptionId", exception.message)
             then(subscriptionRepository).should().findById(subscriptionId)
+        }
+    }
+
+    @Nested
+    inner class ScheduledTaskTest {
+        @Test
+        @DisplayName("만료된 구독 일괄 삭제")
+        fun deleteExpiredSubscriptionsEveryDay() {
+            // given
+            val now = LocalDateTime.now()
+            val expiredSubscription1 = spy(createSubscription(1L, plan = SubscriptionPlan.ONE_MONTH).apply {
+                updatedAt = now.minusMonths(2)
+            })
+            val expiredSubscription2 = spy(createSubscription(2L, plan = SubscriptionPlan.ONE_MONTH).apply {
+                updatedAt = now.minusMonths(2)
+            })
+            val activeSubscription = spy(createSubscription(3L, plan = SubscriptionPlan.ONE_YEAR).apply {
+                updatedAt = now.minusDays(10)
+            })
+
+            val subscriptions = listOf(expiredSubscription1, expiredSubscription2, activeSubscription)
+            val expiredIds = listOf(1L, 2L)
+
+            given(subscriptionRepository.findLimitedSubscriptionsQuery()).willReturn(subscriptions)
+
+            // when
+            subscriptionService.deleteExpiredSubscriptionsEveryDay()
+
+            // then
+            then(subscriptionRepository).should().findLimitedSubscriptionsQuery()
+            then(subscriptionRepository).should().softDeleteSubscriptionsInIdsQuery(expiredIds)
         }
     }
 }
