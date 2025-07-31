@@ -29,7 +29,6 @@ subprojects {
     apply(plugin = "io.spring.dependency-management")
 
     dependencies {
-        implementation(project(":core"))
         // Spring Boot
         implementation("org.springframework.boot:spring-boot-starter-actuator")
         developmentOnly("org.springframework.boot:spring-boot-devtools")

@@ -1,4 +1,6 @@
 dependencies {
+    // Core Module
+    implementation(project(":core"))
     // Spring Boot
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-data-redis")

@@ -3,6 +3,8 @@ plugins {
 }
 
 dependencies {
+    // Core Module
+    implementation(project(":core"))
     // Spring Boot
     implementation("org.springframework.boot:spring-boot-starter-batch")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
