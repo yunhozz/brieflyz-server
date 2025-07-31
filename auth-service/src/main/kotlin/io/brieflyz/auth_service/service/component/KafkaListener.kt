@@ -1,5 +1,6 @@
 package io.brieflyz.auth_service.service.component
 
+import io.brieflyz.core.constants.KafkaTopic
 import io.brieflyz.core.dto.kafka.KafkaMessage
 import io.brieflyz.core.utils.logger
 import org.springframework.kafka.annotation.KafkaListener
@@ -16,7 +17,7 @@ class KafkaListener {
 
     private val log = logger()
 
-    @KafkaListener(topics = [])
+    @KafkaListener(topics = [KafkaTopic.DEFAULT_TOPIC])
     fun listen(
         @Header(KafkaHeaders.RECEIVED_KEY, required = false) key: String?,
         @Header(KafkaHeaders.OFFSET, required = false) offset: Long?,
