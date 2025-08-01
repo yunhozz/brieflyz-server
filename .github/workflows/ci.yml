@@ -33,6 +33,9 @@ jobs:
     needs: build
     permissions:
       contents: read
+      checks: write
+      pull-requests: write
+      statuses: write
 
     steps:
       - name: Checkout Source Code
@@ -79,28 +82,87 @@ jobs:
           name: 'Test Results'
           path: '**/build/test-results/test/*.xml'
           reporter: java-junit
-          fail-on-error: true
+          fail-on-error: false
+          only-summary: 'true'
+        continue-on-error: true
 
-      - name: Add Test Summary
+      - name: Generate Test Summary
         if: always()
         run: |
-          echo "## 🧪 Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "## 🧪 Test Results Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           
-          # 테스트 결과 요약 생성
+          # 각 모듈별 테스트 결과 확인
+          total_tests=0
+          total_failures=0
+          total_errors=0
+          modules_tested=0
+          
           for module in auth-service subscription-service api-gateway core; do
-            if [ -f "$module/build/test-results/test/TEST-*.xml" ]; then
-              echo "### $module" >> $GITHUB_STEP_SUMMARY
-              echo "Tests executed for $module module" >> $GITHUB_STEP_SUMMARY
+            if [ -d "$module/build/test-results/test" ] && [ "$(ls -A $module/build/test-results/test/*.xml 2>/dev/null)" ]; then
+              modules_tested=$((modules_tested + 1))
+              echo "### ✅ $module" >> $GITHUB_STEP_SUMMARY
+          
+              # XML 파일에서 테스트 결과 파싱
+              for xml_file in $module/build/test-results/test/TEST-*.xml; do
+                if [ -f "$xml_file" ]; then
+                  tests=$(grep -o 'tests="[0-9]*"' "$xml_file" | cut -d'"' -f2 || echo "0")
+                  failures=$(grep -o 'failures="[0-9]*"' "$xml_file" | cut -d'"' -f2 || echo "0")
+                  errors=$(grep -o 'errors="[0-9]*"' "$xml_file" | cut -d'"' -f2 || echo "0")
+          
+                  total_tests=$((total_tests + tests))
+                  total_failures=$((total_failures + failures))
+                  total_errors=$((total_errors + errors))
+          
+                  echo "  - Tests: $tests, Failures: $failures, Errors: $errors" >> $GITHUB_STEP_SUMMARY
+                fi
+              done
               echo "" >> $GITHUB_STEP_SUMMARY
             fi
           done
           
-          # 테스트 실패 시 로그 출력
-          if [ $? -ne 0 ]; then
-            echo "❌ Some tests failed. Check the detailed reports above." >> $GITHUB_STEP_SUMMARY
-          else  
-            echo "✅ All tests passed successfully!" >> $GITHUB_STEP_SUMMARY
+          # 전체 요약
+          echo "### 📊 Overall Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- **Modules Tested**: $modules_tested" >> $GITHUB_STEP_SUMMARY
+          echo "- **Total Tests**: $total_tests" >> $GITHUB_STEP_SUMMARY
+          echo "- **Failures**: $total_failures" >> $GITHUB_STEP_SUMMARY
+          echo "- **Errors**: $total_errors" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ $total_failures -eq 0 ] && [ $total_errors -eq 0 ] && [ $total_tests -gt 0 ]; then
+            echo "🎉 **All tests passed successfully!**" >> $GITHUB_STEP_SUMMARY
+          elif [ $total_tests -eq 0 ]; then
+            echo "⚠️ **No tests were found or executed.**" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Some tests failed. Please check the detailed reports.**" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Check Test Results
+        if: always()
+        run: |
+          # 테스트 실패 시 workflow 실패 처리
+          total_failures=0
+          total_errors=0
+          
+          for module in auth-service subscription-service api-gateway core; do
+            if [ -d "$module/build/test-results/test" ]; then
+              for xml_file in $module/build/test-results/test/TEST-*.xml; do
+                if [ -f "$xml_file" ]; then
+                  failures=$(grep -o 'failures="[0-9]*"' "$xml_file" | cut -d'"' -f2 || echo "0")
+                  errors=$(grep -o 'errors="[0-9]*"' "$xml_file" | cut -d'"' -f2 || echo "0")
+          
+                  total_failures=$((total_failures + failures))
+                  total_errors=$((total_errors + errors))
+                fi
+              done
+            fi
+          done
+          
+          if [ $total_failures -gt 0 ] || [ $total_errors -gt 0 ]; then
+            echo "Tests failed with $total_failures failures and $total_errors errors"
+            exit 1
+          else
+            echo "All tests passed successfully"
           fi
 
       - name: Clean up Docker Containers
