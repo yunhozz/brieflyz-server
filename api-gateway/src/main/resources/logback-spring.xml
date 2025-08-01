@@ -40,14 +40,7 @@
     </appender>
 
     <!-- 프로파일 별 로깅 레벨 -->
-    <springProfile name="local">
-        <logger name="${PROJECT_NAME}" level="DEBUG"/>
-        <root level="INFO">
-            <appender-ref ref="CONSOLE"/>
-        </root>
-    </springProfile>
-
-    <springProfile name="dev">
+    <springProfile name="local|dev">
         <logger name="${PROJECT_NAME}" level="DEBUG"/>
         <root level="INFO">
             <appender-ref ref="CONSOLE"/>
