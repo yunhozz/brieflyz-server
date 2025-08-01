@@ -63,7 +63,7 @@ jobs:
           SERVICES_MESSAGE="zookeeper-0 zookeeper-1 zookeeper-2 kafka-0 kafka-1 kafka-2"
           
           echo "🚀 Starting DB Infra..."
-          docker compose -f $DOCKER_COMPOSE_FILE up -d $SERVICES_DB
+          docker compose -f $DOCKER_COMPOSE_FILE --env-file .env up -d $SERVICES_DB
           
           echo "🚀 Starting Message Queue Infra..."
           docker compose -f $DOCKER_COMPOSE_FILE up -d $SERVICES_MESSAGE
