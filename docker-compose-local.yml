@@ -205,7 +205,7 @@ services:
     image: mysql:latest
     container_name: mysql-source
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       TZ: Asia/Seoul
     ports:
       - "13306:3306"
@@ -219,7 +219,7 @@ services:
     image: mysql:latest
     container_name: mysql-replica
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       TZ: Asia/Seoul
     ports:
       - "23306:3306"
