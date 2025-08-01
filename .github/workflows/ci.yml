@@ -67,4 +67,43 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: test-reports
-          path: build/reports/tests/test
+          path: |
+            **/build/reports/tests/test/
+            **/build/test-results/test/
+          retention-days: 7
+
+      - name: Publish Test Results
+        if: always()
+        uses: dorny/test-reporter@v1
+        with:
+          name: 'Test Results'
+          path: '**/build/test-results/test/*.xml'
+          reporter: java-junit
+          fail-on-error: true
+
+      - name: Add Test Summary
+        if: always()
+        run: |
+          echo "## 🧪 Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # 테스트 결과 요약 생성
+          for module in auth-service subscription-service api-gateway core; do
+            if [ -f "$module/build/test-results/test/TEST-*.xml" ]; then
+              echo "### $module" >> $GITHUB_STEP_SUMMARY
+              echo "Tests executed for $module module" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+            fi
+          done
+          
+          # 테스트 실패 시 로그 출력
+          if [ $? -ne 0 ]; then
+            echo "❌ Some tests failed. Check the detailed reports above." >> $GITHUB_STEP_SUMMARY
+          else  
+            echo "✅ All tests passed successfully!" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Clean up Docker Containers
+        if: always()
+        run: |
+          docker compose -f docker-compose-local.yml down --volumes --remove-orphans
