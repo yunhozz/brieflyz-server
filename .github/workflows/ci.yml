@@ -106,7 +106,8 @@ jobs:
               # XML 파일에서 테스트 결과 파싱
               for xml_file in $module/build/test-results/test/TEST-*.xml; do
                 if [ -f "$xml_file" ]; then
-                  tests=$(grep -o 'tests="[0-9]*"' "$xml_file" | cut -d'"' -f2 || echo "0")
+                  name=$(grep -oP '(?<=<testsuite name=")[^"]+' "$xml_file" | head -n 1)
+                  count=$(grep -o 'tests="[0-9]*"' "$xml_file" | cut -d'"' -f2 || echo "0")
                   failures=$(grep -o 'failures="[0-9]*"' "$xml_file" | cut -d'"' -f2 || echo "0")
                   errors=$(grep -o 'errors="[0-9]*"' "$xml_file" | cut -d'"' -f2 || echo "0")
           
@@ -114,7 +115,7 @@ jobs:
                   total_failures=$((total_failures + failures))
                   total_errors=$((total_errors + errors))
           
-                  echo "  - Tests: $tests, Failures: $failures, Errors: $errors" >> $GITHUB_STEP_SUMMARY
+                  echo "  - Name: $name, Count: $count, Failures: $failures, Errors: $errors" >> $GITHUB_STEP_SUMMARY
                 fi
               done
               echo "" >> $GITHUB_STEP_SUMMARY
