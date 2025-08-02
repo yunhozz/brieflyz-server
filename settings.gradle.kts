@@ -3,5 +3,5 @@ include(
     ":core",
     ":api-gateway",
     ":auth-service",
-    "subscription-service"
+    ":subscription-service"
 )
