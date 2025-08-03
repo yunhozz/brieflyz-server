@@ -5,6 +5,18 @@ spring:
     name: api-gateway
   profiles:
     active: ${APPLICATION_PROFILE:local}
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    prometheus:
+      access: read_only
+  prometheus:
+    metrics:
+      export:
+        enabled: true
 ---
 spring:
   config:

@@ -21,6 +21,18 @@ spring:
     redis:
       connect-timeout: 3000
       timeout: 3000
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    prometheus:
+      access: read_only
+  prometheus:
+    metrics:
+      export:
+        enabled: true
 ---
 spring:
   config:
@@ -38,14 +50,14 @@ spring:
         jdbc-url: jdbc:mysql://${MYSQL_SOURCE_ADDR:localhost:13306}/brieflyz_subscription?createDatabaseIfNotExist=true
         username: ${mysql.username}
         password: ${mysql.root-password}
-        pool-name: auth-service-source-pool
+        pool-name: subscription-service-source-pool
         maximum-pool-size: 3
         minimum-idle: 1
       replica:
         jdbc-url: jdbc:mysql://${MYSQL_REPLICA_ADDR:localhost:23306}/brieflyz_subscription?createDatabaseIfNotExist=true
         username: ${mysql.username}
         password: ${mysql.root-password}
-        pool-name: auth-service-replica-pool
+        pool-name: subscription-service-replica-pool
         maximum-pool-size: 5
         minimum-idle: 3
         read-only: true

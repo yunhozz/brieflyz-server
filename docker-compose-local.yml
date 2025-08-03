@@ -124,6 +124,9 @@ services:
   kafka-0:
     image: wurstmeister/kafka:latest
     container_name: kafka-0
+    ports:
+      - "9092:9092"
+      - "19092:19092"
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper-0:2181,zookeeper-1:2182,zookeeper-2:2183
@@ -132,9 +135,6 @@ services:
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
-    ports:
-      - "9092:9092"
-      - "19092:19092"
     depends_on:
       - zookeeper-0
       - zookeeper-1
@@ -145,6 +145,9 @@ services:
   kafka-1:
     image: wurstmeister/kafka:latest
     container_name: kafka-1
+    ports:
+      - "9093:9093"
+      - "19093:19093"
     environment:
       KAFKA_BROKER_ID: 2
       KAFKA_ZOOKEEPER_CONNECT: zookeeper-0:2181,zookeeper-1:2182,zookeeper-2:2183
@@ -153,9 +156,6 @@ services:
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
-    ports:
-      - "9093:9093"
-      - "19093:19093"
     depends_on:
       - zookeeper-0
       - zookeeper-1
@@ -166,6 +166,9 @@ services:
   kafka-2:
     image: wurstmeister/kafka:latest
     container_name: kafka-2
+    ports:
+      - "9094:9094"
+      - "19094:19094"
     environment:
       KAFKA_BROKER_ID: 3
       KAFKA_ZOOKEEPER_CONNECT: zookeeper-0:2181,zookeeper-1:2182,zookeeper-2:2183
@@ -174,9 +177,6 @@ services:
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
-    ports:
-      - "9094:9094"
-      - "19094:19094"
     depends_on:
       - zookeeper-0
       - zookeeper-1
@@ -190,9 +190,9 @@ services:
     ports:
       - "10000:8080"
     environment:
-      - KAFKA_CLUSTERS_0_NAME=local
-      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka-0:9092,kafka-1:9093,kafka-2:9094
-      - KAFKA_CLUSTERS_0_ZOOKEEPER=zookeeper:2181
+      KAFKA_CLUSTERS_0_NAME: brieflyz_kafka_clusters
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka-0:19092,kafka-1:19093,kafka-2:19094
+      KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
     depends_on:
       - kafka-0
       - kafka-1
@@ -204,11 +204,11 @@ services:
   mysql-source:
     image: mysql:latest
     container_name: mysql-source
+    ports:
+      - "13306:3306"
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       TZ: Asia/Seoul
-    ports:
-      - "13306:3306"
     volumes:
       - ./conf/mysql/my-source.cnf:/etc/mysql/my.cnf
       - mysql-source-volume:/var/lib/mysql
@@ -218,11 +218,11 @@ services:
   mysql-replica:
     image: mysql:latest
     container_name: mysql-replica
+    ports:
+      - "23306:3306"
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       TZ: Asia/Seoul
-    ports:
-      - "23306:3306"
     volumes:
       - ./conf/mysql/my-replica.cnf:/etc/mysql/my.cnf
       - mysql-replica-volume:/var/lib/mysql
@@ -329,23 +329,35 @@ services:
     networks:
       - backend
 
-#  prometheus:
-#    image: prom/prometheus
-#    container_name: prometheus
-#    ports:
-#      - "19090:9090"
-#    volumes:
-#      - ./conf/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
-#    networks:
-#      - backend
-#
-#  grafana:
-#    image: grafana/grafana
-#    container_name: grafana
-#    ports:
-#      - "13000:3000"
-#    networks:
-#      - backend
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    ports:
+      - "19090:9090"
+    volumes:
+      - ./conf/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    restart: always
+    networks:
+      - backend
+
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    ports:
+      - "13000:3000"
+    command:
+      - sh
+      - -c
+      - chown -R 472:472 /var/lib/grafana
+    volumes:
+      - ./conf/grafana/datasource.yml:/etc/grafana/provisioning/datasources/datasource.yml
+      - ./conf/grafana/dashboards.yml:/etc/grafana/provisioning/dashboards/dashboards.yml
+      - ./conf/grafana/my-dashboard.json:/var/lib/grafana/dashboards/my-dashboard.json
+    depends_on:
+      - prometheus
+    restart: always
+    networks:
+      - backend
 
 volumes:
   mysql-source-volume:

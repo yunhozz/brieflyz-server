@@ -22,6 +22,18 @@ spring:
     redis:
       connect-timeout: 3000
       timeout: 3000
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    prometheus:
+      access: read_only
+  prometheus:
+    metrics:
+      export:
+        enabled: true
 app:
   auth:
     oauth:
