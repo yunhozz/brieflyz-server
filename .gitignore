@@ -5,6 +5,8 @@ HELP.md
 build/
 conf/
 scripts/
+logs/
+core/src/main/resources/
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
 !**/src/test/**/build/
