@@ -20,7 +20,7 @@ services:
       start_period: 60s
     restart: on-failure
     networks:
-      - backend
+      - local
 
   auth-service:
     build:
@@ -46,7 +46,7 @@ services:
       start_period: 60s
     restart: on-failure
     networks:
-      - backend
+      - local
 
   subscription-service:
     build:
@@ -72,7 +72,7 @@ services:
       start_period: 60s
     restart: on-failure
     networks:
-      - backend
+      - local
 
   nginx:
     image: nginx:latest
@@ -86,7 +86,7 @@ services:
       - api-gateway
     restart: always
     networks:
-      - backend
+      - local
 
   zookeeper-0:
     image: zookeeper:latest
@@ -97,7 +97,7 @@ services:
       ZOO_MY_ID: 1
       ZOO_SERVERS: server.1=zookeeper-0:2888:3888;2181 server.2=zookeeper-1:2888:3888;2181 server.3=zookeeper-2:2888:3888;2181
     networks:
-      - backend
+      - local
 
   zookeeper-1:
     image: zookeeper:latest
@@ -108,7 +108,7 @@ services:
       ZOO_MY_ID: 2
       ZOO_SERVERS: server.1=zookeeper-0:2888:3888;2181 server.2=zookeeper-1:2888:3888;2181 server.3=zookeeper-2:2888:3888;2181
     networks:
-      - backend
+      - local
 
   zookeeper-2:
     image: zookeeper:latest
@@ -119,7 +119,7 @@ services:
       ZOO_MY_ID: 3
       ZOO_SERVERS: server.1=zookeeper-0:2888:3888;2181 server.2=zookeeper-1:2888:3888;2181 server.3=zookeeper-2:2888:3888;2181
     networks:
-      - backend
+      - local
 
   kafka-0:
     image: wurstmeister/kafka:latest
@@ -140,7 +140,7 @@ services:
       - zookeeper-1
       - zookeeper-2
     networks:
-      - backend
+      - local
 
   kafka-1:
     image: wurstmeister/kafka:latest
@@ -161,7 +161,7 @@ services:
       - zookeeper-1
       - zookeeper-2
     networks:
-      - backend
+      - local
 
   kafka-2:
     image: wurstmeister/kafka:latest
@@ -182,7 +182,7 @@ services:
       - zookeeper-1
       - zookeeper-2
     networks:
-      - backend
+      - local
 
   kafka-ui:
     image: provectuslabs/kafka-ui
@@ -199,7 +199,7 @@ services:
       - kafka-2
     restart: always
     networks:
-      - backend
+      - local
 
   mysql-source:
     image: mysql:latest
@@ -213,7 +213,7 @@ services:
       - ./conf/mysql/my-source.cnf:/etc/mysql/my.cnf
       - mysql-source-volume:/var/lib/mysql
     networks:
-      - backend
+      - local
 
   mysql-replica:
     image: mysql:latest
@@ -229,7 +229,7 @@ services:
     depends_on:
       - mysql-source
     networks:
-      - backend
+      - local
 
   redis-0:
     image: redis:latest
@@ -248,7 +248,7 @@ services:
       - ./conf/redis/redis-0.conf:/etc/redis.conf
     restart: always
     networks:
-      - backend
+      - local
 
   redis-1:
     image: redis:latest
@@ -261,7 +261,7 @@ services:
       - ./conf/redis/redis-1.conf:/etc/redis.conf
     restart: always
     networks:
-      - backend
+      - local
 
   redis-2:
     image: redis:latest
@@ -274,7 +274,7 @@ services:
       - ./conf/redis/redis-2.conf:/etc/redis.conf
     restart: always
     networks:
-      - backend
+      - local
 
   es-monitoring:
     image: elasticsearch:9.0.2
@@ -289,7 +289,7 @@ services:
       - ./conf/elk/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
       - es-volume:/usr/share/elasticsearch/data
     networks:
-      - backend
+      - local
 
   kibana:
     image: kibana:9.0.2
@@ -301,7 +301,7 @@ services:
     depends_on:
       - es-monitoring
     networks:
-      - backend
+      - local
 
   logstash:
     image: logstash:9.0.2
@@ -315,7 +315,7 @@ services:
     depends_on:
       - es-monitoring
     networks:
-      - backend
+      - local
 
   filebeat:
     image: elastic/filebeat:9.0.2
@@ -327,7 +327,7 @@ services:
     depends_on:
       - logstash
     networks:
-      - backend
+      - local
 
   prometheus:
     image: prom/prometheus
@@ -338,7 +338,7 @@ services:
       - ./conf/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
     restart: always
     networks:
-      - backend
+      - local
 
   grafana:
     image: grafana/grafana
@@ -357,7 +357,7 @@ services:
       - prometheus
     restart: always
     networks:
-      - backend
+      - local
 
   nginx-exporter:
     image: nginx/nginx-prometheus-exporter:latest
@@ -372,7 +372,7 @@ services:
       - prometheus
     restart: always
     networks:
-      - backend
+      - local
 
 volumes:
   mysql-source-volume:
@@ -381,4 +381,4 @@ volumes:
   log-volume:
 
 networks:
-  backend:
+  local:
