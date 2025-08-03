@@ -68,16 +68,8 @@ jobs:
 
       - name: Set up Docker Containers
         run: |
-          DOCKER_COMPOSE_FILE="docker-compose-local.yml"
-          SERVICES_DB="mysql-source mysql-replica redis-0 redis-1 redis-2"
-          SERVICES_MESSAGE="zookeeper-0 zookeeper-1 zookeeper-2 kafka-0 kafka-1 kafka-2"
-          
-          echo "🚀 Starting DB Infra..."
-          docker compose -f $DOCKER_COMPOSE_FILE --env-file .env up -d $SERVICES_DB
-          
-          echo "🚀 Starting Message Queue Infra..."
-          docker compose -f $DOCKER_COMPOSE_FILE up -d $SERVICES_MESSAGE
-          
+          DOCKER_COMPOSE_FILE="docker-compose-test.yml"
+          docker compose -f $DOCKER_COMPOSE_FILE --env-file .env up -d
           sleep 10
           docker compose -f $DOCKER_COMPOSE_FILE ps
 
@@ -189,4 +181,4 @@ jobs:
       - name: Clean up Docker Containers
         if: always()
         run: |
-          docker compose -f docker-compose-local.yml down --volumes --remove-orphans
+          docker compose -f docker-compose-test.yml down --volumes --remove-orphans
