@@ -352,8 +352,23 @@ services:
     volumes:
       - ./conf/grafana/datasource.yml:/etc/grafana/provisioning/datasources/datasource.yml
       - ./conf/grafana/dashboards.yml:/etc/grafana/provisioning/dashboards/dashboards.yml
-      - ./conf/grafana/my-dashboard.json:/var/lib/grafana/dashboards/my-dashboard.json
+      - ./conf/grafana/dashboards/:/var/lib/grafana/dashboards/
     depends_on:
+      - prometheus
+    restart: always
+    networks:
+      - backend
+
+  nginx-exporter:
+    image: nginx/nginx-prometheus-exporter:latest
+    container_name: nginx-exporter
+    ports:
+      - "9113:9113"
+    command:
+      - --nginx.scrape-uri
+      - http://nginx/stub_status
+    depends_on:
+      - nginx
       - prometheus
     restart: always
     networks:
