@@ -1,4 +1,4 @@
-package io.brieflyz.auth_service.config
+package io.brieflyz.subscription_service.config
 
 import com.zaxxer.hikari.HikariDataSource
 import org.springframework.boot.context.properties.ConfigurationProperties

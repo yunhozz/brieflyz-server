@@ -1,4 +1,4 @@
-package io.brieflyz.auth_service.service.component
+package io.brieflyz.auth_service.service.support
 
 import io.brieflyz.core.constants.KafkaTopic
 import io.brieflyz.core.dto.kafka.KafkaMessage

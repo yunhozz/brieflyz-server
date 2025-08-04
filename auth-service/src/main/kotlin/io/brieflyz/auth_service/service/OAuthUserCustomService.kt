@@ -4,7 +4,7 @@ import io.brieflyz.auth_service.common.constants.LoginType
 import io.brieflyz.auth_service.model.entity.Member
 import io.brieflyz.auth_service.model.security.UserDetailsAdapter
 import io.brieflyz.auth_service.repository.MemberRepository
-import io.brieflyz.auth_service.service.component.OAuthProfile
+import io.brieflyz.auth_service.service.support.OAuthProfile
 import io.brieflyz.core.utils.logger
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest

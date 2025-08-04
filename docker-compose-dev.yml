@@ -1,11 +1,27 @@
 services:
+  config-server:
+    image: ghcr.io/yunhozz/config-server:latest
+    container_name: config-server
+    ports:
+      - "8888"
+    environment:
+      CONFIG_PATH: brieflyz/
+    healthcheck:
+      test: [ "CMD-SHELL", "wget -q --spider http://localhost:8888/actuator/health || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+    restart: on-failure
+    networks:
+      - dev
+
   api-gateway:
     build:
       dockerfile: api-gateway/Dockerfile
       context: .
-    image: brieflyz/api-gateway:latest
-    container_name: api-gateway
-    scale: 1
+    image: ${ECR_REGISTRY}/brieflyz/api-gateway:latest
+    scale: 3
     ports:
       - "8000"
     environment:
@@ -18,19 +34,16 @@ services:
       timeout: 5s
       retries: 3
       start_period: 60s
-    depends_on:
-      - auth-service
     restart: on-failure
     networks:
-      - brieflyz-network
+      - dev
 
   auth-service:
     build:
       dockerfile: auth-service/Dockerfile
       context: .
-    image: brieflyz/auth-service:latest
-    container_name: auth-service
-    scale: 1
+    image: ${ECR_REGISTRY}/brieflyz/auth-service:latest
+    scale: 3
     ports:
       - "8090"
     environment:
@@ -46,7 +59,30 @@ services:
       start_period: 60s
     restart: on-failure
     networks:
-      - brieflyz-network
+      - dev
+
+  subscription-service:
+    build:
+      dockerfile: subscription-service/Dockerfile
+      context: .
+    image: ${ECR_REGISTRY}/brieflyz/subscription-service:latest
+    scale: 3
+    ports:
+      - "8070"
+    environment:
+      APPLICATION_PROFILE: dev
+      TZ: Asia/Seoul
+    volumes:
+      - log-volume:/app/logs
+    healthcheck:
+      test: [ "CMD-SHELL", "wget -q --spider http://localhost:8070/actuator/health || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+    restart: on-failure
+    networks:
+      - dev
 
   nginx:
     image: nginx:latest
@@ -60,7 +96,7 @@ services:
       - api-gateway
     restart: always
     networks:
-      - brieflyz-network
+      - dev
 
   zookeeper-0:
     image: zookeeper:latest
@@ -71,7 +107,7 @@ services:
       ZOO_MY_ID: 1
       ZOO_SERVERS: server.1=zookeeper-0:2888:3888;2181 server.2=zookeeper-1:2888:3888;2181 server.3=zookeeper-2:2888:3888;2181
     networks:
-      - brieflyz-network
+      - dev
 
   zookeeper-1:
     image: zookeeper:latest
@@ -82,7 +118,7 @@ services:
       ZOO_MY_ID: 2
       ZOO_SERVERS: server.1=zookeeper-0:2888:3888;2181 server.2=zookeeper-1:2888:3888;2181 server.3=zookeeper-2:2888:3888;2181
     networks:
-      - brieflyz-network
+      - dev
 
   zookeeper-2:
     image: zookeeper:latest
@@ -93,11 +129,14 @@ services:
       ZOO_MY_ID: 3
       ZOO_SERVERS: server.1=zookeeper-0:2888:3888;2181 server.2=zookeeper-1:2888:3888;2181 server.3=zookeeper-2:2888:3888;2181
     networks:
-      - brieflyz-network
+      - dev
 
   kafka-0:
     image: wurstmeister/kafka:latest
     container_name: kafka-0
+    ports:
+      - "9092:9092"
+      - "19092:19092"
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper-0:2181,zookeeper-1:2182,zookeeper-2:2183
@@ -106,19 +145,19 @@ services:
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
-    ports:
-      - "9092:9092"
-      - "19092:19092"
     depends_on:
       - zookeeper-0
       - zookeeper-1
       - zookeeper-2
     networks:
-      - brieflyz-network
+      - dev
 
   kafka-1:
     image: wurstmeister/kafka:latest
     container_name: kafka-1
+    ports:
+      - "9093:9093"
+      - "19093:19093"
     environment:
       KAFKA_BROKER_ID: 2
       KAFKA_ZOOKEEPER_CONNECT: zookeeper-0:2181,zookeeper-1:2182,zookeeper-2:2183
@@ -127,19 +166,19 @@ services:
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
-    ports:
-      - "9093:9093"
-      - "19093:19093"
     depends_on:
       - zookeeper-0
       - zookeeper-1
       - zookeeper-2
     networks:
-      - brieflyz-network
+      - dev
 
   kafka-2:
     image: wurstmeister/kafka:latest
     container_name: kafka-2
+    ports:
+      - "9094:9094"
+      - "19094:19094"
     environment:
       KAFKA_BROKER_ID: 3
       KAFKA_ZOOKEEPER_CONNECT: zookeeper-0:2181,zookeeper-1:2182,zookeeper-2:2183
@@ -148,15 +187,12 @@ services:
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
-    ports:
-      - "9094:9094"
-      - "19094:19094"
     depends_on:
       - zookeeper-0
       - zookeeper-1
       - zookeeper-2
     networks:
-      - brieflyz-network
+      - dev
 
   kafka-ui:
     image: provectuslabs/kafka-ui
@@ -164,46 +200,46 @@ services:
     ports:
       - "10000:8080"
     environment:
-      - KAFKA_CLUSTERS_0_NAME=local
-      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka-0:9092,kafka-1:9093,kafka-2:9094
-      - KAFKA_CLUSTERS_0_ZOOKEEPER=zookeeper:2181
+      KAFKA_CLUSTERS_0_NAME: brieflyz_kafka_clusters
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka-0:19092,kafka-1:19093,kafka-2:19094
+      KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
     depends_on:
       - kafka-0
       - kafka-1
       - kafka-2
     restart: always
     networks:
-      - brieflyz-network
+      - dev
 
   mysql-source:
     image: mysql:latest
     container_name: mysql-source
-    environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD}
-      TZ: Asia/Seoul
     ports:
       - "13306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      TZ: Asia/Seoul
     volumes:
       - ./conf/mysql/my-source.cnf:/etc/mysql/my.cnf
       - mysql-source-volume:/var/lib/mysql
     networks:
-      - brieflyz-network
+      - dev
 
   mysql-replica:
     image: mysql:latest
     container_name: mysql-replica
-    environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD}
-      TZ: Asia/Seoul
     ports:
       - "23306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      TZ: Asia/Seoul
     volumes:
       - ./conf/mysql/my-replica.cnf:/etc/mysql/my.cnf
       - mysql-replica-volume:/var/lib/mysql
     depends_on:
       - mysql-source
     networks:
-      - brieflyz-network
+      - dev
 
   redis-0:
     image: redis:latest
@@ -211,12 +247,18 @@ services:
     ports:
       - "6379:6379"
       - "16379:16379"
-    command: redis-server /etc/redis.conf
+    command: >
+      bash -c "
+        redis-server /etc/redis.conf &
+        sleep 5 &&
+        yes yes | redis-cli --cluster create redis-0:6379 redis-1:6379 redis-2:6379 &&
+        tail -f /dev/null
+      "
     volumes:
       - ./conf/redis/redis-0.conf:/etc/redis.conf
     restart: always
     networks:
-      - brieflyz-network
+      - dev
 
   redis-1:
     image: redis:latest
@@ -229,7 +271,7 @@ services:
       - ./conf/redis/redis-1.conf:/etc/redis.conf
     restart: always
     networks:
-      - brieflyz-network
+      - dev
 
   redis-2:
     image: redis:latest
@@ -242,11 +284,11 @@ services:
       - ./conf/redis/redis-2.conf:/etc/redis.conf
     restart: always
     networks:
-      - brieflyz-network
+      - dev
 
-  es-monitoring:
+  elasticsearch:
     image: elasticsearch:9.0.2
-    container_name: es-monitoring
+    container_name: elasticsearch
     ports:
       - "19200:9200"
       - "19300:9300"
@@ -257,7 +299,7 @@ services:
       - ./conf/elk/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
       - es-volume:/usr/share/elasticsearch/data
     networks:
-      - brieflyz-network
+      - dev
 
   kibana:
     image: kibana:9.0.2
@@ -267,9 +309,9 @@ services:
     volumes:
       - ./conf/elk/kibana.yml:/usr/share/kibana/config/kibana.yml:ro
     depends_on:
-      - es-monitoring
+      - elasticsearch
     networks:
-      - brieflyz-network
+      - dev
 
   logstash:
     image: logstash:9.0.2
@@ -281,9 +323,9 @@ services:
     environment:
       LS_JAVA_OPTS: -Xms256m -Xmx256m
     depends_on:
-      - es-monitoring
+      - elasticsearch
     networks:
-      - brieflyz-network
+      - dev
 
   filebeat:
     image: elastic/filebeat:9.0.2
@@ -295,25 +337,52 @@ services:
     depends_on:
       - logstash
     networks:
-      - brieflyz-network
+      - dev
 
-#  prometheus:
-#    image: prom/prometheus
-#    container_name: prometheus
-#    ports:
-#      - "19090:9090"
-#    volumes:
-#      - ./conf/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
-#    networks:
-#      - brieflyz-network
-#
-#  grafana:
-#    image: grafana/grafana
-#    container_name: grafana
-#    ports:
-#      - "13000:3000"
-#    networks:
-#      - brieflyz-network
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    ports:
+      - "19090:9090"
+    volumes:
+      - ./conf/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    restart: always
+    networks:
+      - dev
+
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    ports:
+      - "13000:3000"
+    command:
+      - sh
+      - -c
+      - chown -R 472:472 /var/lib/grafana
+    volumes:
+      - ./conf/grafana/datasource.yml:/etc/grafana/provisioning/datasources/datasource.yml
+      - ./conf/grafana/dashboards.yml:/etc/grafana/provisioning/dashboards/dashboards.yml
+      - ./conf/grafana/dashboards/:/var/lib/grafana/dashboards/
+    depends_on:
+      - prometheus
+    restart: always
+    networks:
+      - dev
+
+  nginx-prometheus:
+    image: nginx/nginx-prometheus-exporter:latest
+    container_name: nginx-prometheus
+    ports:
+      - "9113:9113"
+    command:
+      - --nginx.scrape-uri
+      - http://nginx/stub_status
+    depends_on:
+      - nginx
+      - prometheus
+    restart: always
+    networks:
+      - dev
 
 volumes:
   mysql-source-volume:
@@ -322,4 +391,4 @@ volumes:
   log-volume:
 
 networks:
-  brieflyz-network:
+  dev:

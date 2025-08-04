@@ -21,6 +21,18 @@ spring:
     redis:
       connect-timeout: 3000
       timeout: 3000
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    prometheus:
+      access: read_only
+  prometheus:
+    metrics:
+      export:
+        enabled: true
 ---
 spring:
   config:
@@ -33,13 +45,40 @@ spring:
     hibernate:
       ddl-auto: create
   datasource:
-    url: jdbc:mysql://localhost:3306/brieflyz?createDatabaseIfNotExist=true
-    username: ${mysql.username}
-    password: ${mysql.root-password}
+    hikari:
+      source:
+        jdbc-url: jdbc:mysql://${MYSQL_SOURCE_ADDR:localhost:13306}/brieflyz_subscription?createDatabaseIfNotExist=true
+        username: ${mysql.username}
+        password: ${mysql.root-password}
+        pool-name: subscription-service-source-pool
+        maximum-pool-size: 3
+        minimum-idle: 1
+      replica:
+        jdbc-url: jdbc:mysql://${MYSQL_REPLICA_ADDR:localhost:23306}/brieflyz_subscription?createDatabaseIfNotExist=true
+        username: ${mysql.username}
+        password: ${mysql.root-password}
+        pool-name: subscription-service-replica-pool
+        maximum-pool-size: 5
+        minimum-idle: 3
+        read-only: true
+  data:
+    redis:
+      cluster:
+        nodes: ${REDIS_CLUSTER_NODES:localhost:6379}
   kafka:
-    bootstrap-servers: localhost:9092
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092,localhost:9093,localhost:9094}
 app:
   subscription:
     kafka:
-      num-of-partitions: 3
-      replication-factor: 1
+      num-of-partitions: 9
+      replication-factor: 3
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+    import: configserver:http://config-server:8888/
+  cloud:
+    config:
+      name: subscription-service
+      profile: dev

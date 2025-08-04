@@ -1,4 +1,4 @@
-package io.brieflyz.auth_service.service.component
+package io.brieflyz.auth_service.service.support
 
 import org.springframework.security.oauth2.client.registration.ClientRegistration
 

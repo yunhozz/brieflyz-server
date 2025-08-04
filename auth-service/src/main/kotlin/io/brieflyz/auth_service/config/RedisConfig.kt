@@ -7,7 +7,6 @@ import org.redisson.spring.data.connection.RedissonConnectionFactory
 import org.springframework.boot.autoconfigure.data.redis.RedisProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.context.annotation.Profile
 import org.springframework.data.redis.core.RedisTemplate
 import org.springframework.data.redis.serializer.StringRedisSerializer
 
@@ -19,25 +18,23 @@ class RedisConfig(
         Redisson.create(Config().apply(config))
 
     @Bean
-    @Profile("local")
-    fun singleRedissonClient(): RedissonClient = createRedisson {
-        useSingleServer().apply {
-            address = "redis://${redisProperties.host}:${redisProperties.port}"
-            connectTimeout = 100
-            timeout = 3000
-            retryAttempts = 3
-        }
-    }
-
-    @Bean
-    @Profile("dev", "prod")
     fun clusterRedissonClient(): RedissonClient = createRedisson {
-        useClusterServers().apply {
-            nodeAddresses = redisProperties.cluster.nodes.map { "redis://$it" }
-            scanInterval = 2000
-            connectTimeout = 100
-            timeout = 3000
-            retryAttempts = 3
+        val nodes = redisProperties.cluster.nodes
+        if (nodes.size == 1) {
+            useSingleServer().apply {
+                address = "redis://${nodes.first()}"
+                connectTimeout = 100
+                timeout = 3000
+                retryAttempts = 3
+            }
+        } else {
+            useClusterServers().apply {
+                nodeAddresses = nodes.map { "redis://$it" }
+                scanInterval = 2000
+                connectTimeout = 100
+                timeout = 3000
+                retryAttempts = 3
+            }
         }
     }
 
