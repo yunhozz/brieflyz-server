@@ -18,7 +18,7 @@ import io.brieflyz.subscription_service.model.entity.Subscription
 import io.brieflyz.subscription_service.repository.PaymentDetailsRepository
 import io.brieflyz.subscription_service.repository.PaymentRepository
 import io.brieflyz.subscription_service.repository.SubscriptionRepository
-import io.brieflyz.subscription_service.service.component.PaymentDetailsFactory
+import io.brieflyz.subscription_service.service.support.PaymentDetailsFactory
 import org.springframework.data.domain.Pageable
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.scheduling.annotation.EnableScheduling
