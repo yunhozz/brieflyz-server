@@ -276,9 +276,9 @@ services:
     networks:
       - local
 
-  es-monitoring:
+  elasticsearch:
     image: elasticsearch:9.0.2
-    container_name: es-monitoring
+    container_name: elasticsearch
     ports:
       - "19200:9200"
       - "19300:9300"
@@ -299,7 +299,7 @@ services:
     volumes:
       - ./conf/elk/kibana.yml:/usr/share/kibana/config/kibana.yml:ro
     depends_on:
-      - es-monitoring
+      - elasticsearch
     networks:
       - local
 
@@ -313,7 +313,7 @@ services:
     environment:
       LS_JAVA_OPTS: -Xms256m -Xmx256m
     depends_on:
-      - es-monitoring
+      - elasticsearch
     networks:
       - local
 
@@ -359,9 +359,9 @@ services:
     networks:
       - local
 
-  nginx-exporter:
+  nginx-prometheus:
     image: nginx/nginx-prometheus-exporter:latest
-    container_name: nginx-exporter
+    container_name: nginx-prometheus
     ports:
       - "9113:9113"
     command:
