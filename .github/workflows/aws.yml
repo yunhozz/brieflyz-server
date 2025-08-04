@@ -1,9 +1,7 @@
 name: CD - Deploy to AWS ECR & ECS
 
 on:
-#  push:
-#    branches: [ develop ]
-  pull_request:
+  push:
     branches: [ develop ]
 
 env:
@@ -15,7 +13,7 @@ permissions:
 
 jobs:
   filter:
-    name: Filter Changed Modules
+    name: Filter Updated Modules
     runs-on: ubuntu-latest
     outputs:
       api-gateway: ${{ steps.filter.outputs.api-gateway }}
