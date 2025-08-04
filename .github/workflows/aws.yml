@@ -11,9 +11,11 @@ env:
 
 permissions:
   contents: read
+  pull-requests: read
 
 jobs:
   filter:
+    name: Filter Changed Modules
     runs-on: ubuntu-latest
     outputs:
       api-gateway: ${{ steps.filter.outputs.api-gateway }}
