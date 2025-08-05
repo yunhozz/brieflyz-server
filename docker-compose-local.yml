@@ -231,6 +231,40 @@ services:
     networks:
       - local
 
+  pg-source:
+    image: postgres:latest
+    container_name: pg-source
+    ports:
+      - "15432:5432"
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    command:
+      - postgres
+      - -c
+      - config_file=/etc/postgresql/postgresql.conf
+    volumes:
+      - ./conf/postgres/postgres.conf:/etc/postgresql/postgresql.conf
+      - ./conf/postgres/pg_hba.conf:/etc/postgresql/pg_hba.conf
+      - pg-source-volume:/var/lib/postgresql/data
+    restart: always
+    networks:
+      - local
+
+  pg-replica:
+    image: postgres:latest
+    container_name: pg-replica
+    ports:
+      - "25432:5432"
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - pg-replica-volume:/var/lib/postgresql/data
+    depends_on:
+      - pg-source
+    restart: always
+    networks:
+      - local
+
   redis-0:
     image: redis:latest
     container_name: redis-0
@@ -377,6 +411,8 @@ services:
 volumes:
   mysql-source-volume:
   mysql-replica-volume:
+  pg-source-volume:
+  pg-replica-volume:
   es-volume:
   log-volume:
 
