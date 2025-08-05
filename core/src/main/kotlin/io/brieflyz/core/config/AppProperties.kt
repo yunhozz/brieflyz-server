@@ -32,6 +32,17 @@ data class SubscriptionServiceProperties(
     )
 }
 
+@ConfigurationProperties(prefix = "app.ai")
+@EnableConfigurationProperties(AiServiceProperties::class)
+data class AiServiceProperties(
+    val kafka: KafkaProperties? = null
+) {
+    data class KafkaProperties(
+        val numOfPartitions: Int = 0,
+        val replicationFactor: Short = 0
+    )
+}
+
 @ConfigurationProperties(prefix = "jwt")
 @EnableConfigurationProperties(JwtProperties::class)
 data class JwtProperties(
