@@ -48,6 +48,7 @@ subprojects {
         implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
         // Test
         testImplementation("org.springframework.boot:spring-boot-starter-test")
+        testImplementation("org.springframework.kafka:spring-kafka-test")
         testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
         testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test")
         testRuntimeOnly("org.junit.platform:junit-platform-launcher")
@@ -87,8 +88,3 @@ subprojects {
 tasks.named<BootJar>("bootJar") {
     enabled = false
 }
-
-project(":core")
-project(":api-gateway")
-project(":auth-service")
-project(":subscription-service")
