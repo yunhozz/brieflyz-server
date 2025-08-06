@@ -4,7 +4,6 @@ import io.brieflyz.auth_service.common.security.OAuthAuthenticationFailureHandle
 import io.brieflyz.auth_service.common.security.OAuthAuthenticationSuccessHandler
 import io.brieflyz.auth_service.common.security.OAuthAuthorizationRequestCookieRepository
 import io.brieflyz.auth_service.service.OAuthUserCustomService
-import io.brieflyz.core.config.AuthServiceProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.security.config.annotation.web.builders.HttpSecurity

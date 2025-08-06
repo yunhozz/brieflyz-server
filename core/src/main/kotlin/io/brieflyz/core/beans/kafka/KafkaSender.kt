@@ -1,4 +1,4 @@
-package io.brieflyz.core.component
+package io.brieflyz.core.beans.kafka
 
 import io.brieflyz.core.dto.kafka.KafkaMessage
 import io.brieflyz.core.utils.logger

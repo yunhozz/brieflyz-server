@@ -1,4 +1,4 @@
-package io.brieflyz.core.config
+package io.brieflyz.core.beans.mapper
 
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper

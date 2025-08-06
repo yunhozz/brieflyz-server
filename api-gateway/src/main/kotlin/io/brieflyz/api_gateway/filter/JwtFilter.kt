@@ -1,7 +1,7 @@
 package io.brieflyz.api_gateway.filter
 
 import io.brieflyz.api_gateway.exception.JwtTokenNotValidException
-import io.brieflyz.core.component.JwtManager
+import io.brieflyz.core.beans.jwt.JwtManager
 import io.brieflyz.core.utils.logger
 import org.springframework.http.HttpHeaders
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken

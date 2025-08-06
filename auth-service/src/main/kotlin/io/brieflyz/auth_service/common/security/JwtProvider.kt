@@ -2,7 +2,7 @@ package io.brieflyz.auth_service.common.security
 
 import io.brieflyz.auth_service.common.exception.JwtTokenNotValidException
 import io.brieflyz.auth_service.model.security.CustomUserDetails
-import io.brieflyz.core.component.JwtManager
+import io.brieflyz.core.beans.jwt.JwtManager
 import io.brieflyz.core.utils.logger
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.SignatureAlgorithm
@@ -32,7 +32,7 @@ class JwtProvider(
         val roles = rolesStr.split("|")
 
         val secretKey = jwtManager.getEncryptedSecretKey()
-        val (_, tokenType, accessTokenValidTime, refreshTokenValidTime) = jwtManager.jwtProperties
+        val (_, tokenType, accessTokenValidTime, refreshTokenValidTime) = jwtManager.getProperties()
 
         val accessToken = createToken(secretKey, username, roles, now, accessTokenValidTime)
         val refreshToken = createToken(secretKey, username, roles, now, refreshTokenValidTime)
