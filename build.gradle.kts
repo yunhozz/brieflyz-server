@@ -34,6 +34,7 @@ subprojects {
         developmentOnly("org.springframework.boot:spring-boot-devtools")
         // Kafka
         implementation("org.springframework.kafka:spring-kafka")
+        implementation("io.projectreactor.kafka:reactor-kafka:1.3.19")
         // JWT
         implementation("io.jsonwebtoken:jjwt-api:0.11.5")
         runtimeOnly("io.jsonwebtoken:jjwt-impl:0.11.5")

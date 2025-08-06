@@ -1,4 +1,4 @@
-package io.brieflyz.core.config
+package io.brieflyz.core.beans.kafka
 
 import io.brieflyz.core.dto.kafka.KafkaMessage
 import org.apache.kafka.clients.consumer.ConsumerConfig
@@ -16,12 +16,14 @@ import org.springframework.kafka.core.DefaultKafkaConsumerFactory
 import org.springframework.kafka.core.DefaultKafkaProducerFactory
 import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.kafka.core.ProducerFactory
+import org.springframework.kafka.core.reactive.ReactiveKafkaProducerTemplate
 import org.springframework.kafka.listener.ContainerProperties
 import org.springframework.kafka.listener.DeadLetterPublishingRecoverer
 import org.springframework.kafka.listener.DefaultErrorHandler
 import org.springframework.kafka.support.serializer.JsonDeserializer
 import org.springframework.kafka.support.serializer.JsonSerializer
 import org.springframework.util.backoff.FixedBackOff
+import reactor.kafka.sender.SenderOptions
 
 @Configuration
 @EnableKafka
@@ -31,6 +33,10 @@ class KafkaConfig(
 ) {
     @Bean
     fun kafkaTemplate(): KafkaTemplate<String, KafkaMessage> = KafkaTemplate(kafkaProducerFactory())
+
+    @Bean
+    fun reactiveKafkaProducerTemplate(): ReactiveKafkaProducerTemplate<String, KafkaMessage> =
+        ReactiveKafkaProducerTemplate(SenderOptions.create(kafkaProducerProperties()))
 
     @Bean
     fun kafkaProducerFactory(): ProducerFactory<String, KafkaMessage> =
