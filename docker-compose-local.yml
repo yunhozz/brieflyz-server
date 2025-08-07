@@ -408,6 +408,17 @@ services:
     networks:
       - local
 
+  ollama:
+    image: ollama/ollama
+    container_name: ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-model-volume:/root/.ollama
+    restart: always
+    networks:
+      - local
+
 volumes:
   mysql-source-volume:
   mysql-replica-volume:
@@ -415,6 +426,7 @@ volumes:
   pg-replica-volume:
   es-volume:
   log-volume:
+  ollama-model-volume:
 
 networks:
   local:

@@ -41,7 +41,7 @@ spring:
           model: ${groq.model}
     ollama:
       chat:
-        model: llama3.3
+        model: ${ollama.model}
   r2dbc:
     source:
       url: r2dbc:postgresql://${POSTGRESQL_SOURCE_ADDR:localhost:15432}/brieflyz_ai?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Seoul
