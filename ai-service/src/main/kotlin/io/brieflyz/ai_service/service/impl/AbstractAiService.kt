@@ -1,7 +1,8 @@
-package io.brieflyz.ai_service.service
+package io.brieflyz.ai_service.service.impl
 
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
+import io.brieflyz.ai_service.service.AiService
 import io.brieflyz.core.utils.logger
 import reactor.core.publisher.Mono
 

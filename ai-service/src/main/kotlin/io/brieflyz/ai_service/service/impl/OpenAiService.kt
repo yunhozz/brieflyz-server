@@ -2,7 +2,6 @@ package io.brieflyz.ai_service.service.impl
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.brieflyz.ai_service.common.enums.AiProvider
-import io.brieflyz.ai_service.service.AbstractAiService
 import org.springframework.ai.chat.messages.UserMessage
 import org.springframework.ai.chat.prompt.Prompt
 import org.springframework.ai.openai.OpenAiChatModel

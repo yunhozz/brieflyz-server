@@ -1,4 +1,4 @@
-package io.brieflyz.ai_service.service.component
+package io.brieflyz.ai_service.service.support
 
 import io.brieflyz.ai_service.common.enums.AiProvider
 import io.brieflyz.ai_service.service.AiService
