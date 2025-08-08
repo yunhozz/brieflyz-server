@@ -10,15 +10,17 @@ data class DocumentResponse private constructor(
     val fileName: String? = null,
     val fileUrl: String? = null,
     val downloadUrl: String? = null,
-    val status: DocumentStatus? = null,
+    val status: DocumentStatus,
     val createdAt: LocalDateTime? = null,
     val errorMessage: String? = null
 ) {
     companion object {
-        fun forProcessing(documentId: String, title: String) = DocumentResponse(
-            documentId,
-            title
-        )
+        fun forProcessing(documentId: String, title: String) =
+            DocumentResponse(
+                documentId,
+                title,
+                status = DocumentStatus.PROCESSING
+            )
 
         fun forCompleted(documentId: String, title: String, fileName: String, fileUrl: String, downloadUrl: String) =
             DocumentResponse(
@@ -26,14 +28,17 @@ data class DocumentResponse private constructor(
                 title,
                 fileName,
                 fileUrl,
-                downloadUrl
+                downloadUrl,
+                status = DocumentStatus.COMPLETED
             )
 
-        fun forFailed(documentId: String, title: String, errorMessage: String) = DocumentResponse(
-            documentId,
-            title,
-            errorMessage
-        )
+        fun forFailed(documentId: String, title: String, errorMessage: String) =
+            DocumentResponse(
+                documentId,
+                title,
+                errorMessage,
+                status = DocumentStatus.FAILED
+            )
     }
 
     enum class DocumentStatus {
