@@ -1,14 +1,15 @@
-package io.brieflyz.ai_service.service.impl
+package io.brieflyz.ai_service.service.ai.impl
 
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
-import io.brieflyz.ai_service.service.AiService
+import io.brieflyz.ai_service.service.ai.AiStructureGenerator
 import io.brieflyz.core.utils.logger
+import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 
-abstract class AbstractAiService(
+abstract class AbstractAiStructureGenerator(
     private val objectMapper: ObjectMapper
-) : AiService {
+) : AiStructureGenerator {
 
     private val log = logger()
 
@@ -20,27 +21,7 @@ abstract class AbstractAiService(
             "{\"slide1\": {\"title\": \"슬라이드1 제목\", \"content\": \"슬라이드1 내용\", \"notes\": \"슬라이드1 메모\"}, \"slide2\": {...}}"
     }
 
-    override fun generateStructuredContent(prompt: String, outputFormat: String): Mono<Map<String, Any>> {
-        val structuredPrompt = buildString {
-            appendLine(prompt)
-            appendLine("반환 형식은 정확한 JSON이어야 하며 다음과 같아야 합니다: $outputFormat")
-            appendLine("반드시 중괄호로 시작하고 중괄호로 끝나는 유효한 JSON 객체만 출력하세요.")
-            appendLine("다른 텍스트나 설명 없이 JSON 데이터만 출력하세요. 코드블럭(```json)은 포함하지 마세요.")
-        }
-
-        log.debug("Generating structured content with prompt:\n$structuredPrompt")
-
-        return generateContent(structuredPrompt)
-            .collectList()
-            .map { word ->
-                val content = word.joinToString("").trim()
-                    .removeSurrounding("```json", "```")
-                    .removeSurrounding("```", "```")
-                    .replace(Regex(",\\s*([}\\]])"), "$1") // 마지막 쉼표 제거
-                log.debug("Content created by AI:\n$content")
-                objectMapper.readValue(content, object : TypeReference<Map<String, Any>>() {})
-            }
-    }
+    abstract fun generateContent(prompt: String): Flux<String> // Generate stream of content by AI
 
     override fun generateDocumentStructure(title: String, sections: List<String>): Mono<Map<String, String>> {
         val prompt = buildString {
@@ -99,5 +80,27 @@ abstract class AbstractAiService(
                     ?.mapValues { it.value?.toString() ?: "" }
             }
         }
+    }
+
+    private fun generateStructuredContent(prompt: String, outputFormat: String): Mono<Map<String, Any>> {
+        val structuredPrompt = buildString {
+            appendLine(prompt)
+            appendLine("반환 형식은 정확한 JSON이어야 하며 다음과 같아야 합니다: $outputFormat")
+            appendLine("반드시 중괄호로 시작하고 중괄호로 끝나는 유효한 JSON 객체만 출력하세요.")
+            appendLine("다른 텍스트나 설명 없이 JSON 데이터만 출력하세요. 코드블럭(```json)은 포함하지 마세요.")
+        }
+
+        log.debug("Generating structured content with prompt:\n$structuredPrompt")
+
+        return generateContent(structuredPrompt)
+            .collectList()
+            .map { words ->
+                val content = words.joinToString("").trim()
+                    .removeSurrounding("```json", "```")
+                    .removeSurrounding("```", "```")
+                    .replace(Regex(",\\s*([}\\]])"), "$1") // 마지막 쉼표 제거
+                log.debug("Content created by AI:\n$content")
+                objectMapper.readValue(content, object : TypeReference<Map<String, Any>>() {})
+            }
     }
 }

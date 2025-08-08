@@ -1,4 +1,4 @@
-package io.brieflyz.ai_service.service.impl
+package io.brieflyz.ai_service.service.ai.impl
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.brieflyz.ai_service.common.enums.AiProvider
@@ -6,14 +6,14 @@ import io.brieflyz.core.utils.logger
 import org.springframework.ai.chat.messages.UserMessage
 import org.springframework.ai.chat.prompt.Prompt
 import org.springframework.ai.ollama.OllamaChatModel
-import org.springframework.stereotype.Service
+import org.springframework.stereotype.Component
 import reactor.core.publisher.Flux
 
-@Service
-class OllamaAiService(
+@Component
+class OllamaAiStructureGenerator(
     private val ollamaChatModel: OllamaChatModel,
     objectMapper: ObjectMapper
-) : AbstractAiService(objectMapper) {
+) : AbstractAiStructureGenerator(objectMapper) {
 
     private val log = logger()
 
