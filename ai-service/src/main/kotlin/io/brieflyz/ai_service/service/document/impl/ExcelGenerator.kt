@@ -19,6 +19,10 @@ import reactor.core.publisher.Mono
 import reactor.core.scheduler.Schedulers
 import java.io.FileOutputStream
 import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import java.util.UUID
 
 @Component
@@ -35,7 +39,7 @@ class ExcelGenerator(
         val documentId = UUID.randomUUID().toString()
 
         val title = request.title
-        val outputPath = createFilePath(title, "temp/excel")
+        val outputPath = createFilePath(title)
 
         log.debug("Output path: {}", outputPath)
 
@@ -49,10 +53,10 @@ class ExcelGenerator(
                         sheetData.forEach { (sheetName, rows) ->
                             val sheet = workbook.createSheet(sheetName)
 
-                            for ((i, cells) in rows.withIndex()) {
+                            rows.forEachIndexed { i, cells ->
                                 val row = sheet.createRow(i)
 
-                                for ((j, cellValue) in cells.withIndex()) {
+                                cells.forEachIndexed { j, cellValue ->
                                     val cell = row.createCell(j)
                                     cell.setCellValue(cellValue)
                                     cell.cellStyle = if (i == 0) headerStyle else defaultCellStyle
@@ -121,5 +125,11 @@ class ExcelGenerator(
             borderRight = BorderStyle.THIN
             setFont(xssfFont)
         }
+    }
+
+    private fun createFilePath(title: String): Path {
+        val titleName = title.replace(Regex("[^a-zA-Z0-9가-힣]"), "_")
+        val timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"))
+        return Paths.get("docs/excel", "${titleName}_$timestamp.xlsx")
     }
 }

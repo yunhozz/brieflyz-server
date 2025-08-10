@@ -16,6 +16,10 @@ import reactor.core.scheduler.Schedulers
 import java.awt.Color
 import java.io.FileOutputStream
 import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import java.util.UUID
 
 @Component
@@ -32,7 +36,7 @@ class PowerPointGenerator(
         val documentId = UUID.randomUUID().toString()
 
         val title = request.title
-        val outputPath = createFilePath(title, "temp/ppt")
+        val outputPath = createFilePath(title)
 
         log.debug("Output path: {}", outputPath)
 
@@ -66,26 +70,27 @@ class PowerPointGenerator(
                             val slide = ppt.createSlide(titleAndContentLayout)
                             val titlePlaceholder = slide.getPlaceholder(0)
 
-                            if (titlePlaceholder != null) {
-                                titlePlaceholder.text = slideTitle
-                                titlePlaceholder.fillColor = Color(240, 240, 240)
-
-                                titlePlaceholder.textParagraphs.firstOrNull()?.textRuns?.firstOrNull()?.apply {
-                                    fontSize = 32.0
-                                    fontFamily = "맑은 고딕"
-                                    isBold = true
-                                    setFontColor(Color(44, 62, 80))
-                                }
+                            titlePlaceholder?.let { title ->
+                                title.text = slideTitle
+                                title.fillColor = Color(240, 240, 240)
+                                title.textParagraphs.firstOrNull()
+                                    ?.textRuns?.firstOrNull()
+                                    ?.apply {
+                                        fontSize = 32.0
+                                        fontFamily = "맑은 고딕"
+                                        isBold = true
+                                        setFontColor(Color(44, 62, 80))
+                                    }
                             }
 
                             val contentPlaceholder = slide.getPlaceholder(1)
 
-                            if (contentPlaceholder != null) {
-                                contentPlaceholder.clearText()
+                            contentPlaceholder?.let { content ->
+                                content.clearText()
                                 val lines = slideContent.split("\n")
 
-                                for (line in lines) {
-                                    val paragraph = contentPlaceholder.addNewTextParagraph()
+                                lines.forEach { line ->
+                                    val paragraph = content.addNewTextParagraph()
                                     val run = paragraph.addNewTextRun()
 
                                     run.setText(line)
@@ -99,12 +104,12 @@ class PowerPointGenerator(
                                 val notesShape = notes.getPlaceholder(1)
                                 notesShape.text = slideNotes
                             }
+                        }
 
-                            Files.createDirectories(outputPath.parent)
+                        Files.createDirectories(outputPath.parent)
 
-                            FileOutputStream(outputPath.toFile()).use { fos ->
-                                ppt.write(fos)
-                            }
+                        FileOutputStream(outputPath.toFile()).use { fos ->
+                            ppt.write(fos)
                         }
                     }
                 }.subscribeOn(Schedulers.boundedElastic())
@@ -113,5 +118,11 @@ class PowerPointGenerator(
                 Mono.just(DocumentResponse.forProcessing(documentId, title))
                     .doOnNext { log.info("Processing document info: $it") }
             }
+    }
+
+    private fun createFilePath(title: String): Path {
+        val titleName = title.replace(Regex("[^a-zA-Z0-9가-힣]"), "_")
+        val timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"))
+        return Paths.get("docs/ppt", "${titleName}_$timestamp.pptx")
     }
 }
