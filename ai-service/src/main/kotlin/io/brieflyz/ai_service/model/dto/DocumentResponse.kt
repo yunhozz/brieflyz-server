@@ -1,49 +1,18 @@
 package io.brieflyz.ai_service.model.dto
 
 import com.fasterxml.jackson.annotation.JsonInclude
+import io.brieflyz.ai_service.common.enums.DocumentStatus
 import java.time.LocalDateTime
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-data class DocumentResponse private constructor(
-    val documentId: String,
+data class DocumentResponse(
+    val documentId: String?,
     val title: String,
-    val fileName: String? = null,
-    val fileUrl: String? = null,
-    val downloadUrl: String? = null,
+    val fileName: String?,
+    val fileUrl: String?,
+    val downloadUrl: String?,
     val status: DocumentStatus,
-    val createdAt: LocalDateTime? = null,
-    val errorMessage: String? = null
-) {
-    companion object {
-        fun forProcessing(documentId: String, title: String) =
-            DocumentResponse(
-                documentId,
-                title,
-                status = DocumentStatus.PROCESSING
-            )
-
-        fun forCompleted(documentId: String, title: String, fileName: String, fileUrl: String, downloadUrl: String) =
-            DocumentResponse(
-                documentId,
-                title,
-                fileName,
-                fileUrl,
-                downloadUrl,
-                status = DocumentStatus.COMPLETED
-            )
-
-        fun forFailed(documentId: String, title: String, errorMessage: String) =
-            DocumentResponse(
-                documentId,
-                title,
-                errorMessage,
-                status = DocumentStatus.FAILED
-            )
-    }
-
-    enum class DocumentStatus {
-        PROCESSING,
-        COMPLETED,
-        FAILED
-    }
-}
+    val errorMessage: String?,
+    val createdAt: LocalDateTime?,
+    val updatedAt: LocalDateTime?
+)

@@ -1,9 +1,10 @@
 package io.brieflyz.ai_service.service.document.impl
 
 import io.brieflyz.ai_service.common.enums.AiProvider
-import io.brieflyz.ai_service.model.dto.DocumentResponse
+import io.brieflyz.ai_service.model.entity.Document
 import io.brieflyz.ai_service.service.ai.AiStructureGeneratorFactory
 import io.brieflyz.ai_service.service.document.DocumentGenerator
+import io.brieflyz.ai_service.service.document.DocumentManager
 import io.brieflyz.core.constants.DocumentType
 import io.brieflyz.core.dto.kafka.DocumentRequestMessage
 import io.brieflyz.core.utils.logger
@@ -24,14 +25,15 @@ import java.util.UUID
 
 @Component
 class PowerPointGenerator(
-    private val aiStructureGeneratorFactory: AiStructureGeneratorFactory
+    private val aiStructureGeneratorFactory: AiStructureGeneratorFactory,
+    private val documentManager: DocumentManager
 ) : DocumentGenerator {
 
     private val log = logger()
 
     override fun getDocumentType() = DocumentType.POWERPOINT
 
-    override fun generateDocument(aiProvider: AiProvider, request: DocumentRequestMessage): Mono<DocumentResponse> {
+    override fun generateDocument(aiProvider: AiProvider, request: DocumentRequestMessage): Mono<Void> {
         val aiStructureGenerator = aiStructureGeneratorFactory.createByProvider(aiProvider)
         val documentId = UUID.randomUUID().toString()
 
@@ -42,7 +44,7 @@ class PowerPointGenerator(
 
         return aiStructureGenerator.generatePptStructure(title, request.content)
             .flatMap { slides ->
-                Mono.fromCallable {
+                val createFileMono = Mono.fromCallable {
                     XMLSlideShow().use { ppt ->
                         val defaultMaster = ppt.slideMasters[0]
                         val titleLayout = defaultMaster.getLayout(SlideLayout.TITLE)
@@ -107,16 +109,24 @@ class PowerPointGenerator(
                         }
 
                         Files.createDirectories(outputPath.parent)
+                        FileOutputStream(outputPath.toFile()).use { ppt.write(it) }
 
-                        FileOutputStream(outputPath.toFile()).use { fos ->
-                            ppt.write(fos)
-                        }
+                        // TODO: 파일 생성 완료 시 문서 정보 DB 업데이트
                     }
                 }.subscribeOn(Schedulers.boundedElastic())
-            }.flatMap {
-                // TODO: 문서 상태 DB 저장
-                Mono.just(DocumentResponse.forProcessing(documentId, title))
-                    .doOnNext { log.info("Processing document info: $it") }
+
+                val saveDocumentMono = Mono.fromCallable {
+                    Document.forProcessing(documentId, title)
+                }.flatMap { documentManager.save(it) }
+
+                // 파일 생성과 DB 저장 병렬 실행
+                Mono.`when`(createFileMono, saveDocumentMono)
+            }
+            .onErrorResume { ex ->
+                val errorMessage = ex.message
+                log.error("Failed to generate PPT: $errorMessage", ex)
+                val failedDocument = Document.forFailed(documentId, title, errorMessage ?: "FAIL")
+                documentManager.save(failedDocument).then()
             }
     }
 
