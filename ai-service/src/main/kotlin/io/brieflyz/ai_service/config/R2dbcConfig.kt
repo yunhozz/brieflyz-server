@@ -1,5 +1,6 @@
 package io.brieflyz.ai_service.config
 
+import io.brieflyz.core.utils.logger
 import io.r2dbc.pool.ConnectionPool
 import io.r2dbc.pool.ConnectionPoolConfiguration
 import io.r2dbc.spi.ConnectionFactory
@@ -8,17 +9,21 @@ import org.springframework.boot.r2dbc.ConnectionFactoryBuilder
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Primary
+import org.springframework.data.r2dbc.config.EnableR2dbcAuditing
 import org.springframework.r2dbc.connection.R2dbcTransactionManager
 import org.springframework.r2dbc.connection.TransactionAwareConnectionFactoryProxy
 import org.springframework.r2dbc.connection.lookup.AbstractRoutingConnectionFactory
 import org.springframework.transaction.ReactiveTransactionManager
+import org.springframework.transaction.annotation.EnableTransactionManagement
 import org.springframework.transaction.reactive.TransactionSynchronizationManager
 import reactor.core.publisher.Mono
 
 @Configuration
+@EnableR2dbcAuditing
+@EnableTransactionManagement
 class R2dbcConfig {
 
-    private enum class DataSourceType {
+    enum class DataSourceType {
         SOURCE,
         REPLICA
     }
@@ -53,13 +58,20 @@ class R2dbcConfig {
     @Bean
     @Primary
     fun routingConnectionFactory(): ConnectionFactory = object : AbstractRoutingConnectionFactory() {
+        private val log = logger()
+
         override fun determineCurrentLookupKey(): Mono<in Any> =
-            TransactionSynchronizationManager.forCurrentTransaction().map { txManager ->
-                when (txManager.isCurrentTransactionReadOnly) {
-                    true -> DataSourceType.REPLICA
-                    false -> DataSourceType.SOURCE
+            TransactionSynchronizationManager.forCurrentTransaction()
+                .map { txManager ->
+                    log.debug("Current transaction name: ${txManager.currentTransactionName}")
+                    log.debug("Actual transaction active: ${txManager.isActualTransactionActive}")
+                    log.debug("Current transaction read-only: ${txManager.isCurrentTransactionReadOnly}")
+
+                    when (txManager.isCurrentTransactionReadOnly) {
+                        true -> DataSourceType.REPLICA
+                        false -> DataSourceType.SOURCE
+                    }
                 }
-            }
     }.apply {
         setLenientFallback(true)
         setDefaultTargetConnectionFactory(sourceConnectionFactory())
@@ -89,6 +101,9 @@ class R2dbcConfig {
             .maxSize(pool.maxSize)
             .build()
 
-        return ConnectionPool(poolConfiguration)
+        val connectionPool = ConnectionPool(poolConfiguration)
+        connectionPool.warmup().block()
+
+        return connectionPool
     }
 }

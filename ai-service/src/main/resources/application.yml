@@ -48,17 +48,17 @@ spring:
       username: ${postgresql.username}
       password: ${postgresql.password}
       pool:
-        initial-size: 3
-        min-idle: 1
-        max-size: 3
+        initial-size: 5
+        min-idle: 3
+        max-size: 5
     replica:
       url: r2dbc:postgresql://${POSTGRESQL_REPLICA_ADDR:localhost:25432}/brieflyz_ai?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Seoul
       username: ${postgresql.username}
       password: ${postgresql.password}
       pool:
-        initial-size: 5
-        min-idle: 3
-        max-size: 5
+        initial-size: 10
+        min-idle: 5
+        max-size: 10
 #  data:
 #    redis:
 #      cluster:
