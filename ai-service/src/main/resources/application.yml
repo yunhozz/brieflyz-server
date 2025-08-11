@@ -59,10 +59,10 @@ spring:
         initial-size: 10
         min-idle: 5
         max-size: 10
-#  data:
-#    redis:
-#      cluster:
-#        nodes: ${REDIS_CLUSTER_NODES:localhost:6379}
+  data:
+    redis:
+      cluster:
+        nodes: ${REDIS_CLUSTER_NODES:localhost:6379}
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092,localhost:9093,localhost:9094}
 app:
