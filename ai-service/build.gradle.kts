@@ -14,6 +14,8 @@ dependencies {
     // PostgreSQL
     runtimeOnly("org.postgresql:postgresql")
     runtimeOnly("org.postgresql:r2dbc-postgresql")
+    // Redisson
+    implementation("org.redisson:redisson-spring-boot-starter:3.50.0")
     // Excel POI
     implementation("org.apache.poi:poi:5.4.1")
     implementation("org.apache.poi:poi-ooxml:5.4.1")
