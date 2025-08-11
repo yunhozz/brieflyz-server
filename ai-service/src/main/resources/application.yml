@@ -24,6 +24,9 @@ management:
     metrics:
       export:
         enabled: true
+  health:
+    r2dbc:
+      enabled: false
 ---
 spring:
   config:
