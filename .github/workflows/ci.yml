@@ -58,16 +58,18 @@ jobs:
           echo "${{ secrets.ENV }}" > .env
           
           mkdir -p core/src/main/resources
-          echo "${{ secrets.APPLICATION_PROPERTIES }}" > core/src/main/resources/application.properties
+          echo "${{ secrets.APPLICATION_PROPERTIES }}" > ./core/src/main/resources/application.properties
           
           mkdir -p conf/mysql
-          echo "${{ secrets.MY_SOURCE_CNF }}" > conf/mysql/my-source.cnf
-          echo "${{ secrets.MY_REPLICA_CNF }}" > conf/mysql/my-replica.cnf
+          echo "${{ secrets.MY_SOURCE_CNF }}" > ./conf/mysql/my-source.cnf
+          echo "${{ secrets.MY_REPLICA_CNF }}" > ./conf/mysql/my-replica.cnf
           
           mkdir -p conf/redis
-          echo "${{ secrets.REDIS_CONF }}" > conf/redis/redis-0.conf
-          echo "${{ secrets.REDIS_CONF }}" > conf/redis/redis-1.conf
-          echo "${{ secrets.REDIS_CONF }}" > conf/redis/redis-2.conf
+          echo "${{ secrets.REDIS_CONF }}" > ./conf/redis/redis-0.conf
+          
+          mkdir -p conf/postgres
+          echo "${{ secrets.POSTGRES_CONF }}" > ./conf/postgres/postgres.conf
+          echo "${{ secrets.PG_HBA_CONF }}" > ./conf/postgres/pg_hba.conf
 
       - name: Set up Docker Containers
         run: |

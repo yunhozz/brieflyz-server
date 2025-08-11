@@ -123,47 +123,45 @@ services:
     networks:
       - test
 
+  pg-source:
+    image: postgres:latest
+    container_name: pg-source
+    ports:
+      - "15432:5432"
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    command:
+      - postgres
+      - -c
+      - config_file=/etc/postgresql/postgresql.conf
+    volumes:
+      - ./conf/postgres/postgres.conf:/etc/postgresql/postgresql.conf
+      - ./conf/postgres/pg_hba.conf:/etc/postgresql/pg_hba.conf
+    restart: always
+    networks:
+      - test
+
+  pg-replica:
+    image: postgres:latest
+    container_name: pg-replica
+    ports:
+      - "25432:5432"
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    depends_on:
+      - pg-source
+    restart: always
+    networks:
+      - test
+
   redis-0:
     image: redis:latest
     container_name: redis-0
     ports:
       - "6379:6379"
       - "16379:16379"
-    command: >
-      bash -c "
-        redis-server /etc/redis.conf &
-        sleep 5 &&
-        yes yes | redis-cli --cluster create redis-0:6379 redis-1:6379 redis-2:6379 &&
-        tail -f /dev/null
-      "
     volumes:
       - ./conf/redis/redis-0.conf:/etc/redis.conf
-    restart: always
-    networks:
-      - test
-
-  redis-1:
-    image: redis:latest
-    container_name: redis-1
-    ports:
-      - "6380:6379"
-      - "16380:16379"
-    command: redis-server /etc/redis.conf
-    volumes:
-      - ./conf/redis/redis-1.conf:/etc/redis.conf
-    restart: always
-    networks:
-      - test
-
-  redis-2:
-    image: redis:latest
-    container_name: redis-2
-    ports:
-      - "6381:6379"
-      - "16381:16379"
-    command: redis-server /etc/redis.conf
-    volumes:
-      - ./conf/redis/redis-2.conf:/etc/redis.conf
     restart: always
     networks:
       - test
