@@ -1,13 +1,13 @@
 package io.brieflyz.ai_service.service.document.impl
 
 import io.brieflyz.ai_service.common.enums.AiProvider
+import io.brieflyz.ai_service.model.dto.DocumentGenerateRequest
 import io.brieflyz.ai_service.model.dto.DocumentResponse
 import io.brieflyz.ai_service.model.entity.Document
 import io.brieflyz.ai_service.service.ai.AiStructureGeneratorFactory
 import io.brieflyz.ai_service.service.document.DocumentGenerator
 import io.brieflyz.ai_service.service.document.DocumentManager
 import io.brieflyz.core.constants.DocumentType
-import io.brieflyz.core.dto.kafka.DocumentRequestMessage
 import io.brieflyz.core.utils.logger
 import org.apache.poi.ss.usermodel.BorderStyle
 import org.apache.poi.ss.usermodel.FillPatternType
@@ -38,7 +38,7 @@ class ExcelGenerator(
 
     override fun getDocumentType() = DocumentType.EXCEL
 
-    override fun generateDocument(aiProvider: AiProvider, request: DocumentRequestMessage): Mono<DocumentResponse> {
+    override fun generateDocument(aiProvider: AiProvider, request: DocumentGenerateRequest): Mono<DocumentResponse> {
         val aiStructureGenerator = aiStructureGeneratorFactory.createByProvider(aiProvider)
         val documentId = UUID.randomUUID().toString()
 
