@@ -11,35 +11,20 @@ import java.time.LocalDateTime
 @Table
 class Document private constructor(
     @Id
-    val documentId: String? = null,
+    val documentId: String?,
     val title: String
 ) : Persistable<String> {
 
     companion object {
         fun forProcessing(documentId: String, title: String) = Document(documentId, title)
 
-        fun forCompleted(
-            documentId: String,
-            title: String,
-            fileName: String,
-            fileUrl: String,
-            downloadUrl: String
-        ): Document {
-            val document = Document(documentId, title)
-            document.updateForComplete(fileName, fileUrl, downloadUrl)
-            return document
-        }
-
         fun forFailed(documentId: String, title: String, errorMessage: String): Document {
             val document = Document(documentId, title)
-            document.updateForFailed(errorMessage)
+            document.errorMessage = errorMessage
+            document.status = DocumentStatus.FAILED
             return document
         }
     }
-
-    override fun getId(): String? = documentId
-
-    override fun isNew(): Boolean = createdAt == null
 
     var status: DocumentStatus = DocumentStatus.PROCESSING
         protected set
@@ -64,15 +49,14 @@ class Document private constructor(
     var updatedAt: LocalDateTime? = null
         protected set
 
+    override fun getId(): String? = documentId
+
+    override fun isNew(): Boolean = createdAt == null
+
     fun updateForComplete(fileName: String, fileUrl: String, downloadUrl: String) {
         this.fileName = fileName
         this.fileUrl = fileUrl
         this.downloadUrl = downloadUrl
         status = DocumentStatus.COMPLETED
-    }
-
-    fun updateForFailed(errorMessage: String) {
-        this.errorMessage = errorMessage
-        status = DocumentStatus.FAILED
     }
 }

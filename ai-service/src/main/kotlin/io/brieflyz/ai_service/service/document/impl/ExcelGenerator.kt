@@ -1,6 +1,7 @@
 package io.brieflyz.ai_service.service.document.impl
 
 import io.brieflyz.ai_service.common.enums.AiProvider
+import io.brieflyz.ai_service.model.dto.DocumentResponse
 import io.brieflyz.ai_service.model.entity.Document
 import io.brieflyz.ai_service.service.ai.AiStructureGeneratorFactory
 import io.brieflyz.ai_service.service.document.DocumentGenerator
@@ -25,6 +26,7 @@ import java.nio.file.Paths
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.UUID
+import kotlin.io.path.name
 
 @Component
 class ExcelGenerator(
@@ -36,77 +38,54 @@ class ExcelGenerator(
 
     override fun getDocumentType() = DocumentType.EXCEL
 
-    override fun generateDocument(aiProvider: AiProvider, request: DocumentRequestMessage): Mono<Void> {
+    override fun generateDocument(aiProvider: AiProvider, request: DocumentRequestMessage): Mono<DocumentResponse> {
         val aiStructureGenerator = aiStructureGeneratorFactory.createByProvider(aiProvider)
         val documentId = UUID.randomUUID().toString()
 
         val title = request.title
-        val outputPath = createFilePath(title)
+        val filePath = createFilePath(title)
 
-        log.debug("Output path: {}", outputPath)
+        log.debug("Excel file path: {}", filePath)
 
         return aiStructureGenerator.generateExcelStructure(title, request.content)
             .flatMap { sheetData ->
                 val createFileMono = Mono.fromCallable {
                     XSSFWorkbook().use { workbook ->
-                        val headerStyle = createHeaderStyle(workbook)
-                        val defaultCellStyle = createDefaultCellStyle(workbook)
+                        createExcel(workbook, sheetData)
 
-                        sheetData.forEach { (sheetName, rows) ->
-                            val sheet = workbook.createSheet(sheetName)
+                        Files.createDirectories(filePath.parent)
+                        FileOutputStream(filePath.toFile()).use { workbook.write(it) }
 
-                            rows.forEachIndexed { i, cells ->
-                                val row = sheet.createRow(i)
-
-                                cells.forEachIndexed { j, cellValue ->
-                                    val cell = row.createCell(j)
-                                    cell.setCellValue(cellValue)
-                                    cell.cellStyle = if (i == 0) headerStyle else defaultCellStyle
-                                }
-                            }
-
-                            val columnCount = rows.firstOrNull()?.size ?: 0
-
-                            for (i in 0 until columnCount) {
-                                sheet.autoSizeColumn(i)
-                                val currentWidth = sheet.getColumnWidth(i)
-                                when {
-                                    currentWidth < 3000 -> sheet.setColumnWidth(i, 3000)
-                                    currentWidth > 15000 -> sheet.setColumnWidth(i, 15000)
-                                }
-                            }
-                        }
-
-                        Files.createDirectories(outputPath.parent)
-                        FileOutputStream(outputPath.toFile()).use { workbook.write(it) }
-
-                        // TODO: 파일 생성 완료 시 문서 정보 DB 업데이트
+                        log.info("Create excel file completed. File path: ${filePath.name}")
                     }
                 }.subscribeOn(Schedulers.boundedElastic())
+                    .then(
+                        Mono.defer {
+                            val fileName = filePath.fileName.toString()
+                            val fileUrl = filePath.toUri().toURL().toString()
+                            val downloadUrl = filePath.toUri().toURL().toString()
+                            documentManager.updateStatus(documentId, fileName, fileUrl, downloadUrl)
+                                .doOnSuccess { log.info("Excel document update finish. ID: $documentId") }
+                        }
+                    )
 
                 val saveDocumentMono = Mono.fromCallable {
                     Document.forProcessing(documentId, title)
-                }.flatMap { documentManager.save(it) }
+                }.flatMap { documentManager.save(it) }.cache()
 
-                // 파일 생성과 DB 저장 병렬 실행
-                Mono.`when`(createFileMono, saveDocumentMono)
+                Mono.`when`(createFileMono, saveDocumentMono) // 파일 생성과 DB 저장 병렬 실행
+                    .then(saveDocumentMono)
             }
             .onErrorResume { ex ->
                 val errorMessage = ex.message
                 log.error("Failed to generate EXCEL: $errorMessage", ex)
                 val failedDocument = Document.forFailed(documentId, title, errorMessage ?: "FAIL")
-                documentManager.save(failedDocument).then()
+                documentManager.save(failedDocument)
             }
     }
 
-    private fun createHeaderStyle(workbook: XSSFWorkbook): XSSFCellStyle {
-        val xssfFont = workbook.createFont().apply {
-            fontName = "맑은 고딕"
-            fontHeightInPoints = 11.toShort()
-            bold = true
-        }
-
-        return workbook.createCellStyle().apply {
+    private fun createExcel(workbook: XSSFWorkbook, sheetData: Map<String, List<List<String>>>) {
+        fun createHeaderStyle(): XSSFCellStyle = workbook.createCellStyle().apply {
             alignment = HorizontalAlignment.CENTER
             verticalAlignment = VerticalAlignment.CENTER
             fillForegroundColor = IndexedColors.GREY_25_PERCENT.getIndex()
@@ -115,25 +94,57 @@ class ExcelGenerator(
             borderBottom = BorderStyle.THIN
             borderLeft = BorderStyle.THIN
             borderRight = BorderStyle.THIN
-            setFont(xssfFont)
-        }
-    }
-
-    private fun createDefaultCellStyle(workbook: XSSFWorkbook): XSSFCellStyle {
-        val xssfFont = workbook.createFont().apply {
-            fontName = "맑은 고딕"
-            fontHeightInPoints = 10.toShort()
-            bold = true
+            setFont(
+                workbook.createFont().apply {
+                    fontName = "맑은 고딕"
+                    fontHeightInPoints = 11.toShort()
+                    bold = true
+                }
+            )
         }
 
-        return workbook.createCellStyle().apply {
+        fun createDefaultCellStyle(): XSSFCellStyle = workbook.createCellStyle().apply {
             alignment = HorizontalAlignment.LEFT
             verticalAlignment = VerticalAlignment.CENTER
             borderTop = BorderStyle.THIN
             borderBottom = BorderStyle.THIN
             borderLeft = BorderStyle.THIN
             borderRight = BorderStyle.THIN
-            setFont(xssfFont)
+            setFont(
+                workbook.createFont().apply {
+                    fontName = "맑은 고딕"
+                    fontHeightInPoints = 10.toShort()
+                    bold = true
+                }
+            )
+        }
+
+        val headerStyle = createHeaderStyle()
+        val defaultCellStyle = createDefaultCellStyle()
+
+        sheetData.forEach { (sheetName, rows) ->
+            val sheet = workbook.createSheet(sheetName)
+
+            rows.forEachIndexed { i, cells ->
+                val row = sheet.createRow(i)
+
+                cells.forEachIndexed { j, cellValue ->
+                    val cell = row.createCell(j)
+                    cell.setCellValue(cellValue)
+                    cell.cellStyle = if (i == 0) headerStyle else defaultCellStyle
+                }
+            }
+
+            val columnCount = rows.firstOrNull()?.size ?: 0
+
+            for (i in 0 until columnCount) {
+                sheet.autoSizeColumn(i)
+                val currentWidth = sheet.getColumnWidth(i)
+                when {
+                    currentWidth < 3000 -> sheet.setColumnWidth(i, 3000)
+                    currentWidth > 15000 -> sheet.setColumnWidth(i, 15000)
+                }
+            }
         }
     }
 

@@ -6,5 +6,5 @@ import reactor.core.publisher.Mono
 
 interface DocumentManager {
     fun save(document: Document): Mono<DocumentResponse>
-    fun updateStatus(documentId: String)
+    fun updateStatus(documentId: String, fileName: String, fileUrl: String, downloadUrl: String): Mono<Void>
 }
