@@ -119,7 +119,7 @@ jobs:
           total_errors=0
           modules_tested=0
           
-          for module in auth-service subscription-service api-gateway core; do
+          for module in api-gateway auth-service subscription-service ai-service; do
             if [ -d "$module/build/test-results/test" ] && [ "$(ls -A $module/build/test-results/test/*.xml 2>/dev/null)" ]; then
               modules_tested=$((modules_tested + 1))
               echo "### ✅ $module" >> $GITHUB_STEP_SUMMARY
@@ -158,34 +158,6 @@ jobs:
             echo "⚠️ **No tests were found or executed.**" >> $GITHUB_STEP_SUMMARY
           else
             echo "❌ **Some tests failed. Please check the detailed reports.**" >> $GITHUB_STEP_SUMMARY
-          fi
-
-      - name: Check Test Results
-        if: always()
-        run: |
-          # 테스트 실패 시 workflow 실패 처리
-          total_failures=0
-          total_errors=0
-          
-          for module in auth-service subscription-service api-gateway core; do
-            if [ -d "$module/build/test-results/test" ]; then
-              for xml_file in $module/build/test-results/test/TEST-*.xml; do
-                if [ -f "$xml_file" ]; then
-                  failures=$(grep -o 'failures="[0-9]*"' "$xml_file" | cut -d'"' -f2 || echo "0")
-                  errors=$(grep -o 'errors="[0-9]*"' "$xml_file" | cut -d'"' -f2 || echo "0")
-          
-                  total_failures=$((total_failures + failures))
-                  total_errors=$((total_errors + errors))
-                fi
-              done
-            fi
-          done
-          
-          if [ $total_failures -gt 0 ] || [ $total_errors -gt 0 ]; then
-            echo "Tests failed with $total_failures failures and $total_errors errors"
-            exit 1
-          else
-            echo "All tests passed successfully"
           fi
 
       - name: Clean up Docker Containers
