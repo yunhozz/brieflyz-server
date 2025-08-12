@@ -81,7 +81,7 @@ jobs:
           sleep 10
           docker compose -f ${{ env.DOCKER_COMPOSE_FILE }} ps
           
-          echo "${{ secrets.INIT_PG_SQL }}" | docker exec -i pg-source psql -U postgres -d brieflyz_ai
+          echo "${{ secrets.INIT_PG_SQL }}" | docker exec -i pg-source psql -U postgres
 
       - name: Run Unit & Integration Tests
         run: ./gradlew test --stacktrace
