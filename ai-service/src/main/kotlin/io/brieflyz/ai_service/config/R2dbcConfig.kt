@@ -64,14 +64,15 @@ class R2dbcConfig {
             TransactionSynchronizationManager.forCurrentTransaction()
                 .map { txManager ->
                     log.debug("Current transaction name: ${txManager.currentTransactionName}")
-                    log.debug("Actual transaction active: ${txManager.isActualTransactionActive}")
                     log.debug("Current transaction read-only: ${txManager.isCurrentTransactionReadOnly}")
+                    log.debug("Actual transaction active: ${txManager.isActualTransactionActive}")
 
                     when (txManager.isCurrentTransactionReadOnly) {
                         true -> DataSourceType.REPLICA
                         false -> DataSourceType.SOURCE
-                    }
+                    } as Any
                 }
+                .doOnError { ex -> log.error(ex.message, ex) }
     }.apply {
         setLenientFallback(true)
         setDefaultTargetConnectionFactory(sourceConnectionFactory())
@@ -95,15 +96,12 @@ class R2dbcConfig {
             .username(props.username)
             .password(props.password)
             .build()
-        val poolConfiguration = ConnectionPoolConfiguration.builder(connectionFactory)
+        val connectionPoolConfig = ConnectionPoolConfiguration.builder(connectionFactory)
             .initialSize(pool.initialSize)
             .minIdle(pool.minIdle)
             .maxSize(pool.maxSize)
             .build()
 
-        val connectionPool = ConnectionPool(poolConfiguration)
-        connectionPool.warmup().block()
-
-        return connectionPool
+        return ConnectionPool(connectionPoolConfig)
     }
 }

@@ -30,7 +30,7 @@ class ReactiveKafkaListener(
 
                 documentGenerator.generateDocument(AiProvider.OPEN_AI, request)
             }
-            .doOnSubscribe { log.info("Start consumer about document request topic.") }
+            .doOnSubscribe { log.info("Start consumer about document request topic") }
             .retryWhen(Retry.backoff(3, Duration.ofSeconds(5)))
             .subscribe()
     }
