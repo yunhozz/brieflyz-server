@@ -9,39 +9,58 @@ import io.brieflyz.subscription_service.model.entity.CreditCardPaymentDetails
 import io.brieflyz.subscription_service.model.entity.DigitalWalletPaymentDetails
 import io.brieflyz.subscription_service.model.entity.PaymentDetails
 import java.time.YearMonth
-import java.time.ZoneId
-import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
-import java.time.format.DateTimeParseException
 
-object PaymentDetailsFactory {
+object PaymentDetailsFactoryProvider {
+    fun getFactory(request: PaymentDetailsCreateRequest): PaymentDetailsFactory =
+        when (request) {
+            is CreditCardDetailsRequest -> CreditCardPaymentDetailsFactory()
+            is BankTransferDetailsRequest -> BankTransferPaymentDetailsFactory()
+            is DigitalWalletDetailsRequest -> DigitalWalletPaymentDetailsFactory()
+        }
+}
 
-    fun createByRequest(request: PaymentDetailsCreateRequest): PaymentDetails = when (request) {
-        is CreditCardDetailsRequest -> CreditCardPaymentDetails(
+sealed interface PaymentDetailsFactory {
+    fun create(request: PaymentDetailsCreateRequest): PaymentDetails
+}
+
+private class CreditCardPaymentDetailsFactory : PaymentDetailsFactory {
+    companion object {
+        private val DATETIME_FORMATTER = DateTimeFormatter.ofPattern("MM/yy")
+    }
+
+    override fun create(request: PaymentDetailsCreateRequest): PaymentDetails {
+        require(request is CreditCardDetailsRequest)
+        val monthYear = YearMonth.parse(request.expirationDate!!, DATETIME_FORMATTER)
+        println("monthYear = ${monthYear}")
+        val expirationDate = monthYear.atDay(1).atStartOfDay()
+
+        return CreditCardPaymentDetails(
             request.cardNumber!!,
-            parseExpirationDate(request.expirationDate!!),
+            expirationDate,
             request.cvc!!.toInt()
         )
+    }
+}
 
-        is BankTransferDetailsRequest -> BankTransferPaymentDetails(
+private class BankTransferPaymentDetailsFactory : PaymentDetailsFactory {
+    override fun create(request: PaymentDetailsCreateRequest): PaymentDetails {
+        require(request is BankTransferDetailsRequest)
+        return BankTransferPaymentDetails(
             request.bankName!!,
             request.accountNumber!!,
             request.accountHolderName!!,
             request.routingNumber!!
         )
+    }
+}
 
-        is DigitalWalletDetailsRequest -> DigitalWalletPaymentDetails(
+private class DigitalWalletPaymentDetailsFactory : PaymentDetailsFactory {
+    override fun create(request: PaymentDetailsCreateRequest): PaymentDetails {
+        require(request is DigitalWalletDetailsRequest)
+        return DigitalWalletPaymentDetails(
             request.walletType!!,
             request.walletAccountId!!
         )
     }
-
-    private fun parseExpirationDate(expirationDate: String): ZonedDateTime =
-        try {
-            YearMonth.parse(expirationDate, DateTimeFormatter.ofPattern("MM/yy"))
-                .atEndOfMonth()
-                .atStartOfDay(ZoneId.of("Asia/Seoul"))
-        } catch (e: DateTimeParseException) {
-            throw IllegalArgumentException("Invalid expiration date format: $expirationDate", e)
-        }
 }
