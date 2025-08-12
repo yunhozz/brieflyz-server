@@ -5,7 +5,9 @@ on:
     branches: [ develop ]
 
 env:
-  DOCKER_COMPOSE_FILE: docker-compose-test.yml
+  DOCKER_COMPOSE_FILE: docker-compose-local.yml
+  SERVICES_DB: mysql-source mysql-replica pg-source pg-replica redis-0 redis-1 redis-2
+  SERVICES_MESSAGE: zookeeper-0 zookeeper-1 zookeeper-2 kafka-0 kafka-1 kafka-2
 
 jobs:
   build:
@@ -66,6 +68,8 @@ jobs:
           
           mkdir -p conf/redis
           echo "${{ secrets.REDIS_CONF }}" > ./conf/redis/redis-0.conf
+          echo "${{ secrets.REDIS_CONF }}" > ./conf/redis/redis-1.conf
+          echo "${{ secrets.REDIS_CONF }}" > ./conf/redis/redis-2.conf
           
           mkdir -p conf/postgres
           echo "${{ secrets.POSTGRES_CONF }}" > ./conf/postgres/postgres.conf
@@ -73,9 +77,11 @@ jobs:
 
       - name: Set up Docker Containers
         run: |
-          docker compose -f ${{ env.DOCKER_COMPOSE_FILE }} --env-file .env up -d
+          docker compose -f ${{ env.DOCKER_COMPOSE_FILE }} --env-file .env up -d ${{ env.SERVICES_DB }} ${{ env.SERVICES_MESSAGE }}
           sleep 10
           docker compose -f ${{ env.DOCKER_COMPOSE_FILE }} ps
+          
+          echo "${{ secrets.INIT_PG_SQL }}" | docker exec -i pg-source psql -U postgres -d brieflyz_ai
 
       - name: Run Unit & Integration Tests
         run: ./gradlew test --stacktrace
@@ -127,7 +133,7 @@ jobs:
                   failures=$(grep -o 'failures="[0-9]*"' "$xml_file" | cut -d'"' -f2 || echo "0")
                   errors=$(grep -o 'errors="[0-9]*"' "$xml_file" | cut -d'"' -f2 || echo "0")
           
-                  total_tests=$((total_tests + tests))
+                  total_tests=$((total_tests + count))
                   total_failures=$((total_failures + failures))
                   total_errors=$((total_errors + errors))
           
