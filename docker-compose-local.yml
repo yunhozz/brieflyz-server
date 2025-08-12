@@ -74,6 +74,31 @@ services:
     networks:
       - local
 
+  ai-service:
+    build:
+      dockerfile: ai-service/Dockerfile
+      context: .
+    image: brieflyz/ai-service:latest
+    scale: 3
+    ports:
+      - "8999"
+    environment:
+      POSTGRESQL_SOURCE_ADDR: pg-source:5432
+      POSTGRESQL_REPLICA_ADDR: pg-replica:5432
+      REDIS_CLUSTER_NODES: redis-0:6379,redis-1:6379,redis-2:6379
+      KAFKA_BOOTSTRAP_SERVERS: kafka-0:19092,kafka-1:19093,kafka-2:19094
+    volumes:
+      - log-volume:/app/logs
+    healthcheck:
+      test: [ "CMD-SHELL", "wget -q --spider http://localhost:8999/actuator/health || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+    restart: on-failure
+    networks:
+      - local
+
   nginx:
     image: nginx:latest
     container_name: nginx
@@ -231,6 +256,40 @@ services:
     networks:
       - local
 
+  pg-source:
+    image: postgres:latest
+    container_name: pg-source
+    ports:
+      - "15432:5432"
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    command:
+      - postgres
+      - -c
+      - config_file=/etc/postgresql/postgresql.conf
+    volumes:
+      - ./conf/postgres/postgres.conf:/etc/postgresql/postgresql.conf
+      - ./conf/postgres/pg_hba.conf:/etc/postgresql/pg_hba.conf
+      - pg-source-volume:/var/lib/postgresql/data
+    restart: always
+    networks:
+      - local
+
+  pg-replica:
+    image: postgres:latest
+    container_name: pg-replica
+    ports:
+      - "25432:5432"
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - pg-replica-volume:/var/lib/postgresql/data
+    depends_on:
+      - pg-source
+    restart: always
+    networks:
+      - local
+
   redis-0:
     image: redis:latest
     container_name: redis-0
@@ -374,11 +433,25 @@ services:
     networks:
       - local
 
+  ollama:
+    image: ollama/ollama
+    container_name: ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-model-volume:/root/.ollama
+    restart: always
+    networks:
+      - local
+
 volumes:
   mysql-source-volume:
   mysql-replica-volume:
+  pg-source-volume:
+  pg-replica-volume:
   es-volume:
   log-volume:
+  ollama-model-volume:
 
 networks:
   local:

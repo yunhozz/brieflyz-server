@@ -23,7 +23,6 @@ dependencies {
     runtimeOnly("com.mysql:mysql-connector-j")
     // Test
     testImplementation("org.springframework.batch:spring-batch-test")
-    testImplementation("org.springframework.kafka:spring-kafka-test")
 }
 
 dependencyManagement {

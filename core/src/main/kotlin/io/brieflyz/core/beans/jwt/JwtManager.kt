@@ -1,6 +1,5 @@
-package io.brieflyz.core.component
+package io.brieflyz.core.beans.jwt
 
-import io.brieflyz.core.config.JwtProperties
 import io.brieflyz.core.utils.logger
 import io.jsonwebtoken.Claims
 import io.jsonwebtoken.Jws
@@ -8,25 +7,23 @@ import io.jsonwebtoken.JwtException
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.lang.Strings
 import io.jsonwebtoken.security.Keys
-import org.springframework.beans.factory.InitializingBean
 import org.springframework.stereotype.Component
 import javax.crypto.SecretKey
 
 @Component
 class JwtManager(
-    val jwtProperties: JwtProperties
-) : InitializingBean {
-
+    private val jwtProperties: JwtProperties
+) {
     private val log = logger()
 
-    private lateinit var secretKey: SecretKey
-
-    override fun afterPropertiesSet() {
+    private val secretKey: SecretKey by lazy {
         val secretKeyBytes = jwtProperties.secretKey.toByteArray()
-        secretKey = Keys.hmacShaKeyFor(secretKeyBytes)
+        Keys.hmacShaKeyFor(secretKeyBytes)
     }
 
     fun getEncryptedSecretKey() = secretKey
+
+    fun getProperties() = jwtProperties
 
     fun resolveToken(token: String?): String? =
         token.takeIf { Strings.hasText(it) }?.let {

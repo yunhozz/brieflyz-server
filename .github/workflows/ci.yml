@@ -5,7 +5,9 @@ on:
     branches: [ develop ]
 
 env:
-  DOCKER_COMPOSE_FILE: docker-compose-test.yml
+  DOCKER_COMPOSE_FILE: docker-compose-local.yml
+  SERVICES_DB: mysql-source mysql-replica pg-source pg-replica redis-0 redis-1 redis-2
+  SERVICES_MESSAGE: zookeeper-0 zookeeper-1 zookeeper-2 kafka-0 kafka-1 kafka-2
 
 jobs:
   build:
@@ -58,22 +60,28 @@ jobs:
           echo "${{ secrets.ENV }}" > .env
           
           mkdir -p core/src/main/resources
-          echo "${{ secrets.APPLICATION_PROPERTIES }}" > core/src/main/resources/application.properties
+          echo "${{ secrets.APPLICATION_PROPERTIES }}" > ./core/src/main/resources/application.properties
           
           mkdir -p conf/mysql
-          echo "${{ secrets.MY_SOURCE_CNF }}" > conf/mysql/my-source.cnf
-          echo "${{ secrets.MY_REPLICA_CNF }}" > conf/mysql/my-replica.cnf
+          echo "${{ secrets.MY_SOURCE_CNF }}" > ./conf/mysql/my-source.cnf
+          echo "${{ secrets.MY_REPLICA_CNF }}" > ./conf/mysql/my-replica.cnf
           
           mkdir -p conf/redis
-          echo "${{ secrets.REDIS_CONF }}" > conf/redis/redis-0.conf
-          echo "${{ secrets.REDIS_CONF }}" > conf/redis/redis-1.conf
-          echo "${{ secrets.REDIS_CONF }}" > conf/redis/redis-2.conf
+          echo "${{ secrets.REDIS_CONF }}" > ./conf/redis/redis-0.conf
+          echo "${{ secrets.REDIS_CONF }}" > ./conf/redis/redis-1.conf
+          echo "${{ secrets.REDIS_CONF }}" > ./conf/redis/redis-2.conf
+          
+          mkdir -p conf/postgres
+          echo "${{ secrets.POSTGRES_CONF }}" > ./conf/postgres/postgres.conf
+          echo "${{ secrets.PG_HBA_CONF }}" > ./conf/postgres/pg_hba.conf
 
       - name: Set up Docker Containers
         run: |
-          docker compose -f ${{ env.DOCKER_COMPOSE_FILE }} --env-file .env up -d
+          docker compose -f ${{ env.DOCKER_COMPOSE_FILE }} --env-file .env up -d ${{ env.SERVICES_DB }} ${{ env.SERVICES_MESSAGE }}
           sleep 10
           docker compose -f ${{ env.DOCKER_COMPOSE_FILE }} ps
+          
+          printf "%s" "${{ secrets.INIT_PG_SQL }}" | docker exec -i pg-source psql -U postgres
 
       - name: Run Unit & Integration Tests
         run: ./gradlew test --stacktrace
@@ -88,17 +96,6 @@ jobs:
             **/build/test-results/test/
           retention-days: 7
 
-      - name: Publish Test Results
-        if: always()
-        uses: dorny/test-reporter@v1
-        with:
-          name: 'Test Results'
-          path: '**/build/test-results/test/*.xml'
-          reporter: java-junit
-          fail-on-error: false
-          only-summary: 'true'
-        continue-on-error: true
-
       - name: Generate Test Summary
         if: always()
         run: |
@@ -111,7 +108,7 @@ jobs:
           total_errors=0
           modules_tested=0
           
-          for module in auth-service subscription-service api-gateway core; do
+          for module in api-gateway auth-service subscription-service ai-service; do
             if [ -d "$module/build/test-results/test" ] && [ "$(ls -A $module/build/test-results/test/*.xml 2>/dev/null)" ]; then
               modules_tested=$((modules_tested + 1))
               echo "### ✅ $module" >> $GITHUB_STEP_SUMMARY
@@ -125,7 +122,7 @@ jobs:
                   failures=$(grep -o 'failures="[0-9]*"' "$xml_file" | cut -d'"' -f2 || echo "0")
                   errors=$(grep -o 'errors="[0-9]*"' "$xml_file" | cut -d'"' -f2 || echo "0")
           
-                  total_tests=$((total_tests + tests))
+                  total_tests=$((total_tests + count))
                   total_failures=$((total_failures + failures))
                   total_errors=$((total_errors + errors))
           
@@ -150,34 +147,6 @@ jobs:
             echo "⚠️ **No tests were found or executed.**" >> $GITHUB_STEP_SUMMARY
           else
             echo "❌ **Some tests failed. Please check the detailed reports.**" >> $GITHUB_STEP_SUMMARY
-          fi
-
-      - name: Check Test Results
-        if: always()
-        run: |
-          # 테스트 실패 시 workflow 실패 처리
-          total_failures=0
-          total_errors=0
-          
-          for module in auth-service subscription-service api-gateway core; do
-            if [ -d "$module/build/test-results/test" ]; then
-              for xml_file in $module/build/test-results/test/TEST-*.xml; do
-                if [ -f "$xml_file" ]; then
-                  failures=$(grep -o 'failures="[0-9]*"' "$xml_file" | cut -d'"' -f2 || echo "0")
-                  errors=$(grep -o 'errors="[0-9]*"' "$xml_file" | cut -d'"' -f2 || echo "0")
-          
-                  total_failures=$((total_failures + failures))
-                  total_errors=$((total_errors + errors))
-                fi
-              done
-            fi
-          done
-          
-          if [ $total_failures -gt 0 ] || [ $total_errors -gt 0 ]; then
-            echo "Tests failed with $total_failures failures and $total_errors errors"
-            exit 1
-          else
-            echo "All tests passed successfully"
           fi
 
       - name: Clean up Docker Containers

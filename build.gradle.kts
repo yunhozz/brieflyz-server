@@ -34,6 +34,7 @@ subprojects {
         developmentOnly("org.springframework.boot:spring-boot-devtools")
         // Kafka
         implementation("org.springframework.kafka:spring-kafka")
+        implementation("io.projectreactor.kafka:reactor-kafka:1.3.19")
         // JWT
         implementation("io.jsonwebtoken:jjwt-api:0.11.5")
         runtimeOnly("io.jsonwebtoken:jjwt-impl:0.11.5")
@@ -48,6 +49,7 @@ subprojects {
         implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
         // Test
         testImplementation("org.springframework.boot:spring-boot-starter-test")
+        testImplementation("org.springframework.kafka:spring-kafka-test")
         testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
         testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test")
         testRuntimeOnly("org.junit.platform:junit-platform-launcher")
@@ -87,8 +89,3 @@ subprojects {
 tasks.named<BootJar>("bootJar") {
     enabled = false
 }
-
-project(":core")
-project(":api-gateway")
-project(":auth-service")
-project(":subscription-service")

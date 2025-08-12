@@ -1,7 +1,7 @@
 package io.brieflyz.auth_service.config
 
 import io.brieflyz.core.annotation.JwtSubject
-import io.brieflyz.core.component.JwtManager
+import io.brieflyz.core.beans.jwt.JwtManager
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.MethodParameter
 import org.springframework.http.HttpHeaders

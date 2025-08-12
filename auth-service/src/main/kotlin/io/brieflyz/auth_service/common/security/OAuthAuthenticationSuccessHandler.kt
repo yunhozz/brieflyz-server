@@ -4,7 +4,7 @@ import io.brieflyz.auth_service.common.constants.CookieName
 import io.brieflyz.auth_service.common.infra.redis.RedisHandler
 import io.brieflyz.auth_service.common.utils.CookieUtils
 import io.brieflyz.auth_service.common.utils.SerializationUtils
-import io.brieflyz.core.config.AuthServiceProperties
+import io.brieflyz.auth_service.config.AuthServiceProperties
 import io.brieflyz.core.utils.logger
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
