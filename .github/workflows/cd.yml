@@ -19,6 +19,7 @@ jobs:
       api-gateway: ${{ steps.filter.outputs.api-gateway }}
       auth-service: ${{ steps.filter.outputs.auth-service }}
       subscription-service: ${{ steps.filter.outputs.subscription-service }}
+      ai-service: ${{ steps.filter.outputs.ai-service }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -34,6 +35,8 @@ jobs:
               - 'auth-service/**'
             subscription-service:
               - 'subscription-service/**'
+            ai-service:
+              - 'ai-service/**'
 
   deploy-api-gateway:
     name: Deploy API Gateway
@@ -200,10 +203,65 @@ jobs:
   #          cluster: ${{ env.ECS_CLUSTER }}
   #          wait-for-service-stability: true
 
+  deploy-ai-service:
+    name: Deploy AI Service
+    runs-on: ubuntu-latest
+    needs: filter
+    if: needs.filter.outputs.ai-service == 'true'
+    environment: production
+    env:
+      ECR_REPOSITORY: brieflyz/ai-service
+    #      ECS_SERVICE: brieflyz-ai-service-service
+    #      ECS_CLUSTER: brieflyz-cluster
+    #      ECS_TASK_DEFINITION: .aws/ai-service-task-definition.json
+    #      CONTAINER_NAME: ai-service
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build, Tag, and Push AI Service Image to Amazon ECR
+        id: build-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          echo "Building AI Service Docker image..."
+          docker build -f ai-service/Dockerfile -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+  #      - name: Fill in the new image ID in the Amazon ECS task definition
+  #        id: task-def
+  #        uses: aws-actions/amazon-ecs-render-task-definition@v1
+  #        with:
+  #          task-definition: ${{ env.ECS_TASK_DEFINITION }}
+  #          container-name: ${{ env.CONTAINER_NAME }}
+  #          image: ${{ steps.build-image.outputs.image }}
+  #
+  #      - name: Deploy Amazon ECS task definition
+  #        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+  #        with:
+  #          task-definition: ${{ steps.task-def.outputs.task-definition }}
+  #          service: ${{ env.ECS_SERVICE }}
+  #          cluster: ${{ env.ECS_CLUSTER }}
+  #          wait-for-service-stability: true
+
   deploy-summary:
     name: Deployment Summary
     runs-on: ubuntu-latest
-    needs: [ filter, deploy-api-gateway, deploy-auth-service, deploy-subscription-service ]
+    needs: [ filter, deploy-api-gateway, deploy-auth-service, deploy-subscription-service, deploy-ai-service ]
     if: always()
     
     steps:
@@ -215,6 +273,7 @@ jobs:
           echo "- **API Gateway**: ${{ needs.filter.outputs.api-gateway == 'true' && '✅ Changed' || '⚪ No changes' }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Auth Service**: ${{ needs.filter.outputs.auth-service == 'true' && '✅ Changed' || '⚪ No changes' }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Subscription Service**: ${{ needs.filter.outputs.subscription-service == 'true' && '✅ Changed' || '⚪ No changes' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **AI Service**: ${{ needs.filter.outputs.ai-service == 'true' && '✅ Changed' || '⚪ No changes' }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Deployment Status" >> $GITHUB_STEP_SUMMARY
           
@@ -240,6 +299,14 @@ jobs:
             echo "- **Subscription Service**: 🔴 Deployment failed" >> $GITHUB_STEP_SUMMARY
           elif [[ "${{ needs.deploy-subscription-service.result }}" == "skipped" ]]; then
             echo "- **Subscription Service**: ⚪ Skipped (no changes)" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [[ "${{ needs.deploy-ai-service.result }}" == "success" ]]; then
+            echo "- **AI Service**: 🟢 Successfully deployed" >> $GITHUB_STEP_SUMMARY
+          elif [[ "${{ needs.deploy-ai-service.result }}" == "failure" ]]; then
+            echo "- **AI Service**: 🔴 Deployment failed" >> $GITHUB_STEP_SUMMARY
+          elif [[ "${{ needs.deploy-ai-service.result }}" == "skipped" ]]; then
+            echo "- **AI Service**: ⚪ Skipped (no changes)" >> $GITHUB_STEP_SUMMARY
           fi
           
           echo "" >> $GITHUB_STEP_SUMMARY
