@@ -32,7 +32,6 @@ private class CreditCardPaymentDetailsFactory : PaymentDetailsFactory {
     override fun create(request: PaymentDetailsCreateRequest): PaymentDetails {
         require(request is CreditCardDetailsRequest)
         val monthYear = YearMonth.parse(request.expirationDate!!, DATETIME_FORMATTER)
-        println("monthYear = ${monthYear}")
         val expirationDate = monthYear.atDay(1).atStartOfDay()
 
         return CreditCardPaymentDetails(

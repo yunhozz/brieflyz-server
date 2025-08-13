@@ -21,13 +21,10 @@ import io.brieflyz.subscription_service.repository.SubscriptionRepository
 import io.brieflyz.subscription_service.service.support.PaymentDetailsFactoryProvider
 import org.springframework.data.domain.Pageable
 import org.springframework.data.repository.findByIdOrNull
-import org.springframework.scheduling.annotation.EnableScheduling
-import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 @Service
-@EnableScheduling
 class SubscriptionService(
     private val subscriptionRepository: SubscriptionRepository,
     private val paymentRepository: PaymentRepository,
@@ -106,21 +103,6 @@ class SubscriptionService(
         log.info("Canceled Subscription Details : {}", subscription.toResponse())
 
         return subscription.id
-    }
-
-    @Transactional
-    @Scheduled(cron = "0 0 0 * * *")
-    fun deleteExpiredSubscriptionsEveryDay() {
-        val expiredSubscriptionIds = subscriptionRepository.findLimitedSubscriptionsQuery()
-            .filter { it.isExpired() }
-            .map { it.id }
-
-        expiredSubscriptionIds.chunked(100).forEach { ids ->
-            log.debug("Expired Subscription IDs : {}", ids)
-        }
-
-        subscriptionRepository.softDeleteSubscriptionsInIdsQuery(expiredSubscriptionIds)
-        log.info("A total of ${expiredSubscriptionIds.size} subscriptions have been successfully deleted.")
     }
 
     @Transactional
