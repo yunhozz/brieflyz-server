@@ -14,7 +14,7 @@ class BatchJobExecutorLoggingAspect {
 
     private val log = logger()
 
-    @Around("execution(* io.brieflyz.subscription_service.service.support.BatchJobExecutor.*(..))")
+    @Around("execution(* io.brieflyz.subscription_service.service.BatchService.*(..))")
     fun logBatchJobExecutor(joinPoint: ProceedingJoinPoint): Any? {
         val signature = joinPoint.signature as MethodSignature
         val batchJobName = signature.name

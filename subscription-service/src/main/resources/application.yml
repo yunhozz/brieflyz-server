@@ -26,6 +26,18 @@ spring:
     redis:
       connect-timeout: 3000
       timeout: 3000
+  mail:
+    host: ${gmail.host}
+    port: ${gmail.port}
+    username: ${gmail.username}
+    password: ${gmail.password}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
 management:
   endpoints:
     web:

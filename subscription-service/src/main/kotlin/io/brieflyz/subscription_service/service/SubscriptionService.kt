@@ -105,6 +105,9 @@ class SubscriptionService(
         return subscription.id
     }
 
+    fun softDeleteSubscriptionsInIds(ids: List<Long>) =
+        subscriptionRepository.softDeleteSubscriptionsInIdsQuery(ids)
+
     @Transactional
     fun hardDeleteSubscriptionById(id: Long) {
         val subscription = findSubscriptionById(id)

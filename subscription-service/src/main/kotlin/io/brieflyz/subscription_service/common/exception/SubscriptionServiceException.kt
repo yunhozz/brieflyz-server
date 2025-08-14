@@ -12,3 +12,5 @@ class AlreadyHaveSubscriptionException(msg: String) :
 
 class AlreadyHaveUnlimitedSubscriptionException(msg: String) :
     SubscriptionServiceException(ErrorStatus.ALREADY_HAVE_UNLIMITED_SUBSCRIPTION, msg)
+
+class MailSendingException(msg: String) : SubscriptionServiceException(ErrorStatus.SERVICE_UNAVAILABLE, msg)
