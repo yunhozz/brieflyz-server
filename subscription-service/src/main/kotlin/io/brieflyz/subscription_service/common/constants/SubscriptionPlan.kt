@@ -2,14 +2,14 @@ package io.brieflyz.subscription_service.common.constants
 
 import java.time.LocalDateTime
 
-enum class SubscriptionPlan {
-    ONE_MONTH {
+enum class SubscriptionPlan(val displayName: String) {
+    ONE_MONTH("1개월") {
         override fun getExpirationTime(time: LocalDateTime): LocalDateTime = time.plusMonths(1)
     },
-    ONE_YEAR {
+    ONE_YEAR("1년") {
         override fun getExpirationTime(time: LocalDateTime): LocalDateTime = time.plusYears(1)
     },
-    UNLIMITED {
+    UNLIMITED("무제한") {
         override fun getExpirationTime(time: LocalDateTime): LocalDateTime = LocalDateTime.MAX
     }
 
