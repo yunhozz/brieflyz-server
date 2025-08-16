@@ -18,7 +18,7 @@ abstract class AbstractAiStructureGenerator(
         const val EXCEL_FORMAT =
             "{ \"Sheet1\": [[\"Column1\", \"Column2\"], [\"Data1\", \"Data2\"]], \"Sheet2\": [[...], [...]] }"
         const val PPT_FORMAT =
-            "{\"slide1\": {\"title\": \"슬라이드1 제목\", \"content\": \"슬라이드1 내용\", \"notes\": \"슬라이드1 메모\"}, \"slide2\": {...}}"
+            "{ \"slide1\": {\"title\": \"슬라이드1 제목\", \"content\": \"슬라이드1 내용\", \"notes\": \"슬라이드1 메모\"}, \"slide2\": {...} }"
     }
 
     abstract fun generateContent(prompt: String): Flux<String> // Generate stream of content by AI

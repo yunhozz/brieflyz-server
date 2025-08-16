@@ -46,13 +46,11 @@ class PowerPointGenerator(
 
         return aiStructureGenerator.generatePptStructure(title, request.content)
             .flatMap { slides ->
-                val createFileMono = Mono.fromCallable {
+                Mono.fromCallable {
                     XMLSlideShow().use { ppt ->
                         createPowerPoint(ppt, title, slides)
-
                         Files.createDirectories(filePath.parent)
                         FileOutputStream(filePath.toFile()).use { ppt.write(it) }
-
                         log.info("Create  PPT file completed. File path: ${filePath.name}")
                     }
                 }.subscribeOn(Schedulers.boundedElastic())
@@ -61,17 +59,16 @@ class PowerPointGenerator(
                             val fileName = filePath.fileName.toString()
                             val fileUrl = filePath.toUri().toURL().toString()
                             val downloadUrl = filePath.toUri().toURL().toString()
+
                             documentManager.updateStatus(documentId, fileName, fileUrl, downloadUrl)
                                 .doOnSuccess { log.info("PPT document update finish. ID: $documentId") }
                         }
                     )
+                    .doOnError { ex -> log.error("Background task failed: ${ex.message}", ex) }
+                    .subscribe()
 
-                val saveDocumentMono = Mono.fromCallable {
-                    Document.forProcessing(documentId, title)
-                }.flatMap { documentManager.save(it) }.cache()
-
-                Mono.`when`(createFileMono, saveDocumentMono) // 파일 생성과 DB 저장 병렬 실행
-                    .then(saveDocumentMono)
+                Mono.just(Document.forProcessing(documentId, title))
+                    .flatMap { documentManager.save(it) }
             }
             .onErrorResume { ex ->
                 val errorMessage = ex.message

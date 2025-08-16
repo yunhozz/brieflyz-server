@@ -49,13 +49,11 @@ class ExcelGenerator(
 
         return aiStructureGenerator.generateExcelStructure(title, request.content)
             .flatMap { sheetData ->
-                val createFileMono = Mono.fromCallable {
+                Mono.fromCallable {
                     XSSFWorkbook().use { workbook ->
                         createExcel(workbook, sheetData)
-
                         Files.createDirectories(filePath.parent)
                         FileOutputStream(filePath.toFile()).use { workbook.write(it) }
-
                         log.info("Create excel file completed. File path: ${filePath.name}")
                     }
                 }.subscribeOn(Schedulers.boundedElastic())
@@ -64,17 +62,16 @@ class ExcelGenerator(
                             val fileName = filePath.fileName.toString()
                             val fileUrl = filePath.toUri().toURL().toString()
                             val downloadUrl = filePath.toUri().toURL().toString()
+
                             documentManager.updateStatus(documentId, fileName, fileUrl, downloadUrl)
                                 .doOnSuccess { log.info("Excel document update finish. ID: $documentId") }
                         }
                     )
+                    .doOnError { ex -> log.error("Background task failed: ${ex.message}", ex) }
+                    .subscribe()
 
-                val saveDocumentMono = Mono.fromCallable {
-                    Document.forProcessing(documentId, title)
-                }.flatMap { documentManager.save(it) }.cache()
-
-                Mono.`when`(createFileMono, saveDocumentMono) // 파일 생성과 DB 저장 병렬 실행
-                    .then(saveDocumentMono)
+                Mono.just(Document.forProcessing(documentId, title))
+                    .flatMap { documentManager.save(it) }
             }
             .onErrorResume { ex ->
                 val errorMessage = ex.message
