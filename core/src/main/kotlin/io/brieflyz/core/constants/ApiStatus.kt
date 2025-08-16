@@ -22,21 +22,21 @@ enum class SuccessStatus(
     override val message: String
 ) : ApiStatus {
     // 200 OK
-    USER_INFORMATION_READ_SUCCESS(200 ok "유저 정보 조회 성공"),
-    SUBSCRIPTION_INFO_READ_SUCCESS(200 ok "구독 정보 조회 성공"),
-    USER_SIGNUP_VERIFY_SUCCESS(200 ok "회원가입 인증 성공"),
+    USER_INFORMATION_READ_SUCCESS(200 ok "유저 정보 조회에 성공하였습니다."),
+    SUBSCRIPTION_INFO_READ_SUCCESS(200 ok "구독 정보 조회에 성공하였습니다."),
+    USER_SIGNUP_VERIFY_SUCCESS(200 ok "회원가입 인증 성공하였습니다. 다시 로그인을 진행해주세요."),
 
     // 201 Created
-    SIGN_UP_SUCCESS(201 created "회원가입 성공"),
-    SIGN_IN_SUCCESS(201 created "로그인 성공"),
-    TOKEN_REFRESH_SUCCESS(201 created "토큰 재발급 성공"),
-    SUBSCRIBE_SUCCESS(201 created "구독 성공"),
+    SIGN_UP_SUCCESS(201 created "회원가입에 성공하였습니다. 이메일 인증을 진행해주세요."),
+    SIGN_IN_SUCCESS(201 created "로그인 성공하였습니다."),
+    TOKEN_REFRESH_SUCCESS(201 created "토큰 재발급에 성공하였습니다."),
+    SUBSCRIBE_SUCCESS(201 created "구독에 성공하였습니다."),
 
     // 204 No Content
-    LOGOUT_SUCCESS(204 noContent "로그아웃 성공"),
-    USER_WITHDRAW_SUCCESS(204 noContent "회원 탈퇴 성공"),
-    SUBSCRIBE_CANCEL_SUCCESS(204 noContent "구독 취소 성공"),
-    SUBSCRIBE_DELETE_SUCCESS(204 noContent "구독 삭제 성공")
+    LOGOUT_SUCCESS(204 noContent "로그아웃 되었습니다."),
+    USER_WITHDRAW_SUCCESS(204 noContent "회원 탈퇴 처리되었습니다."),
+    SUBSCRIBE_CANCEL_SUCCESS(204 noContent "구독 취소 처리되었습니다."),
+    SUBSCRIBE_DELETE_SUCCESS(204 noContent "구독이 삭제되었습니다.")
     ;
 
     constructor(status: ApiStatusBuilder.ApiStatus) : this(status.statusCode, status.message)
