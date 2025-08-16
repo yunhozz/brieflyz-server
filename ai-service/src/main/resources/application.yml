@@ -73,6 +73,9 @@ app:
     kafka:
       num-of-partitions: 9
       replication-factor: 3
+    file:
+      file-path: tmp
+      download-url: /download
 ---
 spring:
   config:

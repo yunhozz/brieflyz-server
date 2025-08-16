@@ -1,6 +1,7 @@
 package io.brieflyz.ai_service.service.document.impl
 
 import io.brieflyz.ai_service.common.enums.AiProvider
+import io.brieflyz.ai_service.config.AiServiceProperties
 import io.brieflyz.ai_service.model.dto.DocumentGenerateRequest
 import io.brieflyz.ai_service.model.dto.DocumentResponse
 import io.brieflyz.ai_service.model.entity.Document
@@ -27,8 +28,9 @@ import kotlin.io.path.name
 
 @Component
 class PowerPointGenerator(
+    private val aiServiceProperties: AiServiceProperties,
     private val aiStructureGeneratorFactory: AiStructureGeneratorFactory,
-    private val documentManager: DocumentManager
+    private val documentManager: DocumentManager,
 ) : DocumentGenerator {
 
     private val log = logger()
@@ -51,16 +53,16 @@ class PowerPointGenerator(
                         createPowerPoint(ppt, title, slides)
                         Files.createDirectories(filePath.parent)
                         FileOutputStream(filePath.toFile()).use { ppt.write(it) }
-                        log.info("Create  PPT file completed. File path: ${filePath.name}")
+                        log.info("Create PPT file completed. File path: ${filePath.name}")
                     }
                 }.subscribeOn(Schedulers.boundedElastic())
                     .then(
                         Mono.defer {
                             val fileName = filePath.fileName.toString()
                             val fileUrl = filePath.toUri().toURL().toString()
-                            val downloadUrl = filePath.toUri().toURL().toString()
+                            val downloadUrl = aiServiceProperties.file?.downloadUrl
 
-                            documentManager.updateStatus(documentId, fileName, fileUrl, downloadUrl)
+                            documentManager.updateStatus(documentId, fileName, fileUrl, "$downloadUrl/ppt")
                                 .doOnSuccess { log.info("PPT document update finish. ID: $documentId") }
                         }
                     )
@@ -143,8 +145,9 @@ class PowerPointGenerator(
     }
 
     private fun createFilePath(title: String): Path {
+        val filePath = aiServiceProperties.file?.filePath
         val titleName = title.replace(Regex("[^a-zA-Z0-9가-힣]"), "_")
         val timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"))
-        return Paths.get("docs/ppt", "${titleName}_$timestamp.pptx")
+        return Paths.get("$filePath/ppt", "${titleName}_$timestamp.pptx")
     }
 }
