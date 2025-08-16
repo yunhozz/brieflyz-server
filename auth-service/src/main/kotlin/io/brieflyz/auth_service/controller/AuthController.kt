@@ -9,6 +9,7 @@ import io.brieflyz.auth_service.model.dto.response.TokenResponse
 import io.brieflyz.auth_service.service.AuthService
 import io.brieflyz.core.constants.SuccessStatus
 import io.brieflyz.core.dto.api.ApiResponse
+import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
@@ -34,8 +35,13 @@ class AuthController(
 
     @GetMapping("/verify")
     @ResponseStatus(HttpStatus.OK)
-    fun verifyEmail(@RequestParam token: String): ApiResponse<Void> {
+    fun verifyEmail(
+        @RequestParam token: String,
+        request: HttpServletRequest,
+        response: HttpServletResponse
+    ): ApiResponse<Void> {
         authService.verifyEmail(token)
+        CookieUtils.deleteCookie(request, response, CookieName.ACCESS_TOKEN_COOKIE_NAME)
         return ApiResponse.success(SuccessStatus.USER_SIGNUP_VERIFY_SUCCESS)
     }
 

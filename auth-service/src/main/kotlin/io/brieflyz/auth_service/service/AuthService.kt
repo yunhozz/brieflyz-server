@@ -60,7 +60,9 @@ class AuthService(
         val email = redisHandler.find(verifyKey)
         val member = findMemberByEmail(email)
 
-        member.updateByEmailVerify()
+        member.updateByEmailVerify() // add USER role
+
+        if (redisHandler.exists(email)) redisHandler.delete(email)
         redisHandler.delete(verifyKey)
     }
 
