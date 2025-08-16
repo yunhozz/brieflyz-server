@@ -1,9 +1,9 @@
 package io.brieflyz.auth_service.service
 
+import io.brieflyz.auth_service.common.component.JwtProvider
+import io.brieflyz.auth_service.common.component.RedisHandler
 import io.brieflyz.auth_service.common.exception.RefreshTokenNotFoundException
 import io.brieflyz.auth_service.common.exception.UserNotFoundException
-import io.brieflyz.auth_service.common.infra.redis.RedisHandler
-import io.brieflyz.auth_service.common.security.JwtProvider
 import io.brieflyz.auth_service.model.dto.response.MemberResponse
 import io.brieflyz.auth_service.model.dto.response.TokenResponse
 import io.brieflyz.auth_service.model.entity.Member

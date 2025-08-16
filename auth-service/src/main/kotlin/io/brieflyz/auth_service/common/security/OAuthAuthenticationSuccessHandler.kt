@@ -1,7 +1,8 @@
 package io.brieflyz.auth_service.common.security
 
+import io.brieflyz.auth_service.common.component.JwtProvider
+import io.brieflyz.auth_service.common.component.RedisHandler
 import io.brieflyz.auth_service.common.constants.CookieName
-import io.brieflyz.auth_service.common.infra.redis.RedisHandler
 import io.brieflyz.auth_service.common.utils.CookieUtils
 import io.brieflyz.auth_service.common.utils.SerializationUtils
 import io.brieflyz.auth_service.config.AuthServiceProperties

@@ -1,4 +1,4 @@
-package io.brieflyz.auth_service.common.security
+package io.brieflyz.auth_service.common.component
 
 import io.brieflyz.auth_service.common.exception.JwtTokenNotValidException
 import io.brieflyz.auth_service.model.security.CustomUserDetails
