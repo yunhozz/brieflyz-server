@@ -7,9 +7,9 @@ import io.brieflyz.auth_service.common.exception.UserNotFoundException
 import io.brieflyz.auth_service.common.exception.UserRegisteredBySocialException
 import io.brieflyz.auth_service.common.infra.redis.RedisHandler
 import io.brieflyz.auth_service.common.security.JwtProvider
-import io.brieflyz.auth_service.model.dto.SignInRequestDTO
-import io.brieflyz.auth_service.model.dto.SignUpRequestDTO
-import io.brieflyz.auth_service.model.dto.TokenResponseDTO
+import io.brieflyz.auth_service.model.dto.request.SignInRequest
+import io.brieflyz.auth_service.model.dto.request.SignUpRequest
+import io.brieflyz.auth_service.model.dto.response.TokenResponse
 import io.brieflyz.auth_service.model.entity.Member
 import io.brieflyz.auth_service.repository.MemberRepository
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
@@ -24,8 +24,8 @@ class AuthService(
     private val redisHandler: RedisHandler
 ) {
     @Transactional
-    fun join(dto: SignUpRequestDTO): Long {
-        val (email, password, nickname) = dto
+    fun join(request: SignUpRequest): Long {
+        val (email, password, nickname) = request
 
         if (memberRepository.existsByEmail(email)) throw UserAlreadyExistsException("Email: $email")
 
@@ -36,8 +36,8 @@ class AuthService(
     }
 
     @Transactional(readOnly = true)
-    fun login(dto: SignInRequestDTO): TokenResponseDTO {
-        val (email, password) = dto
+    fun login(request: SignInRequest): TokenResponse {
+        val (email, password) = request
         val member = memberRepository.findByEmail(email)
             ?: throw UserNotFoundException("Email: $email")
 
@@ -49,6 +49,6 @@ class AuthService(
 
         redisHandler.save(username, tokens.refreshToken, tokens.refreshTokenValidTime)
 
-        return TokenResponseDTO(tokens.tokenType + tokens.accessToken, tokens.accessTokenValidTime)
+        return TokenResponse(tokens.tokenType + tokens.accessToken, tokens.accessTokenValidTime)
     }
 }

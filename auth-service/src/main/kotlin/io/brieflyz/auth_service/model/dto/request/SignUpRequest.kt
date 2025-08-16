@@ -1,10 +1,10 @@
-package io.brieflyz.auth_service.model.dto
+package io.brieflyz.auth_service.model.dto.request
 
 import jakarta.validation.constraints.Email
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Pattern
 
-data class SignUpRequestDTO(
+data class SignUpRequest(
     @field:NotBlank(message = "이메일을 입력해주세요.")
     @field:Email(message = "정확한 형식의 이메일을 입력해주세요.")
     val email: String,

@@ -1,8 +1,8 @@
-package io.brieflyz.auth_service.model.dto
+package io.brieflyz.auth_service.model.dto.request
 
 import jakarta.validation.constraints.NotBlank
 
-data class SignInRequestDTO(
+data class SignInRequest(
     @field:NotBlank(message = "이메일을 입력해주세요.")
     val email: String,
 

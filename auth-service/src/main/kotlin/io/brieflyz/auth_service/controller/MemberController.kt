@@ -3,8 +3,8 @@ package io.brieflyz.auth_service.controller
 import io.brieflyz.auth_service.common.constants.CookieName
 import io.brieflyz.auth_service.common.utils.CookieUtils
 import io.brieflyz.auth_service.common.utils.SerializationUtils
-import io.brieflyz.auth_service.model.dto.MemberResponseDTO
-import io.brieflyz.auth_service.model.dto.TokenResponseDTO
+import io.brieflyz.auth_service.model.dto.response.MemberResponse
+import io.brieflyz.auth_service.model.dto.response.TokenResponse
 import io.brieflyz.auth_service.service.MemberService
 import io.brieflyz.core.annotation.JwtSubject
 import io.brieflyz.core.constants.SuccessStatus
@@ -27,21 +27,21 @@ class MemberController(
 ) {
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
-    fun lookupAllMembers(): ApiResponse<List<MemberResponseDTO>> {
+    fun lookupAllMembers(): ApiResponse<List<MemberResponse>> {
         val members = memberService.findAllMembers()
         return ApiResponse.success(SuccessStatus.USER_INFORMATION_READ_SUCCESS, members)
     }
 
     @GetMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
-    fun lookupMember(@PathVariable id: Long): ApiResponse<MemberResponseDTO> {
+    fun lookupMember(@PathVariable id: Long): ApiResponse<MemberResponse> {
         val member = memberService.findMemberById(id)
         return ApiResponse.success(SuccessStatus.USER_INFORMATION_READ_SUCCESS, member)
     }
 
     @PostMapping("/token")
     @ResponseStatus(HttpStatus.CREATED)
-    fun refreshToken(@JwtSubject username: String, response: HttpServletResponse): ApiResponse<TokenResponseDTO> {
+    fun refreshToken(@JwtSubject username: String, response: HttpServletResponse): ApiResponse<TokenResponse> {
         val token = memberService.refreshToken(username)
         CookieUtils.addCookie(
             response,
