@@ -24,6 +24,7 @@ enum class SuccessStatus(
     // 200 OK
     USER_INFORMATION_READ_SUCCESS(200 ok "유저 정보 조회 성공"),
     SUBSCRIPTION_INFO_READ_SUCCESS(200 ok "구독 정보 조회 성공"),
+    USER_SIGNUP_VERIFY_SUCCESS(200 ok "회원가입 인증 성공"),
 
     // 201 Created
     SIGN_UP_SUCCESS(201 created "회원가입 성공"),

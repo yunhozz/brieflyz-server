@@ -64,6 +64,10 @@ class Member private constructor(
         roles += newAuthorities
     }
 
+    fun updateByEmailVerify() {
+        if (!roles.contains(Role.USER.auth)) addRoles(Role.USER)
+    }
+
     fun updateBySocialLogin() {
         loginType = LoginType.SOCIAL
         if (!roles.contains(Role.USER.auth)) addRoles(Role.USER)

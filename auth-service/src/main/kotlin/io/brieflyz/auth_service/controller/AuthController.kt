@@ -12,9 +12,11 @@ import io.brieflyz.core.dto.api.ApiResponse
 import jakarta.servlet.http.HttpServletResponse
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
+import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 
@@ -28,6 +30,13 @@ class AuthController(
     fun signUp(@Valid @RequestBody request: SignUpRequest): ApiResponse<Long> {
         val memberId = authService.join(request)
         return ApiResponse.success(SuccessStatus.SIGN_UP_SUCCESS, memberId)
+    }
+
+    @GetMapping("/verify")
+    @ResponseStatus(HttpStatus.OK)
+    fun verifyEmail(@RequestParam token: String): ApiResponse<Void> {
+        authService.verifyEmail(token)
+        return ApiResponse.success(SuccessStatus.USER_SIGNUP_VERIFY_SUCCESS)
     }
 
     @PostMapping("/sign-in")
