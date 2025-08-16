@@ -45,9 +45,9 @@ class SubscriptionService(
         log.debug("Subscription Information : {}", subscription.toResponse())
 
         val paymentDetailsCreateRequest = paymentRequest.details
-        val paymentDetailsFactory = PaymentDetailsFactoryProvider.getFactory(paymentDetailsCreateRequest)
-
-        val paymentDetails = paymentDetailsFactory.create(paymentDetailsCreateRequest)
+        val paymentDetails = PaymentDetailsFactoryProvider
+            .getFactory(paymentDetailsCreateRequest)
+            .createPaymentDetails()
         val payment = paymentRequest.toPayment(subscription, paymentDetails)
 
         log.debug("Payment Method : ${paymentDetails::class.simpleName}")

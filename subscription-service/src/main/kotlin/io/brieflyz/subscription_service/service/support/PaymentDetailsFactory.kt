@@ -14,22 +14,22 @@ import java.time.format.DateTimeFormatter
 object PaymentDetailsFactoryProvider {
     fun getFactory(request: PaymentDetailsCreateRequest): PaymentDetailsFactory =
         when (request) {
-            is CreditCardDetailsRequest -> CreditCardPaymentDetailsFactory()
-            is BankTransferDetailsRequest -> BankTransferPaymentDetailsFactory()
-            is DigitalWalletDetailsRequest -> DigitalWalletPaymentDetailsFactory()
+            is CreditCardDetailsRequest -> CreditCardPaymentDetailsFactory(request)
+            is BankTransferDetailsRequest -> BankTransferPaymentDetailsFactory(request)
+            is DigitalWalletDetailsRequest -> DigitalWalletPaymentDetailsFactory(request)
         }
 }
 
 sealed interface PaymentDetailsFactory {
-    fun create(request: PaymentDetailsCreateRequest): PaymentDetails
+    fun createPaymentDetails(): PaymentDetails
 }
 
-private class CreditCardPaymentDetailsFactory : PaymentDetailsFactory {
+private class CreditCardPaymentDetailsFactory(val request: PaymentDetailsCreateRequest) : PaymentDetailsFactory {
     companion object {
         private val DATETIME_FORMATTER = DateTimeFormatter.ofPattern("MM/yy")
     }
 
-    override fun create(request: PaymentDetailsCreateRequest): PaymentDetails {
+    override fun createPaymentDetails(): PaymentDetails {
         require(request is CreditCardDetailsRequest)
         val monthYear = YearMonth.parse(request.expirationDate!!, DATETIME_FORMATTER)
         val expirationDate = monthYear.atDay(1).atStartOfDay()
@@ -42,8 +42,8 @@ private class CreditCardPaymentDetailsFactory : PaymentDetailsFactory {
     }
 }
 
-private class BankTransferPaymentDetailsFactory : PaymentDetailsFactory {
-    override fun create(request: PaymentDetailsCreateRequest): PaymentDetails {
+private class BankTransferPaymentDetailsFactory(val request: PaymentDetailsCreateRequest) : PaymentDetailsFactory {
+    override fun createPaymentDetails(): PaymentDetails {
         require(request is BankTransferDetailsRequest)
         return BankTransferPaymentDetails(
             request.bankName!!,
@@ -54,8 +54,8 @@ private class BankTransferPaymentDetailsFactory : PaymentDetailsFactory {
     }
 }
 
-private class DigitalWalletPaymentDetailsFactory : PaymentDetailsFactory {
-    override fun create(request: PaymentDetailsCreateRequest): PaymentDetails {
+private class DigitalWalletPaymentDetailsFactory(val request: PaymentDetailsCreateRequest) : PaymentDetailsFactory {
+    override fun createPaymentDetails(): PaymentDetails {
         require(request is DigitalWalletDetailsRequest)
         return DigitalWalletPaymentDetails(
             request.walletType!!,
