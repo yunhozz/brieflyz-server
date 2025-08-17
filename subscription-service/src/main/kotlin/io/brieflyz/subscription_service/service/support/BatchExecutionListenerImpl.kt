@@ -1,6 +1,7 @@
 package io.brieflyz.subscription_service.service.support
 
 import io.brieflyz.core.utils.logger
+import io.brieflyz.subscription_service.config.SubscriptionServiceProperties
 import io.brieflyz.subscription_service.model.entity.ExpiredSubscription
 import io.brieflyz.subscription_service.repository.ExpiredSubscriptionRepository
 import io.brieflyz.subscription_service.repository.SubscriptionRepository
@@ -17,7 +18,8 @@ import java.util.concurrent.CompletableFuture
 class BatchExecutionListenerImpl(
     private val subscriptionRepository: SubscriptionRepository,
     private val expiredSubscriptionRepository: ExpiredSubscriptionRepository,
-    private val mailService: MailService
+    private val mailService: MailService,
+    private val subscriptionServiceProperties: SubscriptionServiceProperties
 ) : BatchExecutionListener {
 
     private val log = logger()
@@ -35,15 +37,17 @@ class BatchExecutionListenerImpl(
 
     override fun sendEmail(chunk: Chunk<out ExpiredSubscription>) {
         val now = LocalDateTime.now()
+        val renewUrl = subscriptionServiceProperties.email?.renewUrl
+
         val context = Context().apply {
             setVariable("sentAt", now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")))
             setVariable("expiryDate", now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))
-            setVariable("renewUrl", "")
+            setVariable("renewUrl", renewUrl)
             setVariable("supportUrl", "")
             setVariable("unsubscribeUrl", "")
             setVariable("year", Year.now().toString())
         }
-        // TODO: 구독 갱신, 고객 지원, 구독 취소 URL 생성
+        // TODO: 고객 지원, 구독 취소 URL 생성
 
         val futures = mutableListOf<CompletableFuture<Boolean>>()
 

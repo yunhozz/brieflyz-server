@@ -89,6 +89,8 @@ app:
     kafka:
       num-of-partitions: 9
       replication-factor: 3
+  email:
+    renew-url: http://localhost:3000/subscriptions
 ---
 spring:
   config:

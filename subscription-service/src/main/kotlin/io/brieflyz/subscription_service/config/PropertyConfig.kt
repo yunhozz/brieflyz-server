@@ -14,10 +14,15 @@ class PropertyConfig {
 @ConfigurationProperties(prefix = "app.subscription")
 @EnableConfigurationProperties(SubscriptionServiceProperties::class)
 data class SubscriptionServiceProperties(
-    var kafka: KafkaProperties? = null
+    var kafka: KafkaProperties? = null,
+    var email: EmailProperties? = null
 ) {
     data class KafkaProperties(
         var numOfPartitions: Int = 0,
         var replicationFactor: Short = 0
+    )
+
+    data class EmailProperties(
+        var renewUrl: String = "",
     )
 }
