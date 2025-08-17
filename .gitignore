@@ -3,6 +3,7 @@ HELP.md
 .idea
 .env
 .k8s/secret
+.k8s/configmap
 build/
 conf/
 scripts/
