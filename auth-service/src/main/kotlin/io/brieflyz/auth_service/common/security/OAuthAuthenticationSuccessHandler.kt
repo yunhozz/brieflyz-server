@@ -24,10 +24,6 @@ class OAuthAuthenticationSuccessHandler(
 
     private val log = logger()
 
-    companion object {
-        private const val DEFAULT_REDIRECT_URL = "http://localhost"
-    }
-
     override fun onAuthenticationSuccess(
         request: HttpServletRequest,
         response: HttpServletResponse,
@@ -43,7 +39,7 @@ class OAuthAuthenticationSuccessHandler(
             return
         }
 
-        val targetUrl = requestedRedirectUri ?: DEFAULT_REDIRECT_URL
+        val targetUrl = requestedRedirectUri ?: defaultTargetUrl
         val tokens = jwtProvider.generateToken(authentication)
 
         CookieUtils.addCookie(

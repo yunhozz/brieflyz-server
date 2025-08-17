@@ -7,6 +7,7 @@ import io.brieflyz.auth_service.common.exception.PasswordNotMatchException
 import io.brieflyz.auth_service.common.exception.UserAlreadyExistsException
 import io.brieflyz.auth_service.common.exception.UserNotFoundException
 import io.brieflyz.auth_service.common.exception.UserRegisteredBySocialException
+import io.brieflyz.auth_service.config.AuthServiceProperties
 import io.brieflyz.auth_service.model.dto.request.SignInRequest
 import io.brieflyz.auth_service.model.dto.request.SignUpRequest
 import io.brieflyz.auth_service.model.dto.response.TokenResponse
@@ -27,7 +28,8 @@ class AuthService(
     private val passwordEncoder: BCryptPasswordEncoder,
     private val mailProducer: MailProducer,
     private val jwtProvider: JwtProvider,
-    private val redisHandler: RedisHandler
+    private val redisHandler: RedisHandler,
+    private val authServiceProperties: AuthServiceProperties
 ) {
     @Transactional
     fun join(request: SignUpRequest): Long {
@@ -38,14 +40,16 @@ class AuthService(
         val guest = Member.forLocal(email, passwordEncoder.encode(password), nickname)
         memberRepository.save(guest)
 
+        val verifyUrl = authServiceProperties.email?.verifyUrl
         val token = generateVerificationToken()
         val ttl = 24 * 3600 * 1000L // 24 hours
+
         redisHandler.save("VERIFY:$token", email, ttl)
 
         val context = Context().apply {
             setVariable("email", email)
             setVariable("nickname", nickname)
-            setVariable("verifyUrl", "http://localhost:8000/api/auth/verify?token=$token")
+            setVariable("verifyUrl", "$verifyUrl?token=$token")
             setVariable("unsubscribeUrl", "")
             setVariable("year", Year.now().toString())
         }
