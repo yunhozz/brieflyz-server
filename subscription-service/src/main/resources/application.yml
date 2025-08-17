@@ -1,5 +1,3 @@
-server:
-  port: 8070
 spring:
   application:
     name: subscription-service
@@ -51,6 +49,8 @@ management:
       export:
         enabled: true
 ---
+server:
+  port: 8070
 spring:
   config:
     activate:
