@@ -29,7 +29,6 @@ import org.mockito.Mockito.spy
 import org.mockito.junit.jupiter.MockitoExtension
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
-import java.time.LocalDateTime
 import java.util.Optional
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -341,37 +340,6 @@ class SubscriptionServiceMockTest {
             }
             assertEquals("해당 구독 정보를 찾을 수 없습니다. Subscription ID: $subscriptionId", exception.message)
             then(subscriptionRepository).should().findById(subscriptionId)
-        }
-    }
-
-    @Nested
-    inner class ScheduledTaskTest {
-        @Test
-        @DisplayName("만료된 구독 일괄 삭제")
-        fun deleteExpiredSubscriptionsEveryDay() {
-            // given
-            val now = LocalDateTime.now()
-            val expiredSubscription1 = spy(createSubscription(1L, plan = SubscriptionPlan.ONE_MONTH).apply {
-                updatedAt = now.minusMonths(2)
-            })
-            val expiredSubscription2 = spy(createSubscription(2L, plan = SubscriptionPlan.ONE_MONTH).apply {
-                updatedAt = now.minusMonths(2)
-            })
-            val activeSubscription = spy(createSubscription(3L, plan = SubscriptionPlan.ONE_YEAR).apply {
-                updatedAt = now.minusDays(10)
-            })
-
-            val subscriptions = listOf(expiredSubscription1, expiredSubscription2, activeSubscription)
-            val expiredIds = listOf(1L, 2L)
-
-            given(subscriptionRepository.findLimitedSubscriptionsQuery()).willReturn(subscriptions)
-
-            // when
-            subscriptionService.deleteExpiredSubscriptionsEveryDay()
-
-            // then
-            then(subscriptionRepository).should().findLimitedSubscriptionsQuery()
-            then(subscriptionRepository).should().softDeleteSubscriptionsInIdsQuery(expiredIds)
         }
     }
 }

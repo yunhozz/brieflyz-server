@@ -1,11 +1,12 @@
 package io.brieflyz.auth_service.service
 
+import io.brieflyz.auth_service.common.component.JwtProvider
+import io.brieflyz.auth_service.common.component.RedisHandler
 import io.brieflyz.auth_service.common.exception.RefreshTokenNotFoundException
 import io.brieflyz.auth_service.common.exception.UserNotFoundException
-import io.brieflyz.auth_service.common.infra.redis.RedisHandler
-import io.brieflyz.auth_service.common.security.JwtProvider
-import io.brieflyz.auth_service.model.dto.MemberResponseDTO
-import io.brieflyz.auth_service.model.dto.TokenResponseDTO
+import io.brieflyz.auth_service.model.dto.response.MemberResponse
+import io.brieflyz.auth_service.model.dto.response.TokenResponse
+import io.brieflyz.auth_service.model.entity.Member
 import io.brieflyz.auth_service.repository.MemberRepository
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
@@ -17,7 +18,7 @@ class MemberService(
     private val jwtProvider: JwtProvider,
     private val redisHandler: RedisHandler
 ) {
-    fun refreshToken(username: String): TokenResponseDTO {
+    fun refreshToken(username: String): TokenResponse {
         if (!redisHandler.exists(username)) throw RefreshTokenNotFoundException() // re-login
 
         val refreshToken = redisHandler.find(username)
@@ -26,7 +27,7 @@ class MemberService(
 
         redisHandler.save(username, tokens.refreshToken, tokens.refreshTokenValidTime)
 
-        return TokenResponseDTO(tokens.tokenType + tokens.accessToken, tokens.accessTokenValidTime)
+        return TokenResponse(tokens.tokenType + tokens.accessToken, tokens.accessTokenValidTime)
     }
 
     fun deleteRefreshToken(username: String) {
@@ -42,13 +43,21 @@ class MemberService(
     }
 
     @Transactional(readOnly = true)
-    fun findAllMembers(): List<MemberResponseDTO> = memberRepository.findAll()
-        .map { member -> MemberResponseDTO.fromMember(member) }
+    fun findAllMembers(): List<MemberResponse> = memberRepository.findAll()
+        .map { member -> member.toResponse() }
 
     @Transactional(readOnly = true)
-    fun findMemberById(memberId: Long): MemberResponseDTO {
+    fun findMemberById(memberId: Long): MemberResponse {
         val member = (memberRepository.findByIdOrNull(memberId)
             ?: throw UserNotFoundException("Member ID: $memberId"))
-        return MemberResponseDTO.fromMember(member)
+        return member.toResponse()
     }
+
+    private fun Member.toResponse() = MemberResponse(
+        id = this.id,
+        email = this.email,
+        nickname = this.email,
+        loginType = this.loginType,
+        roles = this.getRoles()
+    )
 }

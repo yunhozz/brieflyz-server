@@ -1,4 +1,4 @@
-package io.brieflyz.auth_service.common.infra.redis
+package io.brieflyz.auth_service.common.component
 
 import io.brieflyz.auth_service.common.exception.RedisKeyNotExistsException
 import org.springframework.data.redis.core.RedisTemplate

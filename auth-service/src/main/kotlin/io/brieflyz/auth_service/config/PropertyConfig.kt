@@ -16,6 +16,7 @@ class PropertyConfig {
 data class AuthServiceProperties(
     var oauth: OAuthProperties? = null,
     var kafka: KafkaProperties? = null,
+    var email: EmailProperties? = null
 ) {
     data class OAuthProperties(
         var authorizationUri: String = "",
@@ -26,5 +27,9 @@ data class AuthServiceProperties(
     data class KafkaProperties(
         var numOfPartitions: Int = 0,
         var replicationFactor: Short = 0
+    )
+
+    data class EmailProperties(
+        var verifyUrl: String = ""
     )
 }

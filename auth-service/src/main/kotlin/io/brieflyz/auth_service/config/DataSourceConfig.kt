@@ -6,12 +6,14 @@ import org.springframework.boot.jdbc.DataSourceBuilder
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Primary
+import org.springframework.data.jpa.repository.config.EnableJpaAuditing
 import org.springframework.jdbc.datasource.LazyConnectionDataSourceProxy
 import org.springframework.jdbc.datasource.lookup.AbstractRoutingDataSource
 import org.springframework.transaction.support.TransactionSynchronizationManager
 import javax.sql.DataSource
 
 @Configuration
+@EnableJpaAuditing
 class DataSourceConfig {
 
     private enum class DataSourceType {

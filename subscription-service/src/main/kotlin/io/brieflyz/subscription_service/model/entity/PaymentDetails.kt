@@ -7,7 +7,7 @@ import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Inheritance
 import jakarta.persistence.InheritanceType
-import java.time.ZonedDateTime
+import java.time.LocalDateTime
 
 @Entity
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
@@ -21,7 +21,7 @@ abstract class PaymentDetails : BaseEntity() {
 @DiscriminatorValue("CREDIT_CARD")
 class CreditCardPaymentDetails(
     val cardNumber: String,
-    val expirationDate: ZonedDateTime,
+    val expirationDate: LocalDateTime,
     val cvc: Int
 ) : PaymentDetails()
 

@@ -18,16 +18,13 @@ import io.brieflyz.subscription_service.model.entity.Subscription
 import io.brieflyz.subscription_service.repository.PaymentDetailsRepository
 import io.brieflyz.subscription_service.repository.PaymentRepository
 import io.brieflyz.subscription_service.repository.SubscriptionRepository
-import io.brieflyz.subscription_service.service.support.PaymentDetailsFactory
+import io.brieflyz.subscription_service.service.support.PaymentDetailsFactoryProvider
 import org.springframework.data.domain.Pageable
 import org.springframework.data.repository.findByIdOrNull
-import org.springframework.scheduling.annotation.EnableScheduling
-import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 @Service
-@EnableScheduling
 class SubscriptionService(
     private val subscriptionRepository: SubscriptionRepository,
     private val paymentRepository: PaymentRepository,
@@ -47,10 +44,13 @@ class SubscriptionService(
 
         log.debug("Subscription Information : {}", subscription.toResponse())
 
-        val paymentDetails = PaymentDetailsFactory.createByRequest(paymentRequest.details)
+        val paymentDetailsCreateRequest = paymentRequest.details
+        val paymentDetails = PaymentDetailsFactoryProvider
+            .getFactory(paymentDetailsCreateRequest)
+            .createPaymentDetails()
         val payment = paymentRequest.toPayment(subscription, paymentDetails)
 
-        log.info("Payment Method : ${paymentDetails::class.simpleName}")
+        log.debug("Payment Method : ${paymentDetails::class.simpleName}")
         log.debug("Payment Information : {}", payment.toResponse())
 
         paymentRepository.save(payment)
@@ -81,14 +81,12 @@ class SubscriptionService(
         val pageableInfo = subscriptionPage.pageable
 
         log.debug(
-            """
-            [Subscription Page Info]
-            Total Elements: ${subscriptionPage.totalElements}
-            Total Pages: ${subscriptionPage.totalPages}
-            Page Size: ${pageableInfo.pageSize}
-            Page Number: ${pageableInfo.pageNumber}
-            Subscription Count: ${subscriptionPage.content.size}
-        """.trimIndent()
+            "[Subscription Page Info] " +
+                    "Total Elements: ${subscriptionPage.totalElements}, " +
+                    "Total Pages: ${subscriptionPage.totalPages}, " +
+                    "Page Size: ${pageableInfo.pageSize}, " +
+                    "Page Number: ${pageableInfo.pageNumber}, " +
+                    "Subscription Count: ${subscriptionPage.content.size}"
         )
 
         return subscriptionPage.content
@@ -102,24 +100,9 @@ class SubscriptionService(
         }
 
         subscription.delete()
-        log.debug("Canceled Subscription Details : {}", subscription.toResponse())
+        log.info("Canceled Subscription Details : {}", subscription.toResponse())
 
         return subscription.id
-    }
-
-    @Transactional
-    @Scheduled(cron = "0 0 0 * * *")
-    fun deleteExpiredSubscriptionsEveryDay() {
-        val expiredSubscriptionIds = subscriptionRepository.findLimitedSubscriptionsQuery()
-            .filter { it.isExpired() }
-            .map { it.id }
-
-        expiredSubscriptionIds.chunked(100).forEach { ids ->
-            log.debug("Expired Subscription IDs : {}", ids)
-        }
-
-        subscriptionRepository.softDeleteSubscriptionsInIdsQuery(expiredSubscriptionIds)
-        log.info("A total of ${expiredSubscriptionIds.size} subscriptions have been successfully deleted.")
     }
 
     @Transactional

@@ -5,7 +5,6 @@ import com.querydsl.core.annotations.QueryProjection
 import io.brieflyz.subscription_service.common.constants.PaymentMethod
 import io.brieflyz.subscription_service.common.constants.SubscriptionPlan
 import java.time.LocalDateTime
-import java.time.ZonedDateTime
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 data class SubscriptionQueryResponse @QueryProjection constructor(
@@ -44,7 +43,7 @@ data class PaymentQueryResponse @QueryProjection constructor(
 data class PaymentDetailsQueryResponse @QueryProjection constructor(
     val id: Long,
     val cardNumber: String?,
-    val expirationDate: ZonedDateTime?,
+    val expirationDate: LocalDateTime?,
     val cvc: Int?,
     val bankName: String?,
     val accountNumber: String?,

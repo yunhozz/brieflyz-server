@@ -1,5 +1,3 @@
-server:
-  port: 8070
 spring:
   application:
     name: subscription-service
@@ -10,10 +8,13 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQLDialect
-        show_sql: true
-        format_sql: true
         default_batch_fetch_size: 100
         query.in_clause_parameter_padding: true
+  batch:
+    job:
+      enabled: false
+    jdbc:
+      initialize-schema: always
   kafka:
     consumer:
       group-id: subscription-service-group
@@ -21,6 +22,18 @@ spring:
     redis:
       connect-timeout: 3000
       timeout: 3000
+  mail:
+    host: ${gmail.host}
+    port: ${gmail.port}
+    username: ${gmail.username}
+    password: ${gmail.password}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
 management:
   endpoints:
     web:
@@ -34,6 +47,8 @@ management:
       export:
         enabled: true
 ---
+server:
+  port: 8070
 spring:
   config:
     activate:
@@ -44,6 +59,10 @@ spring:
   jpa:
     hibernate:
       ddl-auto: create
+    properties:
+      hibernate:
+        show_sql: true
+        format_sql: true
   datasource:
     hikari:
       source:
@@ -72,6 +91,8 @@ app:
     kafka:
       num-of-partitions: 9
       replication-factor: 3
+  email:
+    renew-url: http://localhost:3000/subscriptions
 ---
 spring:
   config:
