@@ -407,6 +407,17 @@ spec:
     app.kubernetes.io/name: ingress-nginx
   type: ClusterIP
 ---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ingress-nginx-metrics
+  namespace: ingress-nginx
+spec:
+  selector:
+    app.kubernetes.io/component: controller
+  ports:
+    - port: 10254
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -438,6 +449,9 @@ spec:
         app.kubernetes.io/name: ingress-nginx
         app.kubernetes.io/part-of: ingress-nginx
         app.kubernetes.io/version: 1.13.1
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "10254"
     spec:
       automountServiceAccountToken: true
       containers:
@@ -451,6 +465,7 @@ spec:
             - --validating-webhook=:8443
             - --validating-webhook-certificate=/usr/local/certificates/cert
             - --validating-webhook-key=/usr/local/certificates/key
+            - --enable-metrics=true
           env:
             - name: POD_NAME
               valueFrom:
@@ -489,6 +504,9 @@ spec:
               protocol: TCP
             - containerPort: 8443
               name: webhook
+              protocol: TCP
+            - containerPort: 10254
+              name: prometheus
               protocol: TCP
           readinessProbe:
             failureThreshold: 3
