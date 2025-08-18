@@ -9,7 +9,9 @@ spec:
   clusterIP: None
   ports:
     - port: 8888
+
 ---
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -30,5 +32,8 @@ spec:
           imagePullPolicy: Always
           ports:
             - containerPort: 8888
+          env:
+            - name: CONFIG_PATH
+              value: brieflyz/
       imagePullSecrets:
         - name: ghcr-secret
