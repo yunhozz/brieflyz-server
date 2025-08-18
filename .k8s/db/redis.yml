@@ -108,3 +108,4 @@ spec:
               --cluster-yes
       restartPolicy: OnFailure
   backoffLimit: 3
+  ttlSecondsAfterFinished: 0

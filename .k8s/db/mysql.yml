@@ -347,6 +347,7 @@ spec:
             name: mysql-repl-user-configmap
       restartPolicy: OnFailure
   backoffLimit: 3
+  ttlSecondsAfterFinished: 0
 
 ---
 
@@ -429,3 +430,4 @@ spec:
             name: mysql-replication-configmap
       restartPolicy: OnFailure
   backoffLimit: 3
+  ttlSecondsAfterFinished: 0
