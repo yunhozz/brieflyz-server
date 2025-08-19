@@ -24,7 +24,7 @@ spec:
   selector:
     matchLabels:
       app: subscription-service
-  replicas: 1
+  replicas: 3
   strategy:
     type: RollingUpdate
     rollingUpdate:
@@ -50,8 +50,8 @@ spec:
                       - subscription-service
       containers:
         - name: subscription-service
-          image: brieflyz/subscription-service:latest
-          imagePullPolicy: Never
+          image: ghcr.io/yunhozz/brieflyz-subscription-service:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 8070
           env:
@@ -62,21 +62,9 @@ spec:
           volumeMounts:
             - name: subscription-service-logs-pvc-volume
               mountPath: /app/logs
+      imagePullSecrets:
+        - name: ghcr-secret
       volumes:
         - name: subscription-service-logs-pvc-volume
           persistentVolumeClaim:
-            claimName: subscription-service-logs-pvc
-
----
-
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: subscription-service-logs-pvc
-  namespace: dev
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 1Gi
+            claimName: nfs-pvc

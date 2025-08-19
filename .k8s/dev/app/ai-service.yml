@@ -24,7 +24,7 @@ spec:
   selector:
     matchLabels:
       app: ai-service
-  replicas: 1
+  replicas: 3
   strategy:
     type: RollingUpdate
     rollingUpdate:
@@ -50,8 +50,8 @@ spec:
                       - ai-service
       containers:
         - name: ai-service
-          image: brieflyz/ai-service:latest
-          imagePullPolicy: Never
+          image: ghcr.io/yunhozz/brieflyz-ai-service:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 8999
           env:
@@ -60,21 +60,9 @@ spec:
           volumeMounts:
             - name: ai-service-logs-pvc-volume
               mountPath: /app/logs
+      imagePullSecrets:
+        - name: ghcr-secret
       volumes:
         - name: ai-service-logs-pvc-volume
           persistentVolumeClaim:
-            claimName: ai-service-logs-pvc
-
----
-
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: ai-service-logs-pvc
-  namespace: dev
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 1Gi
+            claimName: nfs-pvc

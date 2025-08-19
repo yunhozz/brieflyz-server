@@ -24,7 +24,7 @@ spec:
   selector:
     matchLabels:
       app: auth-service
-  replicas: 1
+  replicas: 3
   strategy:
     type: RollingUpdate
     rollingUpdate:
@@ -50,8 +50,8 @@ spec:
                       - auth-service
       containers:
         - name: auth-service
-          image: brieflyz/auth-service:latest
-          imagePullPolicy: Never
+          image: ghcr.io/yunhozz/brieflyz-auth-service:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 8090
           env:
@@ -62,21 +62,9 @@ spec:
           volumeMounts:
             - name: auth-service-logs-pvc-volume
               mountPath: /app/logs
+      imagePullSecrets:
+        - name: ghcr-secret
       volumes:
         - name: auth-service-logs-pvc-volume
           persistentVolumeClaim:
-            claimName: auth-service-logs-pvc
-
----
-
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: auth-service-logs-pvc
-  namespace: dev
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 1Gi
+            claimName: nfs-pvc
