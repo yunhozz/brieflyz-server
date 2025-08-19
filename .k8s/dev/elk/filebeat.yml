@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: filebeat
+  namespace: dev
+spec:
+  selector:
+    matchLabels:
+      app: filebeat
+  template:
+    metadata:
+      name: filebeat
+      namespace: dev
+      labels:
+        app: filebeat
+    spec:
+      containers:
+        - name: filebeat
+          image: elastic/filebeat:9.0.2
+          volumeMounts:
+            - name: nfs-logs
+              mountPath: /logs
+            - name: filebeat-configmap-volume
+              mountPath: /usr/share/filebeat/filebeat.yml
+              subPath: filebeat.yml
+      volumes:
+        - name: nfs-logs
+          hostPath:
+            path: /mnt/disks/nfs-server
+            type: Directory
+        - name: filebeat-configmap-volume
+          configMap:
+            name: filebeat-configmap
