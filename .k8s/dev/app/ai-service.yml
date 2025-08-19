@@ -2,7 +2,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: ai-service
-  namespace: app
+  namespace: dev
   labels:
     app: ai-service
 spec:
@@ -17,7 +17,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: ai-service
-  namespace: app
+  namespace: dev
   labels:
     app: ai-service
 spec:
@@ -57,3 +57,24 @@ spec:
           env:
             - name: APPLICATION_PROFILE
               value: dev
+          volumeMounts:
+            - name: ai-service-logs-pvc-volume
+              mountPath: /app/logs
+      volumes:
+        - name: ai-service-logs-pvc-volume
+          persistentVolumeClaim:
+            claimName: ai-service-logs-pvc
+
+---
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ai-service-logs-pvc
+  namespace: dev
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi

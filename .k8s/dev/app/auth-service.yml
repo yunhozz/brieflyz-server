@@ -2,7 +2,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: auth-service
-  namespace: app
+  namespace: dev
   labels:
     app: auth-service
 spec:
@@ -17,7 +17,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: auth-service
-  namespace: app
+  namespace: dev
   labels:
     app: auth-service
 spec:
@@ -59,3 +59,24 @@ spec:
               value: dev
             - name: TZ
               value: Asia/Seoul
+          volumeMounts:
+            - name: auth-service-logs-pvc-volume
+              mountPath: /app/logs
+      volumes:
+        - name: auth-service-logs-pvc-volume
+          persistentVolumeClaim:
+            claimName: auth-service-logs-pvc
+
+---
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: auth-service-logs-pvc
+  namespace: dev
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi

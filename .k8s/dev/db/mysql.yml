@@ -2,7 +2,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: mysql-auth-source
-  namespace: db
+  namespace: dev
   labels:
     app: mysql-auth-source
 spec:
@@ -18,7 +18,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: mysql-subscription-source
-  namespace: db
+  namespace: dev
   labels:
     app: mysql-subscription-source
 spec:
@@ -34,7 +34,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: mysql-auth-replica
-  namespace: db
+  namespace: dev
   labels:
     app: mysql-auth-replica
 spec:
@@ -50,7 +50,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: mysql-subscription-replica
-  namespace: db
+  namespace: dev
   labels:
     app: mysql-subscription-replica
 spec:
@@ -66,7 +66,7 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: mysql-auth-source
-  namespace: db
+  namespace: dev
   labels:
     app: mysql-auth-source
 spec:
@@ -109,7 +109,7 @@ spec:
       spec:
         accessModes:
           - ReadWriteOnce
-        storageClassName: local-path
+        storageClassName: standard-rwo
         resources:
           requests:
             storage: 1Gi
@@ -120,7 +120,7 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: mysql-subscription-source
-  namespace: db
+  namespace: dev
   labels:
     app: mysql-subscription-source
 spec:
@@ -163,7 +163,7 @@ spec:
       spec:
         accessModes:
           - ReadWriteOnce
-        storageClassName: local-path
+        storageClassName: standard-rwo
         resources:
           requests:
             storage: 1Gi
@@ -174,7 +174,7 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: mysql-auth-replica
-  namespace: db
+  namespace: dev
   labels:
     app: mysql-auth-replica
 spec:
@@ -228,7 +228,7 @@ spec:
       spec:
         accessModes:
           - ReadWriteOnce
-        storageClassName: local-path
+        storageClassName: standard-rwo
         resources:
           requests:
             storage: 1Gi
@@ -239,7 +239,7 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: mysql-subscription-replica
-  namespace: db
+  namespace: dev
   labels:
     app: mysql-subscription-replica
 spec:
@@ -293,7 +293,7 @@ spec:
       spec:
         accessModes:
           - ReadWriteOnce
-        storageClassName: local-path
+        storageClassName: standard-rwo
         resources:
           requests:
             storage: 1Gi
@@ -304,7 +304,7 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: mysql-repl-user-job
-  namespace: db
+  namespace: dev
 spec:
   template:
     spec:
@@ -321,7 +321,7 @@ spec:
             - sh
             - -c
           args:
-            - mysql -h mysql-auth-source-0.mysql-auth-source.db.svc.cluster.local -u root -p$MYSQL_ROOT_PASSWORD < /sql/mysql-source.sql
+            - mysql -h mysql-auth-source-0.mysql-auth-source -u root -p$MYSQL_ROOT_PASSWORD < /sql/mysql-source.sql
           volumeMounts:
             - name: mysql-repl-user-configmap-volume
               mountPath: /sql
@@ -337,7 +337,7 @@ spec:
             - sh
             - -c
           args:
-            - mysql -h mysql-subscription-source-0.mysql-subscription-source.db.svc.cluster.local -u root -p$MYSQL_ROOT_PASSWORD < /sql/mysql-source.sql
+            - mysql -h mysql-subscription-source-0.mysql-subscription-source -u root -p$MYSQL_ROOT_PASSWORD < /sql/mysql-source.sql
           volumeMounts:
             - name: mysql-repl-user-configmap-volume
               mountPath: /sql
@@ -346,7 +346,6 @@ spec:
           configMap:
             name: mysql-repl-user-configmap
       restartPolicy: OnFailure
-  backoffLimit: 3
   ttlSecondsAfterFinished: 0
 
 ---
@@ -355,7 +354,7 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: mysql-replication-job
-  namespace: db
+  namespace: dev
 spec:
   template:
     spec:
@@ -372,7 +371,7 @@ spec:
             - sh
             - -c
           args:
-            - mysql -h mysql-auth-replica-0.mysql-auth-replica.db.svc.cluster.local -u root -p$MYSQL_ROOT_PASSWORD < /sql/mysql-auth-replica.sql
+            - mysql -h mysql-auth-replica-0.mysql-auth-replica -u root -p$MYSQL_ROOT_PASSWORD < /sql/mysql-auth-replica.sql
           volumeMounts:
             - name: mysql-replication-configmap-volume
               mountPath: /sql
@@ -388,7 +387,7 @@ spec:
             - sh
             - -c
           args:
-            - mysql -h mysql-auth-replica-1.mysql-auth-replica.db.svc.cluster.local -u root -p$MYSQL_ROOT_PASSWORD < /sql/mysql-auth-replica.sql
+            - mysql -h mysql-auth-replica-1.mysql-auth-replica -u root -p$MYSQL_ROOT_PASSWORD < /sql/mysql-auth-replica.sql
           volumeMounts:
             - name: mysql-replication-configmap-volume
               mountPath: /sql
@@ -404,7 +403,7 @@ spec:
             - sh
             - -c
           args:
-            - mysql -h mysql-subscription-replica-0.mysql-subscription-replica.db.svc.cluster.local -u root -p$MYSQL_ROOT_PASSWORD < /sql/mysql-subscription-replica.sql
+            - mysql -h mysql-subscription-replica-0.mysql-subscription-replica -u root -p$MYSQL_ROOT_PASSWORD < /sql/mysql-subscription-replica.sql
           volumeMounts:
             - name: mysql-replication-configmap-volume
               mountPath: /sql
@@ -420,7 +419,7 @@ spec:
             - sh
             - -c
           args:
-            - mysql -h mysql-subscription-replica-1.mysql-subscription-replica.db.svc.cluster.local -u root -p$MYSQL_ROOT_PASSWORD < /sql/mysql-subscription-replica.sql
+            - mysql -h mysql-subscription-replica-1.mysql-subscription-replica -u root -p$MYSQL_ROOT_PASSWORD < /sql/mysql-subscription-replica.sql
           volumeMounts:
             - name: mysql-replication-configmap-volume
               mountPath: /sql
@@ -429,5 +428,4 @@ spec:
           configMap:
             name: mysql-replication-configmap
       restartPolicy: OnFailure
-  backoffLimit: 3
   ttlSecondsAfterFinished: 0
