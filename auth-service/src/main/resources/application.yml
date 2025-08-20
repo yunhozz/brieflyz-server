@@ -46,7 +46,6 @@ app:
   auth:
     oauth:
       authorization-uri: ${oauth.authorization-uri}
-      authorized-redirect-uris: ${oauth.authorized-redirect-uris}
 ---
 server:
   port: 8090
@@ -101,6 +100,7 @@ app:
   auth:
     oauth:
       redirect-uri: http://localhost/login/oauth2/code/{registrationId}
+      authorized-redirect-uris: ${oauth.authorized-redirect-uris}
     kafka:
       num-of-partitions: 9
       replication-factor: 3

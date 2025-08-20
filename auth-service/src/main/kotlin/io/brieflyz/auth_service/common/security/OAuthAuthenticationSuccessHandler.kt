@@ -61,8 +61,9 @@ class OAuthAuthenticationSuccessHandler(
         requestedRedirectUri: String?,
         authorizedRedirectUris: List<String>
     ): Boolean =
-        if (requestedRedirectUri != null &&
-            authorizedRedirectUris.none { requestedRedirectUri == it }
+        if (
+            requestedRedirectUri != null &&
+            authorizedRedirectUris.none { requestedRedirectUri.startsWith(it) }
         ) {
             log.warn("Unauthorized redirect URI: $requestedRedirectUri")
             true
