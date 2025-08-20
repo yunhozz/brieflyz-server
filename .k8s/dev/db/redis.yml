@@ -107,5 +107,4 @@ spec:
               redis-2.redis:6379
               --cluster-yes
       restartPolicy: OnFailure
-  backoffLimit: 3
   ttlSecondsAfterFinished: 0
