@@ -1,16 +1,19 @@
-name: CD - Deploy to GCP Artifact Registry & GKE
+name: CD - Deploy to GHCR & GKE
 
 on:
   push:
     branches: [ develop, master ]
 
 env:
-  GCP_PROJECT_ID: your-gcp-project-id
+  NAMESPACE: ${{ github.ref == 'refs/heads/master' && 'prod' || 'dev' }}
+  REGISTRY: ghcr.io
+  GITHUB_USERNAME: yunhozz
+  GCP_PROJECT_ID: brieflyz-469509
   GCP_REGION: asia-northeast3
-  GCP_REPO_NAME: brieflyz
 
 permissions:
   contents: read
+  packages: write
   id-token: write
 
 jobs:
@@ -48,11 +51,42 @@ jobs:
     if: needs.filter.outputs.api-gateway == 'true'
     environment: ${{ github.ref == 'refs/heads/master' && 'prod' || 'dev' }}
     env:
-      IMAGE_NAME: api-gateway
+      SERVICE_NAME: brieflyz-api-gateway
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.GITHUB_USERNAME }}/${{ env.SERVICE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and Push Docker Image
+        id: build-image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./api-gateway/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
 
       - name: Authenticate to GCP
         uses: google-github-actions/auth@v2
@@ -60,20 +94,18 @@ jobs:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
-      - name: Configure Docker for GCP Artifact Registry
-        run: |
-          gcloud auth configure-docker ${{ env.GCP_REGION }}-docker.pkg.dev --quiet
+      - name: Set up GKE credentials
+        uses: google-github-actions/get-gke-credentials@v2
+        with:
+          cluster_name: ${{ secrets.GKE_CLUSTER_NAME }}
+          location: ${{ env.GCP_REGION }}
 
-      - name: Build, Tag, and Push API Gateway Image to Artifact Registry
-        id: build-image
+      - name: Deploy to GKE
         env:
-          IMAGE_TAG: ${{ github.sha }}
+          IMAGE_URI: ${{ env.REGISTRY }}/${{ env.GITHUB_USERNAME }}/${{ env.SERVICE_NAME }}:latest
         run: |
-          IMAGE_URI=${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.GCP_REPO_NAME }}/${{ env.IMAGE_NAME }}:$IMAGE_TAG
-          echo "Building API Gateway Docker image..."
-          docker build -f api-gateway/Dockerfile -t $IMAGE_URI .
-          docker push $IMAGE_URI
-          echo "image=$IMAGE_URI" >> $GITHUB_OUTPUT
+          kubectl set image deployment/api-gateway api-gateway=${{ env.IMAGE_URI }} -n ${{ env.NAMESPACE }}
+          kubectl rollout status deployment/api-gateway -n ${{ env.NAMESPACE }}
 
   deploy-auth-service:
     name: Deploy Auth Service
@@ -82,11 +114,42 @@ jobs:
     if: needs.filter.outputs.auth-service == 'true'
     environment: ${{ github.ref == 'refs/heads/master' && 'prod' || 'dev' }}
     env:
-      IMAGE_NAME: auth-service
+      SERVICE_NAME: brieflyz-auth-service
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.GITHUB_USERNAME }}/${{ env.SERVICE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and Push Docker Image
+        id: build-image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./auth-service/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
 
       - name: Authenticate to GCP
         uses: google-github-actions/auth@v2
@@ -94,20 +157,18 @@ jobs:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
-      - name: Configure Docker for GCP Artifact Registry
-        run: |
-          gcloud auth configure-docker ${{ env.GCP_REGION }}-docker.pkg.dev --quiet
+      - name: Set up GKE credentials
+        uses: google-github-actions/get-gke-credentials@v2
+        with:
+          cluster_name: ${{ secrets.GKE_CLUSTER_NAME }}
+          location: ${{ env.GCP_REGION }}
 
-      - name: Build, Tag, and Push Auth Service Image to Artifact Registry
-        id: build-image
+      - name: Deploy to GKE
         env:
-          IMAGE_TAG: ${{ github.sha }}
+          IMAGE_URI: ${{ env.REGISTRY }}/${{ env.GITHUB_USERNAME }}/${{ env.SERVICE_NAME }}:latest
         run: |
-          IMAGE_URI=${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.GCP_REPO_NAME }}/${{ env.IMAGE_NAME }}:$IMAGE_TAG
-          echo "Building Auth Service Docker image..."
-          docker build -f auth-service/Dockerfile -t $IMAGE_URI .
-          docker push $IMAGE_URI
-          echo "image=$IMAGE_URI" >> $GITHUB_OUTPUT
+          kubectl set image deployment/auth-service auth-service=${{ env.IMAGE_URI }} -n ${{ env.NAMESPACE }}
+          kubectl rollout status deployment/auth-service -n ${{ env.NAMESPACE }}
 
   deploy-subscription-service:
     name: Deploy Subscription Service
@@ -116,11 +177,42 @@ jobs:
     if: needs.filter.outputs.subscription-service == 'true'
     environment: ${{ github.ref == 'refs/heads/master' && 'prod' || 'dev' }}
     env:
-      IMAGE_NAME: subscription-service
+      SERVICE_NAME: brieflyz-subscription-service
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.GITHUB_USERNAME }}/${{ env.SERVICE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and Push Docker Image
+        id: build-image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./subscription-service/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
 
       - name: Authenticate to GCP
         uses: google-github-actions/auth@v2
@@ -128,20 +220,18 @@ jobs:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
-      - name: Configure Docker for GCP Artifact Registry
-        run: |
-          gcloud auth configure-docker ${{ env.GCP_REGION }}-docker.pkg.dev --quiet
+      - name: Set up GKE credentials
+        uses: google-github-actions/get-gke-credentials@v2
+        with:
+          cluster_name: ${{ secrets.GKE_CLUSTER_NAME }}
+          location: ${{ env.GCP_REGION }}
 
-      - name: Build, Tag, and Push Subscription Service Image to Artifact Registry
-        id: build-image
+      - name: Deploy to GKE
         env:
-          IMAGE_TAG: ${{ github.sha }}
+          IMAGE_URI: ${{ env.REGISTRY }}/${{ env.GITHUB_USERNAME }}/${{ env.SERVICE_NAME }}:latest
         run: |
-          IMAGE_URI=${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.GCP_REPO_NAME }}/${{ env.IMAGE_NAME }}:$IMAGE_TAG
-          echo "Building Subscription Service Docker image..."
-          docker build -f subscription-service/Dockerfile -t $IMAGE_URI .
-          docker push $IMAGE_URI
-          echo "image=$IMAGE_URI" >> $GITHUB_OUTPUT
+          kubectl set image deployment/subscription-service subscription-service=${{ env.IMAGE_URI }} -n ${{ env.NAMESPACE }}
+          kubectl rollout status deployment/subscription-service -n ${{ env.NAMESPACE }}
 
   deploy-ai-service:
     name: Deploy AI Service
@@ -150,11 +240,42 @@ jobs:
     if: needs.filter.outputs.ai-service == 'true'
     environment: ${{ github.ref == 'refs/heads/master' && 'prod' || 'dev' }}
     env:
-      IMAGE_NAME: ai-service
+      SERVICE_NAME: brieflyz-ai-service
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.GITHUB_USERNAME }}/${{ env.SERVICE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and Push Docker Image
+        id: build-image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./ai-service/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
 
       - name: Authenticate to GCP
         uses: google-github-actions/auth@v2
@@ -162,20 +283,18 @@ jobs:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
-      - name: Configure Docker for GCP Artifact Registry
-        run: |
-          gcloud auth configure-docker ${{ env.GCP_REGION }}-docker.pkg.dev --quiet
+      - name: Set up GKE credentials
+        uses: google-github-actions/get-gke-credentials@v2
+        with:
+          cluster_name: ${{ secrets.GKE_CLUSTER_NAME }}
+          location: ${{ env.GCP_REGION }}
 
-      - name: Build, Tag, and Push AI Service Image to Artifact Registry
-        id: build-image
+      - name: Deploy to GKE
         env:
-          IMAGE_TAG: ${{ github.sha }}
+          IMAGE_URI: ${{ env.REGISTRY }}/${{ env.GITHUB_USERNAME }}/${{ env.SERVICE_NAME }}:latest
         run: |
-          IMAGE_URI=${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.GCP_REPO_NAME }}/${{ env.IMAGE_NAME }}:$IMAGE_TAG
-          echo "Building AI Service Docker image..."
-          docker build -f ai-service/Dockerfile -t $IMAGE_URI .
-          docker push $IMAGE_URI
-          echo "image=$IMAGE_URI" >> $GITHUB_OUTPUT
+          kubectl set image deployment/ai-service ai-service=${{ env.IMAGE_URI }} -n ${{ env.NAMESPACE }}
+          kubectl rollout status deployment/ai-service -n ${{ env.NAMESPACE }}
 
   deploy-summary:
     name: Deployment Summary
