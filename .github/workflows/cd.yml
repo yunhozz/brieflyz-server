@@ -51,7 +51,7 @@ jobs:
     runs-on: ubuntu-latest
 #    needs: filter
 #    if: needs.filter.outputs.api-gateway == 'true'
-    environment: ${{ github.ref == 'refs/heads/master' && 'prod' || 'dev' }}
+#    environment: ${{ github.ref == 'refs/heads/master' && 'prod' || 'dev' }}
     env:
       SERVICE_NAME: brieflyz-api-gateway
 
@@ -69,15 +69,14 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.GITHUB_USERNAME }}/${{ env.SERVICE_NAME }}
-          tags: |
-            type=ref,event=branch
-            type=sha,prefix=${{ github.ref_name }}-
-            type=raw,value=latest,enable={{is_default_branch}}
+      - name: Set Docker Image Tag
+        id: image-tag
+        run: |
+          if [[ "${GITHUB_REF_NAME}" == "master" ]]; then
+            echo "TAG=latest" >> $GITHUB_ENV
+          else
+            echo "TAG=${GITHUB_REF_NAME}" >> $GITHUB_ENV
+          fi
 
       - name: Build and Push Docker Image
         id: build-image
@@ -87,8 +86,7 @@ jobs:
           file: ./api-gateway/Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: ${{ env.REGISTRY }}/${{ env.GITHUB_USERNAME }}/${{ env.SERVICE_NAME }}:${{ env.TAG }}
 
       - name: Authenticate to GCP
         uses: google-github-actions/auth@v2
@@ -104,7 +102,7 @@ jobs:
 
       - name: Deploy to GKE
         env:
-          IMAGE_URI: ${{ env.REGISTRY }}/${{ env.GITHUB_USERNAME }}/${{ env.SERVICE_NAME }}:latest
+          IMAGE_URI: ${{ env.REGISTRY }}/${{ env.GITHUB_USERNAME }}/${{ env.SERVICE_NAME }}:${{ env.TAG }}
         run: |
           kubectl set image deployment/api-gateway api-gateway=${{ env.IMAGE_URI }} -n ${{ env.NAMESPACE }}
           kubectl rollout status deployment/api-gateway -n ${{ env.NAMESPACE }}
