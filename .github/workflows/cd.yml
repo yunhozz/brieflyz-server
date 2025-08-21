@@ -12,7 +12,7 @@ env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
   GCP_PROJECT_ID: brieflyz-469509
-  GCP_REGION: asia-northeast3
+  GCP_REGION: asia-northeast3-a
   NAMESPACE: ${{ github.ref == 'refs/heads/master' && 'prod' || 'dev' }}
 
 permissions:
