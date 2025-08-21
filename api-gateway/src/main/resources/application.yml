@@ -32,22 +32,14 @@ spring:
             locator:
               enabled: true
           routes:
-            - id: auth-service-authentication
+            - id: auth-service
               uri: ${AUTH_SERVICE_URL:http://localhost:8090}
               predicates:
-                - Path=/api/auth/**,/oauth2/authorization/**,/login/oauth2/code/**
-            - id: auth-service-members
-              uri: ${AUTH_SERVICE_URL:http://localhost:8090}
-              predicates:
-                - Path=/api/members/**
-              filters:
-                - AuthorizationHeaderFilter
+                - Path=/api/auth/**,/api/members/**,/oauth2/authorization/**,/login/oauth2/code/**
             - id: subscription-service
               uri: ${SUBSCRIPTION_SERVICE_URL:http://localhost:8070}
               predicates:
                 - Path=/api/subscriptions/**,/api/admin/subscriptions/**
-              filters:
-                - AuthorizationHeaderFilter
 ---
 spring:
   config:
