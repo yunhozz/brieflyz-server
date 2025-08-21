@@ -77,18 +77,18 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-${{ env.SERVICE_NAME }}
 
-      - name: Build and Push Docker Image
-        id: build-image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./${{ env.SERVICE_NAME }}/Dockerfile
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+#      - name: Build and Push Docker Image
+#        id: build-image
+#        uses: docker/build-push-action@v5
+#        with:
+#          context: .
+#          file: ./${{ env.SERVICE_NAME }}/Dockerfile
+#          platforms: linux/amd64,linux/arm64
+#          push: true
+#          tags: ${{ steps.meta.outputs.tags }}
+#          labels: ${{ steps.meta.outputs.labels }}
+#          cache-from: type=gha
+#          cache-to: type=gha,mode=max
 
       - name: Authenticate to GCP
         uses: google-github-actions/auth@v2
@@ -107,8 +107,8 @@ jobs:
         env:
           IMAGE_URI: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-${{ env.SERVICE_NAME }}:latest
         run: |
-          kubectl set image deployment/api-gateway api-gateway=${{ env.IMAGE_URI }} -n ${{ env.NAMESPACE }}
-          kubectl rollout status deployment/api-gateway -n ${{ env.NAMESPACE }}
+          kubectl set image deployment/${{ env.SERVICE_NAME }} ${{ env.SERVICE_NAME }}=${{ env.IMAGE_URI }} -n ${{ env.NAMESPACE }}
+          kubectl rollout status deployment/${{ env.SERVICE_NAME }} -n ${{ env.NAMESPACE }}
 
 #  deploy-auth-service:
 #    name: Deploy Auth Service
