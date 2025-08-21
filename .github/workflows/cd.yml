@@ -1,19 +1,12 @@
 name: CD - Deploy to GHCR & GKE
 
 on:
-#  push:
-#    branches: [ develop, master ]
-  pull_request:
+  push:
     branches: [ develop, master ]
 
 env:
   ACTIONS_STEP_DEBUG: true
   ACTIONS_RUNNER_DEBUG: true
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
-  GCP_PROJECT_ID: brieflyz-469509
-  GCP_REGION: asia-northeast3-a
-  NAMESPACE: ${{ github.ref == 'refs/heads/master' && 'prod' || 'dev' }}
 
 permissions:
   contents: read
@@ -21,45 +14,60 @@ permissions:
   id-token: write
 
 jobs:
-#  filter:
-#    name: Filter Updated Modules
-#    runs-on: ubuntu-latest
-#    steps:
-#      - name: Checkout Code
-#        uses: actions/checkout@v4
-#
-#      - name: Check Changed Files
-#        uses: dorny/paths-filter@v3
-#        id: filter
-#        with:
-#          base: ${{ github.event.before }}
-#          filters: |
-#            api-gateway:
-#              - 'api-gateway/**'
-#            auth-service:
-#              - 'auth-service/**'
-#            subscription-service:
-#              - 'subscription-service/**'
-#            ai-service:
-#              - 'ai-service/**'
-#    outputs:
-#      api-gateway: ${{ steps.filter.outputs.api-gateway }}
-#      auth-service: ${{ steps.filter.outputs.auth-service }}
-#      subscription-service: ${{ steps.filter.outputs.subscription-service }}
-#      ai-service: ${{ steps.filter.outputs.ai-service }}
-
-  deploy-api-gateway:
-    name: Deploy API Gateway
+  filter:
+    name: Filter Updated Modules
     runs-on: ubuntu-latest
-#    needs: filter
-#    if: needs.filter.outputs.api-gateway == 'true'
-#    environment: ${{ github.ref == 'refs/heads/master' && 'prod' || 'dev' }}
-    env:
-      SERVICE_NAME: api-gateway
+    outputs:
+      api-gateway: ${{ steps.filter.outputs.api-gateway }}
+      auth-service: ${{ steps.filter.outputs.auth-service }}
+      subscription-service: ${{ steps.filter.outputs.subscription-service }}
+      ai-service: ${{ steps.filter.outputs.ai-service }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
+      - name: Check Changed Files
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          base: ${{ github.event.before }}
+          filters: |
+            api-gateway:
+              - 'api-gateway/**'
+            auth-service:
+              - 'auth-service/**'
+            subscription-service:
+              - 'subscription-service/**'
+            ai-service:
+              - 'ai-service/**'
+
+  deploy-services:
+    runs-on: ubuntu-latest
+    needs: filter
+    strategy:
+      matrix:
+        service: [ api-gateway, auth-service, subscription-service, ai-service ]
+    env:
+      SERVICE_NAME: ${{ matrix.service }}
+      REGISTRY: ghcr.io
+      IMAGE_NAME: ${{ github.repository }}
+      GCP_PROJECT_ID: brieflyz-469509
+      GCP_REGION: asia-northeast3-a
+      NAMESPACE: ${{ github.ref == 'refs/heads/master' && 'prod' || 'dev' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Deploy if Service Changed
+        if: ${{
+          (matrix.service == 'api-gateway' && needs.filter.outputs.api-gateway != 'true') ||
+          (matrix.service == 'auth-service' && needs.filter.outputs.auth-service != 'true') ||
+          (matrix.service == 'subscription-service' && needs.filter.outputs.subscription-service != 'true') ||
+          (matrix.service == 'ai-service' && needs.filter.outputs.ai-service != 'true')
+          }}
+        run: |
+          echo "No changes detected for ${{ matrix.service }}, skipping..."
+          exit 0
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -77,18 +85,18 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-${{ env.SERVICE_NAME }}
 
-#      - name: Build and Push Docker Image
-#        id: build-image
-#        uses: docker/build-push-action@v5
-#        with:
-#          context: .
-#          file: ./${{ env.SERVICE_NAME }}/Dockerfile
-#          platforms: linux/amd64,linux/arm64
-#          push: true
-#          tags: ${{ steps.meta.outputs.tags }}
-#          labels: ${{ steps.meta.outputs.labels }}
-#          cache-from: type=gha
-#          cache-to: type=gha,mode=max
+      - name: Build and Push Docker Image
+        id: build-image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./${{ env.SERVICE_NAME }}/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Authenticate to GCP
         uses: google-github-actions/auth@v2
@@ -113,246 +121,57 @@ jobs:
             echo "Deployment ${{ env.SERVICE_NAME }} not found. Skipping set image and rollout status."
           fi
 
-#  deploy-auth-service:
-#    name: Deploy Auth Service
-#    runs-on: ubuntu-latest
-#    needs: filter
-#    if: needs.filter.outputs.auth-service == 'true'
-#    environment: ${{ github.ref == 'refs/heads/master' && 'prod' || 'dev' }}
-#    env:
-#      SERVICE_NAME: brieflyz-auth-service
-#
-#    steps:
-#      - name: Checkout
-#        uses: actions/checkout@v4
-#
-#      - name: Set up Docker Buildx
-#        uses: docker/setup-buildx-action@v3
-#
-#      - name: Log in to GitHub Container Registry
-#        uses: docker/login-action@v3
-#        with:
-#          registry: ${{ env.REGISTRY }}
-#          username: ${{ github.actor }}
-#          password: ${{ secrets.GITHUB_TOKEN }}
-#
-#      - name: Extract metadata
-#        id: meta
-#        uses: docker/metadata-action@v5
-#        with:
-#          images: ${{ env.REGISTRY }}/${{ env.GITHUB_USERNAME }}/${{ env.SERVICE_NAME }}
-#          tags: |
-#            type=ref,event=branch
-#            type=sha,prefix={{branch}}-
-#            type=raw,value=latest,enable={{is_default_branch}}
-#
-#      - name: Build and Push Docker Image
-#        id: build-image
-#        uses: docker/build-push-action@v5
-#        with:
-#          context: .
-#          file: ./auth-service/Dockerfile
-#          platforms: linux/amd64,linux/arm64
-#          push: true
-#          tags: ${{ steps.meta.outputs.tags }}
-#          labels: ${{ steps.meta.outputs.labels }}
-#
-#      - name: Authenticate to GCP
-#        uses: google-github-actions/auth@v2
-#        with:
-#          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-#          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
-#
-#      - name: Set up GKE credentials
-#        uses: google-github-actions/get-gke-credentials@v2
-#        with:
-#          cluster_name: ${{ secrets.GKE_CLUSTER_NAME }}
-#          location: ${{ env.GCP_REGION }}
-#
-#      - name: Deploy to GKE
-#        env:
-#          IMAGE_URI: ${{ env.REGISTRY }}/${{ env.GITHUB_USERNAME }}/${{ env.SERVICE_NAME }}:latest
-#        run: |
-#          kubectl set image deployment/auth-service auth-service=${{ env.IMAGE_URI }} -n ${{ env.NAMESPACE }}
-#          kubectl rollout status deployment/auth-service -n ${{ env.NAMESPACE }}
-#
-#  deploy-subscription-service:
-#    name: Deploy Subscription Service
-#    runs-on: ubuntu-latest
-#    needs: filter
-#    if: needs.filter.outputs.subscription-service == 'true'
-#    environment: ${{ github.ref == 'refs/heads/master' && 'prod' || 'dev' }}
-#    env:
-#      SERVICE_NAME: brieflyz-subscription-service
-#
-#    steps:
-#      - name: Checkout
-#        uses: actions/checkout@v4
-#
-#      - name: Set up Docker Buildx
-#        uses: docker/setup-buildx-action@v3
-#
-#      - name: Log in to GitHub Container Registry
-#        uses: docker/login-action@v3
-#        with:
-#          registry: ${{ env.REGISTRY }}
-#          username: ${{ github.actor }}
-#          password: ${{ secrets.GITHUB_TOKEN }}
-#
-#      - name: Extract metadata
-#        id: meta
-#        uses: docker/metadata-action@v5
-#        with:
-#          images: ${{ env.REGISTRY }}/${{ env.GITHUB_USERNAME }}/${{ env.SERVICE_NAME }}
-#          tags: |
-#            type=ref,event=branch
-#            type=sha,prefix={{branch}}-
-#            type=raw,value=latest,enable={{is_default_branch}}
-#
-#      - name: Build and Push Docker Image
-#        id: build-image
-#        uses: docker/build-push-action@v5
-#        with:
-#          context: .
-#          file: ./subscription-service/Dockerfile
-#          platforms: linux/amd64,linux/arm64
-#          push: true
-#          tags: ${{ steps.meta.outputs.tags }}
-#          labels: ${{ steps.meta.outputs.labels }}
-#
-#      - name: Authenticate to GCP
-#        uses: google-github-actions/auth@v2
-#        with:
-#          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-#          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
-#
-#      - name: Set up GKE credentials
-#        uses: google-github-actions/get-gke-credentials@v2
-#        with:
-#          cluster_name: ${{ secrets.GKE_CLUSTER_NAME }}
-#          location: ${{ env.GCP_REGION }}
-#
-#      - name: Deploy to GKE
-#        env:
-#          IMAGE_URI: ${{ env.REGISTRY }}/${{ env.GITHUB_USERNAME }}/${{ env.SERVICE_NAME }}:latest
-#        run: |
-#          kubectl set image deployment/subscription-service subscription-service=${{ env.IMAGE_URI }} -n ${{ env.NAMESPACE }}
-#          kubectl rollout status deployment/subscription-service -n ${{ env.NAMESPACE }}
-#
-#  deploy-ai-service:
-#    name: Deploy AI Service
-#    runs-on: ubuntu-latest
-#    needs: filter
-#    if: needs.filter.outputs.ai-service == 'true'
-#    environment: ${{ github.ref == 'refs/heads/master' && 'prod' || 'dev' }}
-#    env:
-#      SERVICE_NAME: brieflyz-ai-service
-#
-#    steps:
-#      - name: Checkout
-#        uses: actions/checkout@v4
-#
-#      - name: Set up Docker Buildx
-#        uses: docker/setup-buildx-action@v3
-#
-#      - name: Log in to GitHub Container Registry
-#        uses: docker/login-action@v3
-#        with:
-#          registry: ${{ env.REGISTRY }}
-#          username: ${{ github.actor }}
-#          password: ${{ secrets.GITHUB_TOKEN }}
-#
-#      - name: Extract metadata
-#        id: meta
-#        uses: docker/metadata-action@v5
-#        with:
-#          images: ${{ env.REGISTRY }}/${{ env.GITHUB_USERNAME }}/${{ env.SERVICE_NAME }}
-#          tags: |
-#            type=ref,event=branch
-#            type=sha,prefix={{branch}}-
-#            type=raw,value=latest,enable={{is_default_branch}}
-#
-#      - name: Build and Push Docker Image
-#        id: build-image
-#        uses: docker/build-push-action@v5
-#        with:
-#          context: .
-#          file: ./ai-service/Dockerfile
-#          platforms: linux/amd64,linux/arm64
-#          push: true
-#          tags: ${{ steps.meta.outputs.tags }}
-#          labels: ${{ steps.meta.outputs.labels }}
-#
-#      - name: Authenticate to GCP
-#        uses: google-github-actions/auth@v2
-#        with:
-#          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-#          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
-#
-#      - name: Set up GKE credentials
-#        uses: google-github-actions/get-gke-credentials@v2
-#        with:
-#          cluster_name: ${{ secrets.GKE_CLUSTER_NAME }}
-#          location: ${{ env.GCP_REGION }}
-#
-#      - name: Deploy to GKE
-#        env:
-#          IMAGE_URI: ${{ env.REGISTRY }}/${{ env.GITHUB_USERNAME }}/${{ env.SERVICE_NAME }}:latest
-#        run: |
-#          kubectl set image deployment/ai-service ai-service=${{ env.IMAGE_URI }} -n ${{ env.NAMESPACE }}
-#          kubectl rollout status deployment/ai-service -n ${{ env.NAMESPACE }}
-#
-#  deploy-summary:
-#    name: Deployment Summary
-#    runs-on: ubuntu-latest
-#    needs: [ filter, deploy-api-gateway, deploy-auth-service, deploy-subscription-service, deploy-ai-service ]
-#    if: always()
-#
-#    steps:
-#      - name: Generate Deployment Summary
-#        run: |
-#          echo "## 🚀 Deployment Summary" >> $GITHUB_STEP_SUMMARY
-#          echo "" >> $GITHUB_STEP_SUMMARY
-#          echo "### Changed Modules Detection" >> $GITHUB_STEP_SUMMARY
-#          echo "- **API Gateway**: ${{ needs.filter.outputs.api-gateway == 'true' && '✅ Changed' || '⚪ No changes' }}" >> $GITHUB_STEP_SUMMARY
-#          echo "- **Auth Service**: ${{ needs.filter.outputs.auth-service == 'true' && '✅ Changed' || '⚪ No changes' }}" >> $GITHUB_STEP_SUMMARY
-#          echo "- **Subscription Service**: ${{ needs.filter.outputs.subscription-service == 'true' && '✅ Changed' || '⚪ No changes' }}" >> $GITHUB_STEP_SUMMARY
-#          echo "- **AI Service**: ${{ needs.filter.outputs.ai-service == 'true' && '✅ Changed' || '⚪ No changes' }}" >> $GITHUB_STEP_SUMMARY
-#          echo "" >> $GITHUB_STEP_SUMMARY
-#          echo "### Deployment Status" >> $GITHUB_STEP_SUMMARY
-#
-#          if [[ "${{ needs.deploy-api-gateway.result }}" == "success" ]]; then
-#            echo "- **API Gateway**: 🟢 Successfully deployed" >> $GITHUB_STEP_SUMMARY
-#          elif [[ "${{ needs.deploy-api-gateway.result }}" == "failure" ]]; then
-#            echo "- **API Gateway**: 🔴 Deployment failed" >> $GITHUB_STEP_SUMMARY
-#          elif [[ "${{ needs.deploy-api-gateway.result }}" == "skipped" ]]; then
-#            echo "- **API Gateway**: ⚪ Skipped (no changes)" >> $GITHUB_STEP_SUMMARY
-#          fi
-#
-#          if [[ "${{ needs.deploy-auth-service.result }}" == "success" ]]; then
-#            echo "- **Auth Service**: 🟢 Successfully deployed" >> $GITHUB_STEP_SUMMARY
-#          elif [[ "${{ needs.deploy-auth-service.result }}" == "failure" ]]; then
-#            echo "- **Auth Service**: 🔴 Deployment failed" >> $GITHUB_STEP_SUMMARY
-#          elif [[ "${{ needs.deploy-auth-service.result }}" == "skipped" ]]; then
-#            echo "- **Auth Service**: ⚪ Skipped (no changes)" >> $GITHUB_STEP_SUMMARY
-#          fi
-#
-#          if [[ "${{ needs.deploy-subscription-service.result }}" == "success" ]]; then
-#            echo "- **Subscription Service**: 🟢 Successfully deployed" >> $GITHUB_STEP_SUMMARY
-#          elif [[ "${{ needs.deploy-subscription-service.result }}" == "failure" ]]; then
-#            echo "- **Subscription Service**: 🔴 Deployment failed" >> $GITHUB_STEP_SUMMARY
-#          elif [[ "${{ needs.deploy-subscription-service.result }}" == "skipped" ]]; then
-#            echo "- **Subscription Service**: ⚪ Skipped (no changes)" >> $GITHUB_STEP_SUMMARY
-#          fi
-#
-#          if [[ "${{ needs.deploy-ai-service.result }}" == "success" ]]; then
-#            echo "- **AI Service**: 🟢 Successfully deployed" >> $GITHUB_STEP_SUMMARY
-#          elif [[ "${{ needs.deploy-ai-service.result }}" == "failure" ]]; then
-#            echo "- **AI Service**: 🔴 Deployment failed" >> $GITHUB_STEP_SUMMARY
-#          elif [[ "${{ needs.deploy-ai-service.result }}" == "skipped" ]]; then
-#            echo "- **AI Service**: ⚪ Skipped (no changes)" >> $GITHUB_STEP_SUMMARY
-#          fi
-#
-#          echo "" >> $GITHUB_STEP_SUMMARY
-#          echo "---" >> $GITHUB_STEP_SUMMARY
-#          echo "🔗 **Commit**: [\`${{ github.sha }}\`](https://github.com/${{ github.repository }}/commit/${{ github.sha }})" >> $GITHUB_STEP_SUMMARY
+  deploy-summary:
+    name: Deployment Summary
+    runs-on: ubuntu-latest
+    needs: [ filter, deploy-services ]
+    if: always()
+
+    steps:
+      - name: Generate Deployment Summary
+        run: |
+          echo "## 🚀 Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Changed Modules Detection" >> $GITHUB_STEP_SUMMARY
+          echo "- **API Gateway**: ${{ needs.filter.outputs.api-gateway == 'true' && '✅ Changed' || '⚪ No changes' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Auth Service**: ${{ needs.filter.outputs.auth-service == 'true' && '✅ Changed' || '⚪ No changes' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Subscription Service**: ${{ needs.filter.outputs.subscription-service == 'true' && '✅ Changed' || '⚪ No changes' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **AI Service**: ${{ needs.filter.outputs.ai-service == 'true' && '✅ Changed' || '⚪ No changes' }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Deployment Status" >> $GITHUB_STEP_SUMMARY
+
+          if [[ "${{ needs.deploy-api-gateway.result }}" == "success" ]]; then
+            echo "- **API Gateway**: 🟢 Successfully deployed" >> $GITHUB_STEP_SUMMARY
+          elif [[ "${{ needs.deploy-api-gateway.result }}" == "failure" ]]; then
+            echo "- **API Gateway**: 🔴 Deployment failed" >> $GITHUB_STEP_SUMMARY
+          elif [[ "${{ needs.deploy-api-gateway.result }}" == "skipped" ]]; then
+            echo "- **API Gateway**: ⚪ Skipped (no changes)" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [[ "${{ needs.deploy-auth-service.result }}" == "success" ]]; then
+            echo "- **Auth Service**: 🟢 Successfully deployed" >> $GITHUB_STEP_SUMMARY
+          elif [[ "${{ needs.deploy-auth-service.result }}" == "failure" ]]; then
+            echo "- **Auth Service**: 🔴 Deployment failed" >> $GITHUB_STEP_SUMMARY
+          elif [[ "${{ needs.deploy-auth-service.result }}" == "skipped" ]]; then
+            echo "- **Auth Service**: ⚪ Skipped (no changes)" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [[ "${{ needs.deploy-subscription-service.result }}" == "success" ]]; then
+            echo "- **Subscription Service**: 🟢 Successfully deployed" >> $GITHUB_STEP_SUMMARY
+          elif [[ "${{ needs.deploy-subscription-service.result }}" == "failure" ]]; then
+            echo "- **Subscription Service**: 🔴 Deployment failed" >> $GITHUB_STEP_SUMMARY
+          elif [[ "${{ needs.deploy-subscription-service.result }}" == "skipped" ]]; then
+            echo "- **Subscription Service**: ⚪ Skipped (no changes)" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [[ "${{ needs.deploy-ai-service.result }}" == "success" ]]; then
+            echo "- **AI Service**: 🟢 Successfully deployed" >> $GITHUB_STEP_SUMMARY
+          elif [[ "${{ needs.deploy-ai-service.result }}" == "failure" ]]; then
+            echo "- **AI Service**: 🔴 Deployment failed" >> $GITHUB_STEP_SUMMARY
+          elif [[ "${{ needs.deploy-ai-service.result }}" == "skipped" ]]; then
+            echo "- **AI Service**: ⚪ Skipped (no changes)" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "🔗 **Commit**: [\`${{ github.sha }}\`](https://github.com/${{ github.repository }}/commit/${{ github.sha }})" >> $GITHUB_STEP_SUMMARY
