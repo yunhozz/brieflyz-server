@@ -2,6 +2,8 @@ HELP.md
 .gradle
 .idea
 .env
+.k8s/dev/configmap
+.k8s/dev/secret
 build/
 conf/
 scripts/

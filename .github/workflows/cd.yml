@@ -1,15 +1,20 @@
-name: CD - Deploy to AWS ECR & ECS
+name: CD - Deploy to GHCR & GKE
 
 on:
   push:
     branches: [ develop, master ]
 
 env:
-  AWS_REGION: ap-northeast-2
+  NAMESPACE: ${{ github.ref == 'refs/heads/master' && 'prod' || 'dev' }}
+  REGISTRY: ghcr.io
+  GITHUB_USERNAME: yunhozz
+  GCP_PROJECT_ID: brieflyz-469509
+  GCP_REGION: asia-northeast3
 
 permissions:
   contents: read
-  pull-requests: read
+  packages: write
+  id-token: write
 
 jobs:
   filter:
@@ -46,53 +51,61 @@ jobs:
     if: needs.filter.outputs.api-gateway == 'true'
     environment: ${{ github.ref == 'refs/heads/master' && 'prod' || 'dev' }}
     env:
-      ECR_REPOSITORY: brieflyz/api-gateway
-    #      ECS_SERVICE: brieflyz-api-gateway-service
-    #      ECS_CLUSTER: brieflyz-cluster
-    #      ECS_TASK_DEFINITION: .aws/api-gateway-task-definition.json
-    #      CONTAINER_NAME: api-gateway
+      SERVICE_NAME: brieflyz-api-gateway
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.GITHUB_USERNAME }}/${{ env.SERVICE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
 
-      - name: Build, Tag, and Push API Gateway Image to Amazon ECR
+      - name: Build and Push Docker Image
         id: build-image
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          IMAGE_TAG: ${{ github.sha }}
-        run: |
-          echo "Building API Gateway Docker image..."
-          docker build -f api-gateway/Dockerfile -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./api-gateway/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
 
-  #      - name: Fill in the new image ID in the Amazon ECS task definition
-  #        id: task-def
-  #        uses: aws-actions/amazon-ecs-render-task-definition@v1
-  #        with:
-  #          task-definition: ${{ env.ECS_TASK_DEFINITION }}
-  #          container-name: ${{ env.CONTAINER_NAME }}
-  #          image: ${{ steps.build-image.outputs.image }}
-  #
-  #      - name: Deploy Amazon ECS task definition
-  #        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
-  #        with:
-  #          task-definition: ${{ steps.task-def.outputs.task-definition }}
-  #          service: ${{ env.ECS_SERVICE }}
-  #          cluster: ${{ env.ECS_CLUSTER }}
-  #          wait-for-service-stability: true
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Set up GKE credentials
+        uses: google-github-actions/get-gke-credentials@v2
+        with:
+          cluster_name: ${{ secrets.GKE_CLUSTER_NAME }}
+          location: ${{ env.GCP_REGION }}
+
+      - name: Deploy to GKE
+        env:
+          IMAGE_URI: ${{ env.REGISTRY }}/${{ env.GITHUB_USERNAME }}/${{ env.SERVICE_NAME }}:latest
+        run: |
+          kubectl set image deployment/api-gateway api-gateway=${{ env.IMAGE_URI }} -n ${{ env.NAMESPACE }}
+          kubectl rollout status deployment/api-gateway -n ${{ env.NAMESPACE }}
 
   deploy-auth-service:
     name: Deploy Auth Service
@@ -101,53 +114,61 @@ jobs:
     if: needs.filter.outputs.auth-service == 'true'
     environment: ${{ github.ref == 'refs/heads/master' && 'prod' || 'dev' }}
     env:
-      ECR_REPOSITORY: brieflyz/auth-service
-    #      ECS_SERVICE: brieflyz-auth-service-service
-    #      ECS_CLUSTER: brieflyz-cluster
-    #      ECS_TASK_DEFINITION: .aws/auth-service-task-definition.json
-    #      CONTAINER_NAME: auth-service
+      SERVICE_NAME: brieflyz-auth-service
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.GITHUB_USERNAME }}/${{ env.SERVICE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
 
-      - name: Build, Tag, and Push Auth Service Image to Amazon ECR
+      - name: Build and Push Docker Image
         id: build-image
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          IMAGE_TAG: ${{ github.sha }}
-        run: |
-          echo "Building Auth Service Docker image..."
-          docker build -f auth-service/Dockerfile -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./auth-service/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
 
-  #      - name: Fill in the new image ID in the Amazon ECS task definition
-  #        id: task-def
-  #        uses: aws-actions/amazon-ecs-render-task-definition@v1
-  #        with:
-  #          task-definition: ${{ env.ECS_TASK_DEFINITION }}
-  #          container-name: ${{ env.CONTAINER_NAME }}
-  #          image: ${{ steps.build-image.outputs.image }}
-  #
-  #      - name: Deploy Amazon ECS task definition
-  #        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
-  #        with:
-  #          task-definition: ${{ steps.task-def.outputs.task-definition }}
-  #          service: ${{ env.ECS_SERVICE }}
-  #          cluster: ${{ env.ECS_CLUSTER }}
-  #          wait-for-service-stability: true
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Set up GKE credentials
+        uses: google-github-actions/get-gke-credentials@v2
+        with:
+          cluster_name: ${{ secrets.GKE_CLUSTER_NAME }}
+          location: ${{ env.GCP_REGION }}
+
+      - name: Deploy to GKE
+        env:
+          IMAGE_URI: ${{ env.REGISTRY }}/${{ env.GITHUB_USERNAME }}/${{ env.SERVICE_NAME }}:latest
+        run: |
+          kubectl set image deployment/auth-service auth-service=${{ env.IMAGE_URI }} -n ${{ env.NAMESPACE }}
+          kubectl rollout status deployment/auth-service -n ${{ env.NAMESPACE }}
 
   deploy-subscription-service:
     name: Deploy Subscription Service
@@ -156,53 +177,61 @@ jobs:
     if: needs.filter.outputs.subscription-service == 'true'
     environment: ${{ github.ref == 'refs/heads/master' && 'prod' || 'dev' }}
     env:
-      ECR_REPOSITORY: brieflyz/subscription-service
-    #      ECS_SERVICE: brieflyz-subscription-service-service
-    #      ECS_CLUSTER: brieflyz-cluster
-    #      ECS_TASK_DEFINITION: .aws/subscription-service-task-definition.json
-    #      CONTAINER_NAME: subscription-service
+      SERVICE_NAME: brieflyz-subscription-service
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.GITHUB_USERNAME }}/${{ env.SERVICE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
 
-      - name: Build, Tag, and Push Subscription Service Image to Amazon ECR
+      - name: Build and Push Docker Image
         id: build-image
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          IMAGE_TAG: ${{ github.sha }}
-        run: |
-          echo "Building Subscription Service Docker image..."
-          docker build -f subscription-service/Dockerfile -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./subscription-service/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
 
-  #      - name: Fill in the new image ID in the Amazon ECS task definition
-  #        id: task-def
-  #        uses: aws-actions/amazon-ecs-render-task-definition@v1
-  #        with:
-  #          task-definition: ${{ env.ECS_TASK_DEFINITION }}
-  #          container-name: ${{ env.CONTAINER_NAME }}
-  #          image: ${{ steps.build-image.outputs.image }}
-  #
-  #      - name: Deploy Amazon ECS task definition
-  #        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
-  #        with:
-  #          task-definition: ${{ steps.task-def.outputs.task-definition }}
-  #          service: ${{ env.ECS_SERVICE }}
-  #          cluster: ${{ env.ECS_CLUSTER }}
-  #          wait-for-service-stability: true
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Set up GKE credentials
+        uses: google-github-actions/get-gke-credentials@v2
+        with:
+          cluster_name: ${{ secrets.GKE_CLUSTER_NAME }}
+          location: ${{ env.GCP_REGION }}
+
+      - name: Deploy to GKE
+        env:
+          IMAGE_URI: ${{ env.REGISTRY }}/${{ env.GITHUB_USERNAME }}/${{ env.SERVICE_NAME }}:latest
+        run: |
+          kubectl set image deployment/subscription-service subscription-service=${{ env.IMAGE_URI }} -n ${{ env.NAMESPACE }}
+          kubectl rollout status deployment/subscription-service -n ${{ env.NAMESPACE }}
 
   deploy-ai-service:
     name: Deploy AI Service
@@ -211,60 +240,68 @@ jobs:
     if: needs.filter.outputs.ai-service == 'true'
     environment: ${{ github.ref == 'refs/heads/master' && 'prod' || 'dev' }}
     env:
-      ECR_REPOSITORY: brieflyz/ai-service
-    #      ECS_SERVICE: brieflyz-ai-service-service
-    #      ECS_CLUSTER: brieflyz-cluster
-    #      ECS_TASK_DEFINITION: .aws/ai-service-task-definition.json
-    #      CONTAINER_NAME: ai-service
+      SERVICE_NAME: brieflyz-ai-service
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.GITHUB_USERNAME }}/${{ env.SERVICE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
 
-      - name: Build, Tag, and Push AI Service Image to Amazon ECR
+      - name: Build and Push Docker Image
         id: build-image
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          IMAGE_TAG: ${{ github.sha }}
-        run: |
-          echo "Building AI Service Docker image..."
-          docker build -f ai-service/Dockerfile -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./ai-service/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
 
-  #      - name: Fill in the new image ID in the Amazon ECS task definition
-  #        id: task-def
-  #        uses: aws-actions/amazon-ecs-render-task-definition@v1
-  #        with:
-  #          task-definition: ${{ env.ECS_TASK_DEFINITION }}
-  #          container-name: ${{ env.CONTAINER_NAME }}
-  #          image: ${{ steps.build-image.outputs.image }}
-  #
-  #      - name: Deploy Amazon ECS task definition
-  #        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
-  #        with:
-  #          task-definition: ${{ steps.task-def.outputs.task-definition }}
-  #          service: ${{ env.ECS_SERVICE }}
-  #          cluster: ${{ env.ECS_CLUSTER }}
-  #          wait-for-service-stability: true
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Set up GKE credentials
+        uses: google-github-actions/get-gke-credentials@v2
+        with:
+          cluster_name: ${{ secrets.GKE_CLUSTER_NAME }}
+          location: ${{ env.GCP_REGION }}
+
+      - name: Deploy to GKE
+        env:
+          IMAGE_URI: ${{ env.REGISTRY }}/${{ env.GITHUB_USERNAME }}/${{ env.SERVICE_NAME }}:latest
+        run: |
+          kubectl set image deployment/ai-service ai-service=${{ env.IMAGE_URI }} -n ${{ env.NAMESPACE }}
+          kubectl rollout status deployment/ai-service -n ${{ env.NAMESPACE }}
 
   deploy-summary:
     name: Deployment Summary
     runs-on: ubuntu-latest
     needs: [ filter, deploy-api-gateway, deploy-auth-service, deploy-subscription-service, deploy-ai-service ]
     if: always()
-    
+
     steps:
       - name: Generate Deployment Summary
         run: |

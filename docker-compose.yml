@@ -1,9 +1,12 @@
 services:
   api-gateway:
+    image: ghcr.io/yunhozz/brieflyz-api-gateway:latest
     build:
       dockerfile: api-gateway/Dockerfile
       context: .
-    image: brieflyz/api-gateway:latest
+      platforms:
+        - linux/amd64
+        - linux/arm64
     scale: 3
     ports:
       - "8000"
@@ -23,10 +26,13 @@ services:
       - local
 
   auth-service:
+    image: ghcr.io/yunhozz/brieflyz-auth-service:latest
     build:
       dockerfile: auth-service/Dockerfile
       context: .
-    image: brieflyz/auth-service:latest
+      platforms:
+        - linux/amd64
+        - linux/arm64
     scale: 3
     ports:
       - "8090"
@@ -49,10 +55,13 @@ services:
       - local
 
   subscription-service:
+    image: ghcr.io/yunhozz/brieflyz-subscription-service:latest
     build:
       dockerfile: subscription-service/Dockerfile
       context: .
-    image: brieflyz/subscription-service:latest
+      platforms:
+        - linux/amd64
+        - linux/arm64
     scale: 3
     ports:
       - "8070"
@@ -75,10 +84,13 @@ services:
       - local
 
   ai-service:
+    image: ghcr.io/yunhozz/brieflyz-ai-service:latest
     build:
       dockerfile: ai-service/Dockerfile
       context: .
-    image: brieflyz/ai-service:latest
+      platforms:
+        - linux/amd64
+        - linux/arm64
     scale: 3
     ports:
       - "8999"

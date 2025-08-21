@@ -30,10 +30,11 @@ class SecurityConfig {
         .csrf { it.disable() }
         .addFilterBefore(jwtFilter, SecurityWebFiltersOrder.HTTP_BASIC)
         .authorizeExchange {
+            it.pathMatchers("/favicon.ico", "/health", "/actuator/**").permitAll()
             it.pathMatchers("/api/admin/**").hasAuthority(Authority.ROLE_ADMIN.name)
             it.pathMatchers(HttpMethod.GET, "/api/members/**").hasAuthority(Authority.ROLE_ADMIN.name)
             it.pathMatchers("/api/subscriptions/**").hasAuthority(Authority.ROLE_USER.name)
-            it.anyExchange().permitAll()
+            it.anyExchange().authenticated()
         }
         .exceptionHandling {
             it.accessDeniedHandler(jwtAccessDeniedHandler)
