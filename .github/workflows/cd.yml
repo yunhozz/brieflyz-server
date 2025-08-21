@@ -1,7 +1,9 @@
 name: CD - Deploy to GHCR & GKE
 
 on:
-  push:
+#  push:
+#    branches: [ develop, master ]
+  pull_request:
     branches: [ develop, master ]
 
 env:

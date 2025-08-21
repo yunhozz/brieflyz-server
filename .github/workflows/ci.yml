@@ -1,8 +1,8 @@
 name: CI - Build and Tests
 
-on:
-  pull_request:
-    branches: [ develop ]
+#on:
+#  pull_request:
+#    branches: [ develop ]
 
 env:
   SERVICES_DB: mysql-source mysql-replica pg-source pg-replica redis-0 redis-1 redis-2
