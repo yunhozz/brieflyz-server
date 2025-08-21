@@ -7,6 +7,11 @@ on:
 env:
   ACTIONS_STEP_DEBUG: true
   ACTIONS_RUNNER_DEBUG: true
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  GCP_PROJECT_ID: brieflyz-469509
+  GCP_REGION: asia-northeast3-a
+  NAMESPACE: ${{ github.ref == 'refs/heads/master' && 'prod' || 'dev' }}
 
 permissions:
   contents: read
@@ -41,33 +46,17 @@ jobs:
             ai-service:
               - 'ai-service/**'
 
-  deploy-services:
+  deploy-api-gateway:
+    name: Deploy API Gateway
     runs-on: ubuntu-latest
     needs: filter
-    strategy:
-      matrix:
-        service: [ api-gateway, auth-service, subscription-service, ai-service ]
+    if: needs.filter.outputs.api-gateway == 'true'
+    environment: ${{ github.ref == 'refs/heads/master' && 'prod' || 'dev' }}
     env:
-      SERVICE_NAME: ${{ matrix.service }}
-      REGISTRY: ghcr.io
-      IMAGE_NAME: ${{ github.repository }}
-      GCP_PROJECT_ID: brieflyz-469509
-      GCP_REGION: asia-northeast3-a
-      NAMESPACE: ${{ github.ref == 'refs/heads/master' && 'prod' || 'dev' }}
+      SERVICE_NAME: api-gateway
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Deploy if Service Changed
-        if: ${{
-          (matrix.service == 'api-gateway' && needs.filter.outputs.api-gateway != 'true') ||
-          (matrix.service == 'auth-service' && needs.filter.outputs.auth-service != 'true') ||
-          (matrix.service == 'subscription-service' && needs.filter.outputs.subscription-service != 'true') ||
-          (matrix.service == 'ai-service' && needs.filter.outputs.ai-service != 'true')
-          }}
-        run: |
-          echo "No changes detected for ${{ matrix.service }}, skipping..."
-          exit 0
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -79,11 +68,227 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Get Short SHA
+        id: gitsha
+        run: |
+          echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+
       - name: Extract Docker Metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-${{ env.SERVICE_NAME }}
+          tags: ${{ github.ref == 'refs/heads/master' && 'latest' || format('dev-{0}', env.SHORT_SHA) }}
+
+      - name: Build and Push Docker Image
+        id: build-image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./${{ env.SERVICE_NAME }}/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Set up GKE Credentials
+        uses: google-github-actions/get-gke-credentials@v2
+        with:
+          cluster_name: ${{ secrets.GKE_CLUSTER_NAME }}
+          location: ${{ env.GCP_REGION }}
+
+      - name: Deploy to GKE
+        env:
+          IMAGE_URI: ${{ steps.meta.outputs.tags }}
+        run: |
+          if kubectl get deployment ${{ env.SERVICE_NAME }} -n ${{ env.NAMESPACE }} >/dev/null 2>&1; then
+            kubectl set image deployment/${{ env.SERVICE_NAME }} ${{ env.SERVICE_NAME }}=${{ env.IMAGE_URI }} -n ${{ env.NAMESPACE }}
+            kubectl rollout status deployment/${{ env.SERVICE_NAME }} -n ${{ env.NAMESPACE }}
+          else
+            echo "Deployment ${{ env.SERVICE_NAME }} not found. Skipping set image and rollout status."
+          fi
+
+  deploy-auth-service:
+    name: Deploy Auth Service
+    runs-on: ubuntu-latest
+    needs: filter
+    if: needs.filter.outputs.auth-service == 'true'
+    environment: ${{ github.ref == 'refs/heads/master' && 'prod' || 'dev' }}
+    env:
+      SERVICE_NAME: auth-service
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Get Short SHA
+        id: gitsha
+        run: |
+          echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+
+      - name: Extract Docker Metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-${{ env.SERVICE_NAME }}
+          tags: ${{ github.ref == 'refs/heads/master' && 'latest' || format('dev-{0}', env.SHORT_SHA) }}
+
+      - name: Build and Push Docker Image
+        id: build-image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./${{ env.SERVICE_NAME }}/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Set up GKE Credentials
+        uses: google-github-actions/get-gke-credentials@v2
+        with:
+          cluster_name: ${{ secrets.GKE_CLUSTER_NAME }}
+          location: ${{ env.GCP_REGION }}
+
+      - name: Deploy to GKE
+        env:
+          IMAGE_URI: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-${{ env.SERVICE_NAME }}:latest
+        run: |
+          if kubectl get deployment ${{ env.SERVICE_NAME }} -n ${{ env.NAMESPACE }} >/dev/null 2>&1; then
+            kubectl set image deployment/${{ env.SERVICE_NAME }} ${{ env.SERVICE_NAME }}=${{ env.IMAGE_URI }} -n ${{ env.NAMESPACE }}
+            kubectl rollout status deployment/${{ env.SERVICE_NAME }} -n ${{ env.NAMESPACE }}
+          else
+            echo "Deployment ${{ env.SERVICE_NAME }} not found. Skipping set image and rollout status."
+          fi
+
+  deploy-subscription-service:
+    name: Deploy Subscription Service
+    runs-on: ubuntu-latest
+    needs: filter
+    if: needs.filter.outputs.subscription-service == 'true'
+    environment: ${{ github.ref == 'refs/heads/master' && 'prod' || 'dev' }}
+    env:
+      SERVICE_NAME: subscription-service
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Get Short SHA
+        id: gitsha
+        run: |
+          echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+
+      - name: Extract Docker Metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-${{ env.SERVICE_NAME }}
+          tags: ${{ github.ref == 'refs/heads/master' && 'latest' || format('dev-{0}', env.SHORT_SHA) }}
+
+      - name: Build and Push Docker Image
+        id: build-image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./${{ env.SERVICE_NAME }}/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Set up GKE Credentials
+        uses: google-github-actions/get-gke-credentials@v2
+        with:
+          cluster_name: ${{ secrets.GKE_CLUSTER_NAME }}
+          location: ${{ env.GCP_REGION }}
+
+      - name: Deploy to GKE
+        env:
+          IMAGE_URI: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-${{ env.SERVICE_NAME }}:latest
+        run: |
+          if kubectl get deployment ${{ env.SERVICE_NAME }} -n ${{ env.NAMESPACE }} >/dev/null 2>&1; then
+            kubectl set image deployment/${{ env.SERVICE_NAME }} ${{ env.SERVICE_NAME }}=${{ env.IMAGE_URI }} -n ${{ env.NAMESPACE }}
+            kubectl rollout status deployment/${{ env.SERVICE_NAME }} -n ${{ env.NAMESPACE }}
+          else
+            echo "Deployment ${{ env.SERVICE_NAME }} not found. Skipping set image and rollout status."
+          fi
+
+  deploy-ai-service:
+    name: Deploy AI Service
+    runs-on: ubuntu-latest
+    needs: filter
+    if: needs.filter.outputs.ai-service == 'true'
+    environment: ${{ github.ref == 'refs/heads/master' && 'prod' || 'dev' }}
+    env:
+      SERVICE_NAME: ai-service
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Get Short SHA
+        id: gitsha
+        run: |
+          echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+
+      - name: Extract Docker Metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-${{ env.SERVICE_NAME }}
+          tags: ${{ github.ref == 'refs/heads/master' && 'latest' || format('dev-{0}', env.SHORT_SHA) }}
 
       - name: Build and Push Docker Image
         id: build-image
@@ -124,9 +329,8 @@ jobs:
   deploy-summary:
     name: Deployment Summary
     runs-on: ubuntu-latest
-    needs: [ filter, deploy-services ]
+    needs: [ filter, deploy-api-gateway, deploy-auth-service, deploy-subscription-service, deploy-ai-service ]
     if: always()
-
     steps:
       - name: Generate Deployment Summary
         run: |
