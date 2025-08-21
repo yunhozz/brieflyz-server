@@ -106,8 +106,12 @@ jobs:
         env:
           IMAGE_URI: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-${{ env.SERVICE_NAME }}:latest
         run: |
-          kubectl set image deployment/${{ env.SERVICE_NAME }} ${{ env.SERVICE_NAME }}=${{ env.IMAGE_URI }} -n ${{ env.NAMESPACE }}
-          kubectl rollout status deployment/${{ env.SERVICE_NAME }} -n ${{ env.NAMESPACE }}
+          if kubectl get deployment ${{ env.SERVICE_NAME }} -n ${{ env.NAMESPACE }} >/dev/null 2>&1; then
+            kubectl set image deployment/${{ env.SERVICE_NAME }} ${{ env.SERVICE_NAME }}=${{ env.IMAGE_URI }} -n ${{ env.NAMESPACE }}
+            kubectl rollout status deployment/${{ env.SERVICE_NAME }} -n ${{ env.NAMESPACE }}
+          else
+            echo "Deployment ${{ env.SERVICE_NAME }} not found. Skipping set image and rollout status."
+          fi
 
 #  deploy-auth-service:
 #    name: Deploy Auth Service
