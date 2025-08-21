@@ -31,6 +31,7 @@ class SecurityConfig {
         .addFilterBefore(jwtFilter, SecurityWebFiltersOrder.HTTP_BASIC)
         .authorizeExchange {
             it.pathMatchers("/favicon.ico", "/health", "/actuator/**").permitAll()
+            it.pathMatchers("/api/auth/**", "/oauth2/authorization/**", "/login/oauth2/code/**").permitAll()
             it.pathMatchers("/api/admin/**").hasAuthority(Authority.ROLE_ADMIN.name)
             it.pathMatchers(HttpMethod.GET, "/api/members/**").hasAuthority(Authority.ROLE_ADMIN.name)
             it.pathMatchers("/api/subscriptions/**").hasAuthority(Authority.ROLE_USER.name)
