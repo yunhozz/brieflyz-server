@@ -69,14 +69,12 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set Docker Image Tag
-        id: image-tag
-        run: |
-          if [[ "${GITHUB_REF_NAME}" == "master" ]]; then
-            echo "TAG=latest" >> $GITHUB_ENV
-          else
-            echo "TAG=${GITHUB_REF_NAME}" >> $GITHUB_ENV
-          fi
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.GITHUB_USERNAME }}/${{ env.SERVICE_NAME }}
+          tags: latest
 
       - name: Build and Push Docker Image
         id: build-image
@@ -86,7 +84,8 @@ jobs:
           file: ./api-gateway/Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: ${{ env.REGISTRY }}/${{ env.GITHUB_USERNAME }}/${{ env.SERVICE_NAME }}:${{ env.TAG }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
 
       - name: Authenticate to GCP
         uses: google-github-actions/auth@v2
@@ -102,7 +101,7 @@ jobs:
 
       - name: Deploy to GKE
         env:
-          IMAGE_URI: ${{ env.REGISTRY }}/${{ env.GITHUB_USERNAME }}/${{ env.SERVICE_NAME }}:${{ env.TAG }}
+          IMAGE_URI: ${{ env.REGISTRY }}/${{ env.GITHUB_USERNAME }}/${{ env.SERVICE_NAME }}:latest
         run: |
           kubectl set image deployment/api-gateway api-gateway=${{ env.IMAGE_URI }} -n ${{ env.NAMESPACE }}
           kubectl rollout status deployment/api-gateway -n ${{ env.NAMESPACE }}
