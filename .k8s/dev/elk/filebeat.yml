@@ -18,16 +18,15 @@ spec:
         - name: filebeat
           image: elastic/filebeat:9.0.2
           volumeMounts:
-            - name: nfs-logs
+            - name: nfs-logs-pvc-volume
               mountPath: /logs
             - name: filebeat-configmap-volume
               mountPath: /usr/share/filebeat/filebeat.yml
               subPath: filebeat.yml
       volumes:
-        - name: nfs-logs
-          hostPath:
-            path: /mnt/disks/nfs-server
-            type: Directory
+        - name: nfs-logs-pvc-volume
+          persistentVolumeClaim:
+            claimName: nfs-logs-pvc
         - name: filebeat-configmap-volume
           configMap:
             name: filebeat-configmap

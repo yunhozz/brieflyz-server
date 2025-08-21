@@ -60,11 +60,16 @@ spec:
             - name: APPLICATION_PROFILE
               value: dev
           volumeMounts:
-            - name: ai-service-logs-pvc-volume
+            - name: nfs-logs-pvc-volume
               mountPath: /app/logs
+            - name: nfs-documents-pvc-volume
+              mountPath: /app/documents
       imagePullSecrets:
         - name: ghcr-secret
       volumes:
-        - name: ai-service-logs-pvc-volume
+        - name: nfs-logs-pvc-volume
           persistentVolumeClaim:
-            claimName: nfs-pvc
+            claimName: nfs-logs-pvc
+        - name: nfs-documents-pvc-volume
+          persistentVolumeClaim:
+            claimName: nfs-documents-pvc

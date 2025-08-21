@@ -62,11 +62,11 @@ spec:
             - name: TZ
               value: Asia/Seoul
           volumeMounts:
-            - name: subscription-service-logs-pvc-volume
+            - name: nfs-logs-pvc-volume
               mountPath: /app/logs
       imagePullSecrets:
         - name: ghcr-secret
       volumes:
-        - name: subscription-service-logs-pvc-volume
+        - name: nfs-logs-pvc-volume
           persistentVolumeClaim:
-            claimName: nfs-pvc
+            claimName: nfs-logs-pvc

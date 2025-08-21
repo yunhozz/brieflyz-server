@@ -60,11 +60,11 @@ spec:
             - name: APPLICATION_PROFILE
               value: dev
           volumeMounts:
-            - name: api-gateway-logs-pvc-volume
+            - name: nfs-logs-pvc-volume
               mountPath: /app/logs
       imagePullSecrets:
         - name: ghcr-secret
       volumes:
-        - name: api-gateway-logs-pvc-volume
+        - name: nfs-logs-pvc-volume
           persistentVolumeClaim:
-            claimName: nfs-pvc
+            claimName: nfs-logs-pvc
