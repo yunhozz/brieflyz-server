@@ -7,11 +7,13 @@ on:
     branches: [ develop, master ]
 
 env:
-  NAMESPACE: ${{ github.ref == 'refs/heads/master' && 'prod' || 'dev' }}
+  ACTIONS_STEP_DEBUG: true
+  ACTIONS_RUNNER_DEBUG: true
   REGISTRY: ghcr.io
-  GITHUB_USERNAME: yunhozz
+  IMAGE_NAME: ${{ github.repository }}
   GCP_PROJECT_ID: brieflyz-469509
   GCP_REGION: asia-northeast3
+  NAMESPACE: ${{ github.ref == 'refs/heads/master' && 'prod' || 'dev' }}
 
 permissions:
   contents: read
@@ -53,7 +55,7 @@ jobs:
 #    if: needs.filter.outputs.api-gateway == 'true'
 #    environment: ${{ github.ref == 'refs/heads/master' && 'prod' || 'dev' }}
     env:
-      SERVICE_NAME: brieflyz-api-gateway
+      SERVICE_NAME: api-gateway
 
     steps:
       - name: Checkout
@@ -69,31 +71,33 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract metadata
+      - name: Extract Docker Metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.GITHUB_USERNAME }}/${{ env.SERVICE_NAME }}
-          tags: latest
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-${{ env.SERVICE_NAME }}
 
       - name: Build and Push Docker Image
         id: build-image
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./api-gateway/Dockerfile
+          file: ./${{ env.SERVICE_NAME }}/Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Authenticate to GCP
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+          token_format: full
 
-      - name: Set up GKE credentials
+      - name: Set up GKE Credentials
         uses: google-github-actions/get-gke-credentials@v2
         with:
           cluster_name: ${{ secrets.GKE_CLUSTER_NAME }}
@@ -101,7 +105,7 @@ jobs:
 
       - name: Deploy to GKE
         env:
-          IMAGE_URI: ${{ env.REGISTRY }}/${{ env.GITHUB_USERNAME }}/${{ env.SERVICE_NAME }}:latest
+          IMAGE_URI: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-${{ env.SERVICE_NAME }}:latest
         run: |
           kubectl set image deployment/api-gateway api-gateway=${{ env.IMAGE_URI }} -n ${{ env.NAMESPACE }}
           kubectl rollout status deployment/api-gateway -n ${{ env.NAMESPACE }}
