@@ -2,10 +2,10 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
-  - ../../../api-gateway
-  - ../../../auth-service
-  - ../../../subscription-service
-  - ../../../ai-service
+  - ../../base/app/api-gateway
+  - ../../base/app/auth-service
+  - ../../base/app/subscription-service
+  - ../../base/app/ai-service
 
 namespace: prod
 
