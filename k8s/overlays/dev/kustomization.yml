@@ -1,0 +1,39 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../../api-gateway
+  - ../../../auth-service
+  - ../../../subscription-service
+  - ../../../ai-service
+
+namespace: dev
+
+replicas:
+  - name: api-gateway
+    count: 2
+  - name: auth-service
+    count: 2
+  - name: subscription-service
+    count: 2
+  - name: ai-service
+    count: 2
+
+images:
+  - name: api-gateway
+    newName: ghcr.io/yunhozz/brieflyz-api-gateway
+    newTag: latest
+  - name: auth-service
+    newName: ghcr.io/yunhozz/brieflyz-auth-service
+    newTag: latest
+  - name: subscription-service
+    newName: ghcr.io/yunhozz/brieflyz-subscription-service
+    newTag: latest
+  - name: ai-service
+    newName: ghcr.io/yunhozz/brieflyz-ai-service
+    newTag: latest
+
+configMapGenerator:
+  - name: app-profile-configmap
+    literals:
+      - APPLICATION_PROFILE=dev
