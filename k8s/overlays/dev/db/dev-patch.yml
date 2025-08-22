@@ -1,0 +1,219 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mysql-auth-source
+spec:
+  selector:
+    matchLabels:
+      app: mysql-auth-source
+  template:
+    metadata:
+      labels:
+        app: mysql-auth-source
+    spec:
+      containers:
+        - name: mysql-auth-source
+          volumeMounts:
+            - name: mysql-auth-source-volume
+              mountPath: /var/lib/mysql
+  volumeClaimTemplates:
+    - metadata:
+        name: mysql-auth-source-volume
+      spec:
+        storageClassName: standard-rwo
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
+
+---
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mysql-subscription-source
+spec:
+  selector:
+    matchLabels:
+      app: mysql-subscription-source
+  template:
+    metadata:
+      labels:
+        app: mysql-subscription-source
+    spec:
+      containers:
+        - name: mysql-subscription-source
+          volumeMounts:
+            - name: mysql-subscription-source-volume
+              mountPath: /var/lib/mysql
+  volumeClaimTemplates:
+    - metadata:
+        name: mysql-subscription-source-volume
+      spec:
+        storageClassName: standard-rwo
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
+
+---
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mysql-auth-replica
+spec:
+  selector:
+    matchLabels:
+      app: mysql-auth-replica
+  template:
+    metadata:
+      labels:
+        app: mysql-auth-replica
+    spec:
+      containers:
+        - name: mysql-auth-replica
+          volumeMounts:
+            - name: mysql-auth-replica-volume
+              mountPath: /var/lib/mysql
+  volumeClaimTemplates:
+    - metadata:
+        name: mysql-auth-replica-volume
+      spec:
+        storageClassName: standard-rwo
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
+
+---
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mysql-subscription-replica
+spec:
+  selector:
+    matchLabels:
+      app: mysql-subscription-replica
+  template:
+    metadata:
+      labels:
+        app: mysql-subscription-replica
+    spec:
+      containers:
+        - name: mysql-subscription-replica
+          volumeMounts:
+            - name: mysql-subscription-replica-volume
+              mountPath: /var/lib/mysql
+  volumeClaimTemplates:
+    - metadata:
+        name: mysql-subscription-replica-volume
+      spec:
+        storageClassName: standard-rwo
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
+
+---
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: pg-ai-source
+spec:
+  selector:
+    matchLabels:
+      app: pg-ai-source
+  template:
+    metadata:
+      labels:
+        app: pg-ai-source
+    spec:
+      containers:
+        - name: pg-ai-source
+          volumeMounts:
+            - name: pg-ai-source-volume
+              mountPath: /var/lib/postgresql/data
+  volumeClaimTemplates:
+    - metadata:
+        name: pg-ai-source-volume
+      spec:
+        storageClassName: standard-rwo
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
+
+---
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: pg-ai-replica
+spec:
+  selector:
+    matchLabels:
+      app: pg-ai-replica
+  template:
+    metadata:
+      labels:
+        app: pg-ai-replica
+    spec:
+      initContainers:
+        - name: replica-init
+          volumeMounts:
+            - name: pg-ai-replica-volume
+              mountPath: /var/lib/postgresql/data
+      containers:
+        - name: pg-ai-replica
+          volumeMounts:
+            - name: pg-ai-replica-volume
+              mountPath: /var/lib/postgresql/data
+  volumeClaimTemplates:
+    - metadata:
+        name: pg-ai-replica-volume
+      spec:
+        storageClassName: standard-rwo
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
+
+---
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: redis
+spec:
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+        - name: redis
+          volumeMounts:
+            - name: redis-volume
+              mountPath: /data
+  volumeClaimTemplates:
+    - metadata:
+        name: redis-volume
+      spec:
+        storageClassName: standard-rwo
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi

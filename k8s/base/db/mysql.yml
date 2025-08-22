@@ -2,7 +2,6 @@ apiVersion: v1
 kind: Service
 metadata:
   name: mysql-auth-source
-  namespace: dev
   labels:
     app: mysql-auth-source
 spec:
@@ -18,7 +17,6 @@ apiVersion: v1
 kind: Service
 metadata:
   name: mysql-subscription-source
-  namespace: dev
   labels:
     app: mysql-subscription-source
 spec:
@@ -34,7 +32,6 @@ apiVersion: v1
 kind: Service
 metadata:
   name: mysql-auth-replica
-  namespace: dev
   labels:
     app: mysql-auth-replica
 spec:
@@ -50,7 +47,6 @@ apiVersion: v1
 kind: Service
 metadata:
   name: mysql-subscription-replica
-  namespace: dev
   labels:
     app: mysql-subscription-replica
 spec:
@@ -66,12 +62,10 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: mysql-auth-source
-  namespace: dev
   labels:
     app: mysql-auth-source
 spec:
   serviceName: mysql-auth-source
-  replicas: 1
   selector:
     matchLabels:
       app: mysql-auth-source
@@ -89,30 +83,19 @@ spec:
                 secretKeyRef:
                   name: mysql-secret
                   key: mysql-password
-            - name: TZ
-              value: Asia/Seoul
+          envFrom:
+            - configMapRef:
+                name: mysql-configmap
           ports:
             - containerPort: 3306
           volumeMounts:
             - name: mysql-auth-source-configmap-volume
               mountPath: /etc/mysql/conf.d
               readOnly: true
-            - name: mysql-auth-source-volume
-              mountPath: /var/lib/mysql
       volumes:
         - name: mysql-auth-source-configmap-volume
           configMap:
             name: mysql-auth-source-configmap
-  volumeClaimTemplates:
-    - metadata:
-        name: mysql-auth-source-volume
-      spec:
-        accessModes:
-          - ReadWriteOnce
-        storageClassName: standard-rwo
-        resources:
-          requests:
-            storage: 1Gi
 
 ---
 
@@ -120,12 +103,10 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: mysql-subscription-source
-  namespace: dev
   labels:
     app: mysql-subscription-source
 spec:
   serviceName: mysql-subscription-source
-  replicas: 1
   selector:
     matchLabels:
       app: mysql-subscription-source
@@ -143,30 +124,19 @@ spec:
                 secretKeyRef:
                   name: mysql-secret
                   key: mysql-password
-            - name: TZ
-              value: Asia/Seoul
+          envFrom:
+            - configMapRef:
+                name: mysql-configmap
           ports:
             - containerPort: 3306
           volumeMounts:
             - name: mysql-subscription-source-configmap-volume
               mountPath: /etc/mysql/conf.d
               readOnly: true
-            - name: mysql-subscription-source-volume
-              mountPath: /var/lib/mysql
       volumes:
         - name: mysql-subscription-source-configmap-volume
           configMap:
             name: mysql-subscription-source-configmap
-  volumeClaimTemplates:
-    - metadata:
-        name: mysql-subscription-source-volume
-      spec:
-        accessModes:
-          - ReadWriteOnce
-        storageClassName: standard-rwo
-        resources:
-          requests:
-            storage: 1Gi
 
 ---
 
@@ -174,12 +144,10 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: mysql-auth-replica
-  namespace: dev
   labels:
     app: mysql-auth-replica
 spec:
   serviceName: mysql-auth-replica
-  replicas: 2
   selector:
     matchLabels:
       app: mysql-auth-replica
@@ -208,30 +176,19 @@ spec:
                 secretKeyRef:
                   name: mysql-secret
                   key: mysql-password
-            - name: TZ
-              value: Asia/Seoul
+          envFrom:
+            - configMapRef:
+                name: mysql-configmap
           ports:
             - containerPort: 3306
           volumeMounts:
             - name: mysql-auth-replica-configmap-volume
               mountPath: /etc/mysql/conf.d
               readOnly: true
-            - name: mysql-auth-replica-volume
-              mountPath: /var/lib/mysql
       volumes:
         - name: mysql-auth-replica-configmap-volume
           configMap:
             name: mysql-auth-replica-configmap
-  volumeClaimTemplates:
-    - metadata:
-        name: mysql-auth-replica-volume
-      spec:
-        accessModes:
-          - ReadWriteOnce
-        storageClassName: standard-rwo
-        resources:
-          requests:
-            storage: 1Gi
 
 ---
 
@@ -239,12 +196,10 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: mysql-subscription-replica
-  namespace: dev
   labels:
     app: mysql-subscription-replica
 spec:
   serviceName: mysql-subscription-replica
-  replicas: 2
   selector:
     matchLabels:
       app: mysql-subscription-replica
@@ -273,30 +228,19 @@ spec:
                 secretKeyRef:
                   name: mysql-secret
                   key: mysql-password
-            - name: TZ
-              value: Asia/Seoul
+          envFrom:
+            - configMapRef:
+                name: mysql-configmap
           ports:
             - containerPort: 3306
           volumeMounts:
             - name: mysql-subscription-replica-configmap-volume
               mountPath: /etc/mysql/conf.d
               readOnly: true
-            - name: mysql-subscription-replica-volume
-              mountPath: /var/lib/mysql
       volumes:
         - name: mysql-subscription-replica-configmap-volume
           configMap:
             name: mysql-subscription-replica-configmap
-  volumeClaimTemplates:
-    - metadata:
-        name: mysql-subscription-replica-volume
-      spec:
-        accessModes:
-          - ReadWriteOnce
-        storageClassName: standard-rwo
-        resources:
-          requests:
-            storage: 1Gi
 
 ---
 
@@ -304,7 +248,6 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: mysql-repl-user-job
-  namespace: dev
 spec:
   template:
     spec:
@@ -354,7 +297,6 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: mysql-replication-job
-  namespace: dev
 spec:
   template:
     spec:
