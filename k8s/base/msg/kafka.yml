@@ -2,7 +2,6 @@ apiVersion: v1
 kind: Service
 metadata:
   name: kafka
-  namespace: dev
   labels:
     app: kafka
 spec:
@@ -12,7 +11,9 @@ spec:
   ports:
     - port: 9092
       name: kafka
+
 ---
+
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
@@ -22,22 +23,20 @@ spec:
     matchLabels:
       app: kafka
   maxUnavailable: 1
+
 ---
+
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: kafka
-  namespace: dev
   labels:
     app: kafka
 spec:
+  serviceName: kafka
   selector:
     matchLabels:
       app: kafka
-  serviceName: kafka
-  replicas: 3
-  updateStrategy:
-    type: RollingUpdate
   podManagementPolicy: Parallel
   template:
     metadata:
@@ -61,10 +60,9 @@ spec:
               value: PLAINTEXT://:9092
             - name: KAFKA_ADVERTISED_LISTENERS
               value: PLAINTEXT://$(MY_POD_NAME).kafka:9092
-            - name: KAFKA_ZOOKEEPER_CONNECT
-              value: zk-0.zk-hs:2181,zk-1.zk-hs:2181,zk-2.zk-hs:2181
-            - name: KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR
-              value: "3"
+          envFrom:
+            - configMapRef:
+                name: kafka-configmap
           command:
             - sh
             - -c
@@ -73,16 +71,3 @@ spec:
               echo "Setting KAFKA_BROKER_ID to $KAFKA_BROKER_ID"
               export KAFKA_BROKER_ID
               /usr/bin/start-kafka.sh
-          volumeMounts:
-            - name: kafka-volume
-              mountPath: /var/lib/kafka
-  volumeClaimTemplates:
-    - metadata:
-        name: kafka-volume
-      spec:
-        accessModes:
-          - ReadWriteOnce
-        storageClassName: standard-rwo
-        resources:
-          requests:
-            storage: 1Gi

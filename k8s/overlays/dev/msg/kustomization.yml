@@ -1,0 +1,22 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../../base/msg
+
+namespace: dev
+
+replicas:
+  - name: kafka
+    count: 3
+  - name: zk
+    count: 3
+
+configMapGenerator:
+  - name: kafka-configmap
+    literals:
+      - KAFKA_ZOOKEEPER_CONNECT=zk-0.zk-hs:2181,zk-1.zk-hs:2181,zk-2.zk-hs:2181
+      - KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=3
+
+patches:
+  - path: dev-patch.yml
