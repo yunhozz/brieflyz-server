@@ -2,12 +2,11 @@ apiVersion: v1
 kind: Service
 metadata:
   name: nfs-documents-server
-  namespace: dev
   labels:
-    app: nfs
+    app: nfs-documents-server
 spec:
   selector:
-    app: nfs
+    app: nfs-documents-server
   clusterIP: None
   ports:
     - name: nfs
@@ -23,18 +22,16 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: nfs-documents-server
-  namespace: dev
   labels:
-    app: nfs
+    app: nfs-documents-server
 spec:
-  replicas: 1
   selector:
     matchLabels:
-      app: nfs
+      app: nfs-documents-server
   template:
     metadata:
       labels:
-        app: nfs
+        app: nfs-documents-server
     spec:
       securityContext:
         fsGroup: 65534
@@ -64,7 +61,6 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: nfs-documents-server-pvc
-  namespace: dev
 spec:
   storageClassName: standard-rwo
   accessModes:
@@ -90,7 +86,6 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: nfs-documents-pvc
-  namespace: dev
 spec:
   storageClassName: nfs-documents-storage
   accessModes:
