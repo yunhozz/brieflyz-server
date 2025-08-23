@@ -2,7 +2,6 @@ apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: filebeat
-  namespace: dev
 spec:
   selector:
     matchLabels:
@@ -10,13 +9,12 @@ spec:
   template:
     metadata:
       name: filebeat
-      namespace: dev
       labels:
         app: filebeat
     spec:
       containers:
         - name: filebeat
-          image: elastic/filebeat:9.0.2
+          image: filebeat
           volumeMounts:
             - name: nfs-logs-pvc-volume
               mountPath: /logs
