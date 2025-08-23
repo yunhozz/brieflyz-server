@@ -109,16 +109,16 @@ spec:
             requests:
               memory: 1Gi
               cpu: "0.5"
-#          volumeMounts:
-#            - name: zk-volume
-#              mountPath: /var/lib/zookeeper/data
-#  volumeClaimTemplates:
-#    - metadata:
-#        name: zk-volume
-#      spec:
-#        accessModes:
-#          - ReadWriteOnce
-#        storageClassName: standard-rwo
-#        resources:
-#          requests:
-#            storage: 1Gi
+          volumeMounts:
+            - name: zk-volume
+              mountPath: /var/lib/zookeeper/data
+  volumeClaimTemplates:
+    - metadata:
+        name: zk-volume
+      spec:
+        storageClassName: standard-rwo
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi

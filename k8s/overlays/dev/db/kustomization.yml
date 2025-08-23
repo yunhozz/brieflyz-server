@@ -28,6 +28,3 @@ configMapGenerator:
       - TZ=Asia/Seoul
       - MYSQL_CHARSET=utf8mb4
       - MYSQL_COLLATION=utf8mb4_general_ci
-
-patches:
-  - path: dev-patch.yml

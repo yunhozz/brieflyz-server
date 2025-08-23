@@ -33,3 +33,10 @@ spec:
           image: provectuslabs/kafka-ui:latest
           ports:
             - containerPort: 8080
+          env:
+            - name: KAFKA_CLUSTERS_0_NAME
+              value: climacast-kafka-cluster
+            - name: KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS
+              value: kafka-0.kafka:9092,kafka-1.kafka:9092,kafka-2.kafka:9092
+            - name: KAFKA_CLUSTERS_0_ZOOKEEPER
+              value: zk-0.zk-hs:2181

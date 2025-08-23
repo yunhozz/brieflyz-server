@@ -47,6 +47,8 @@ spec:
       containers:
         - name: pg-ai-source
           image: postgres:latest
+          ports:
+            - containerPort: 5432
           env:
             - name: POSTGRES_PASSWORD
               valueFrom:
@@ -59,12 +61,12 @@ spec:
               value: postgres
             - name: PGDATA
               value: /var/lib/postgresql/data/pgdata
-          ports:
-            - containerPort: 5432
           args:
             - -c
             - config_file=/etc/postgresql/postgresql.conf
           volumeMounts:
+            - name: pg-ai-source-volume
+              mountPath: /var/lib/postgresql/data
             - name: pg-ai-source-postgres-configmap-volume
               mountPath: /etc/postgresql/postgresql.conf
               subPath: postgres.conf
@@ -96,6 +98,16 @@ spec:
         - name: pg-ai-source-pghba-configmap-volume
           configMap:
             name: pg-ai-source-pghba-configmap
+  volumeClaimTemplates:
+    - metadata:
+        name: pg-ai-source-volume
+      spec:
+        storageClassName: standard-rwo
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
 
 ---
 
@@ -146,7 +158,7 @@ spec:
             - |
               set -e
               echo "Waiting for primary PostgreSQL to be ready..."
-              
+
               for i in {1..60}; do
                 if pg_isready -h pg-ai-source -p 5432 -U postgres; then
                   echo "Primary is ready!"
@@ -159,9 +171,9 @@ spec:
                 echo "Attempt $i/60: Primary not ready, waiting..."
                 sleep 5
               done
-              
+
               rm -rf /var/lib/postgresql/data/*
-              
+
               echo "Starting base backup from primary..."
               pg_basebackup \
                 -h pg-ai-source \
@@ -173,23 +185,28 @@ spec:
                 -W \
                 --wal-method=stream \
                 --checkpoint=fast
-              
+
               echo "Configuring standby..."
               touch /var/lib/postgresql/data/standby.signal
-              
+
               cat > /var/lib/postgresql/data/postgresql.auto.conf << EOF
               primary_conninfo = 'host=pg-ai-source port=5432 user=postgres password=${POSTGRES_PASSWORD} application_name=replica'
               hot_standby = on
               recovery_target_timeline = 'latest'
               EOF
-              
+
               chown -R postgres:postgres /var/lib/postgresql/data
               chmod 700 /var/lib/postgresql/data
-              
+
               echo "Replica initialization completed successfully!"
+          volumeMounts:
+            - name: pg-ai-replica-volume
+              mountPath: /var/lib/postgresql/data
       containers:
         - name: pg-ai-replica
           image: postgres:latest
+          ports:
+            - containerPort: 5432
           env:
             - name: POSTGRES_PASSWORD
               valueFrom:
@@ -198,5 +215,16 @@ spec:
                   key: pg-password
             - name: PGDATA
               value: /var/lib/postgresql/data
-          ports:
-            - containerPort: 5432
+          volumeMounts:
+            - name: pg-ai-replica-volume
+              mountPath: /var/lib/postgresql/data
+  volumeClaimTemplates:
+    - metadata:
+        name: pg-ai-replica-volume
+      spec:
+        storageClassName: standard-rwo
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi

@@ -72,9 +72,9 @@ spec:
     - metadata:
         name: redis-volume
       spec:
+        storageClassName: standard-rwo
         accessModes:
           - ReadWriteOnce
-        storageClassName: standard-rwo
         resources:
           requests:
             storage: 1Gi

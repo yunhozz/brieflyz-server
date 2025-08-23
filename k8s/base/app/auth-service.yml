@@ -22,10 +22,18 @@ spec:
   selector:
     matchLabels:
       app: auth-service
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
   template:
     metadata:
       labels:
         app: auth-service
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8090"
     spec:
       affinity:
         podAntiAffinity:
@@ -48,5 +56,12 @@ spec:
           envFrom:
             - configMapRef:
                 name: app-profile-configmap
+          volumeMounts:
+            - name: nfs-logs-pvc-volume
+              mountPath: /app/logs
+      volumes:
+        - name: nfs-logs-pvc-volume
+          persistentVolumeClaim:
+            claimName: nfs-logs-pvc
       imagePullSecrets:
         - name: ghcr-secret

@@ -60,9 +60,10 @@ spec:
               value: PLAINTEXT://:9092
             - name: KAFKA_ADVERTISED_LISTENERS
               value: PLAINTEXT://$(MY_POD_NAME).kafka:9092
-          envFrom:
-            - configMapRef:
-                name: kafka-configmap
+            - name: KAFKA_ZOOKEEPER_CONNECT
+              value: zk-0.zk-hs:2181,zk-1.zk-hs:2181,zk-2.zk-hs:2181
+            - name: KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR
+              value: "3"
           command:
             - sh
             - -c
@@ -71,3 +72,16 @@ spec:
               echo "Setting KAFKA_BROKER_ID to $KAFKA_BROKER_ID"
               export KAFKA_BROKER_ID
               /usr/bin/start-kafka.sh
+          volumeMounts:
+            - name: kafka-volume
+              mountPath: /var/lib/kafka
+  volumeClaimTemplates:
+    - metadata:
+        name: kafka-volume
+      spec:
+        storageClassName: standard-rwo
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
