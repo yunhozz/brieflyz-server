@@ -6,6 +6,12 @@ resources:
 
 namespace: dev
 
+labels:
+  - pairs:
+      role: app
+    includeSelectors: true
+    includeTemplates: true
+
 replicas:
   - name: api-gateway
     count: 3

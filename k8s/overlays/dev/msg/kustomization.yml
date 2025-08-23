@@ -6,6 +6,12 @@ resources:
 
 namespace: dev
 
+labels:
+  - pairs:
+      role: msg
+    includeSelectors: true
+    includeTemplates: true
+
 replicas:
   - name: kafka
     count: 3

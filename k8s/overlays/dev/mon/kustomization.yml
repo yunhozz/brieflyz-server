@@ -6,6 +6,12 @@ resources:
 
 namespace: dev
 
+labels:
+  - pairs:
+      role: mon
+    includeSelectors: true
+    includeTemplates: true
+
 replicas:
   - name: prometheus
     count: 1

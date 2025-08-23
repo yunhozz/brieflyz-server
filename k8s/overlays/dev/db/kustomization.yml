@@ -6,6 +6,12 @@ resources:
 
 namespace: dev
 
+labels:
+  - pairs:
+      role: db
+    includeSelectors: true
+    includeTemplates: true
+
 replicas:
   - name: mysql-auth-source
     count: 1
