@@ -1,0 +1,230 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: pg-ai-source
+  labels:
+    app: pg-ai-source
+spec:
+  selector:
+    app: pg-ai-source
+  clusterIP: None
+  ports:
+    - port: 5432
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: pg-ai-replica
+  labels:
+    app: pg-ai-replica
+spec:
+  selector:
+    app: pg-ai-replica
+  clusterIP: None
+  ports:
+    - port: 5432
+
+---
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: pg-ai-source
+  labels:
+    app: pg-ai-source
+spec:
+  serviceName: pg-ai-source
+  selector:
+    matchLabels:
+      app: pg-ai-source
+  template:
+    metadata:
+      labels:
+        app: pg-ai-source
+    spec:
+      containers:
+        - name: pg-ai-source
+          image: postgres:latest
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: pg-secret
+                  key: pg-password
+            - name: POSTGRES_USER
+              value: postgres
+            - name: POSTGRES_DB
+              value: postgres
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+          args:
+            - -c
+            - config_file=/etc/postgresql/postgresql.conf
+          volumeMounts:
+            - name: pg-ai-source-volume
+              mountPath: /var/lib/postgresql/data
+            - name: pg-ai-source-postgres-configmap-volume
+              mountPath: /etc/postgresql/postgresql.conf
+              subPath: postgres.conf
+            - name: pg-ai-source-pghba-configmap-volume
+              mountPath: /etc/postgresql/pg_hba.conf
+              subPath: pg_hba.conf
+          readinessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - exec pg_isready -U postgres -d postgres -h 127.0.0.1 -p 5432
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            timeoutSeconds: 5
+          livenessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - exec pg_isready -U postgres -d postgres -h 127.0.0.1 -p 5432
+            initialDelaySeconds: 45
+            periodSeconds: 10
+            timeoutSeconds: 5
+      volumes:
+        - name: pg-ai-source-postgres-configmap-volume
+          configMap:
+            name: pg-ai-source-postgres-configmap
+        - name: pg-ai-source-pghba-configmap-volume
+          configMap:
+            name: pg-ai-source-pghba-configmap
+  volumeClaimTemplates:
+    - metadata:
+        name: pg-ai-source-volume
+      spec:
+        storageClassName: standard-rwo
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
+
+---
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: pg-ai-replica
+  labels:
+    app: pg-ai-replica
+spec:
+  serviceName: pg-ai-replica
+  selector:
+    matchLabels:
+      app: pg-ai-replica
+  template:
+    metadata:
+      labels:
+        app: pg-ai-replica
+    spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - topologyKey: kubernetes.io/hostname
+              labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                      - pg-ai-source
+                      - pg-ai-replica
+      initContainers:
+        - name: replica-init
+          image: postgres:latest
+          env:
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: pg-secret
+                  key: pg-password
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: pg-secret
+                  key: pg-password
+          command:
+            - bash
+            - -c
+            - |
+              set -e
+              echo "Waiting for primary PostgreSQL to be ready..."
+
+              for i in {1..60}; do
+                if pg_isready -h pg-ai-source -p 5432 -U postgres; then
+                  echo "Primary is ready!"
+                  break
+                fi
+                if [ $i -eq 60 ]; then
+                  echo "Timeout waiting for primary PostgreSQL"
+                  exit 1
+                fi
+                echo "Attempt $i/60: Primary not ready, waiting..."
+                sleep 5
+              done
+
+              rm -rf /var/lib/postgresql/data/*
+
+              echo "Starting base backup from primary..."
+              pg_basebackup \
+                -h pg-ai-source \
+                -p 5432 \
+                -U postgres \
+                -D /var/lib/postgresql/data \
+                -v \
+                -P \
+                -W \
+                --wal-method=stream \
+                --checkpoint=fast
+
+              echo "Configuring standby..."
+              touch /var/lib/postgresql/data/standby.signal
+
+              cat > /var/lib/postgresql/data/postgresql.auto.conf << EOF
+              primary_conninfo = 'host=pg-ai-source port=5432 user=postgres password=${POSTGRES_PASSWORD} application_name=replica'
+              hot_standby = on
+              recovery_target_timeline = 'latest'
+              EOF
+
+              chown -R postgres:postgres /var/lib/postgresql/data
+              chmod 700 /var/lib/postgresql/data
+
+              echo "Replica initialization completed successfully!"
+          volumeMounts:
+            - name: pg-ai-replica-volume
+              mountPath: /var/lib/postgresql/data
+      containers:
+        - name: pg-ai-replica
+          image: postgres:latest
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: pg-secret
+                  key: pg-password
+            - name: PGDATA
+              value: /var/lib/postgresql/data
+          volumeMounts:
+            - name: pg-ai-replica-volume
+              mountPath: /var/lib/postgresql/data
+  volumeClaimTemplates:
+    - metadata:
+        name: pg-ai-replica-volume
+      spec:
+        storageClassName: standard-rwo
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi

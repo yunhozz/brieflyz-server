@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: filebeat
+spec:
+  selector:
+    matchLabels:
+      app: filebeat
+  template:
+    metadata:
+      name: filebeat
+      labels:
+        app: filebeat
+    spec:
+      containers:
+        - name: filebeat
+          image: filebeat
+          volumeMounts:
+            - name: nfs-logs-pvc-volume
+              mountPath: /logs
+            - name: filebeat-configmap-volume
+              mountPath: /usr/share/filebeat/filebeat.yml
+              subPath: filebeat.yml
+      volumes:
+        - name: nfs-logs-pvc-volume
+          persistentVolumeClaim:
+            claimName: nfs-logs-pvc
+        - name: filebeat-configmap-volume
+          configMap:
+            name: filebeat-configmap
