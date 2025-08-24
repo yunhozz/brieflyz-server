@@ -78,7 +78,9 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-${{ env.SERVICE_NAME }}
-          tags: ${{ github.ref == 'refs/heads/master' && 'latest' || format('dev-{0}', env.SHORT_SHA) }}
+          tags: |
+            ${{ github.ref == 'refs/heads/master' && format('prod-{0}', env.SHORT_SHA) || format('dev-{0}', env.SHORT_SHA) }}
+            ${{ github.ref == 'refs/heads/master' && 'latest' || '' }}
 
       - name: Build and Push Docker Image
         id: build-image
@@ -148,7 +150,9 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-${{ env.SERVICE_NAME }}
-          tags: ${{ github.ref == 'refs/heads/master' && 'latest' || format('dev-{0}', env.SHORT_SHA) }}
+          tags: |
+            ${{ github.ref == 'refs/heads/master' && format('prod-{0}', env.SHORT_SHA) || format('dev-{0}', env.SHORT_SHA) }}
+            ${{ github.ref == 'refs/heads/master' && 'latest' || '' }}
 
       - name: Build and Push Docker Image
         id: build-image
@@ -218,7 +222,9 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-${{ env.SERVICE_NAME }}
-          tags: ${{ github.ref == 'refs/heads/master' && 'latest' || format('dev-{0}', env.SHORT_SHA) }}
+          tags: |
+            ${{ github.ref == 'refs/heads/master' && format('prod-{0}', env.SHORT_SHA) || format('dev-{0}', env.SHORT_SHA) }}
+            ${{ github.ref == 'refs/heads/master' && 'latest' || '' }}
 
       - name: Build and Push Docker Image
         id: build-image
@@ -288,7 +294,9 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-${{ env.SERVICE_NAME }}
-          tags: ${{ github.ref == 'refs/heads/master' && 'latest' || format('dev-{0}', env.SHORT_SHA) }}
+          tags: |
+            ${{ github.ref == 'refs/heads/master' && format('prod-{0}', env.SHORT_SHA) || format('dev-{0}', env.SHORT_SHA) }}
+            ${{ github.ref == 'refs/heads/master' && 'latest' || '' }}
 
       - name: Build and Push Docker Image
         id: build-image
