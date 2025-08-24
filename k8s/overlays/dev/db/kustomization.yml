@@ -16,15 +16,15 @@ replicas:
   - name: mysql-auth-source
     count: 1
   - name: mysql-auth-replica
-    count: 2
+    count: 3
   - name: mysql-subscription-source
     count: 1
   - name: mysql-subscription-replica
-    count: 2
+    count: 3
   - name: pg-ai-source
     count: 1
   - name: pg-ai-replica
-    count: 2
+    count: 3
   - name: redis
     count: 3
 
