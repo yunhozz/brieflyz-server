@@ -1,4 +1,4 @@
-package io.brieflyz.ai_service.service.ai.impl
+package io.brieflyz.ai_service.service.support.ai.impl
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.brieflyz.ai_service.common.enums.AiProvider

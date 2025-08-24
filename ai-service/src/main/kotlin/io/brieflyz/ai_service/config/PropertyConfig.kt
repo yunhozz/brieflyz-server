@@ -14,16 +14,10 @@ class PropertyConfig {
 @ConfigurationProperties(prefix = "app.ai")
 @EnableConfigurationProperties(AiServiceProperties::class)
 data class AiServiceProperties(
-    var kafka: KafkaProperties? = null,
-    var file: FileProperties? = null
+    var kafka: KafkaProperties? = null
 ) {
     data class KafkaProperties(
         var numOfPartitions: Int = 0,
         var replicationFactor: Short = 0
-    )
-
-    data class FileProperties(
-        var filePath: String? = null,
-        var downloadUrl: String? = null
     )
 }

@@ -1,4 +1,4 @@
-package io.brieflyz.ai_service.service.ai
+package io.brieflyz.ai_service.service.support.ai
 
 import io.brieflyz.ai_service.common.enums.AiProvider
 import reactor.core.publisher.Mono

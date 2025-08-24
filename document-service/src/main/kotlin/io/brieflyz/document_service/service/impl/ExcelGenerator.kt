@@ -1,15 +1,14 @@
-package io.brieflyz.ai_service.service.document.impl
+package io.brieflyz.document_service.service.impl
 
-import io.brieflyz.ai_service.common.enums.AiProvider
-import io.brieflyz.ai_service.config.AiServiceProperties
-import io.brieflyz.ai_service.model.dto.DocumentGenerateRequest
-import io.brieflyz.ai_service.model.dto.DocumentResponse
-import io.brieflyz.ai_service.model.entity.Document
-import io.brieflyz.ai_service.service.ai.AiStructureGeneratorFactory
-import io.brieflyz.ai_service.service.document.DocumentGenerator
-import io.brieflyz.ai_service.service.document.DocumentManager
+import com.fasterxml.jackson.core.type.TypeReference
+import com.fasterxml.jackson.databind.ObjectMapper
 import io.brieflyz.core.constants.DocumentType
 import io.brieflyz.core.utils.logger
+import io.brieflyz.document_service.config.DocumentServiceProperties
+import io.brieflyz.document_service.model.dto.DocumentResponse
+import io.brieflyz.document_service.model.entity.Document
+import io.brieflyz.document_service.service.DocumentGenerator
+import io.brieflyz.document_service.service.DocumentManager
 import org.apache.poi.ss.usermodel.BorderStyle
 import org.apache.poi.ss.usermodel.FillPatternType
 import org.apache.poi.ss.usermodel.HorizontalAlignment
@@ -31,25 +30,24 @@ import kotlin.io.path.name
 
 @Component
 class ExcelGenerator(
-    private val aiServiceProperties: AiServiceProperties,
-    private val aiStructureGeneratorFactory: AiStructureGeneratorFactory,
-    private val documentManager: DocumentManager
+    private val documentServiceProperties: DocumentServiceProperties,
+    private val documentManager: DocumentManager,
+    private val objectMapper: ObjectMapper
 ) : DocumentGenerator {
 
     private val log = logger()
 
     override fun getDocumentType() = DocumentType.EXCEL
 
-    override fun generateDocument(aiProvider: AiProvider, request: DocumentGenerateRequest): Mono<DocumentResponse> {
-        val aiStructureGenerator = aiStructureGeneratorFactory.createByProvider(aiProvider)
+    override fun generateDocument(title: String, structure: Any): Mono<DocumentResponse> {
         val documentId = UUID.randomUUID().toString()
-
-        val title = request.title
         val filePath = createFilePath(title)
+        val excelStructure =
+            objectMapper.convertValue(structure, object : TypeReference<Map<String, List<List<String>>>>() {})
 
         log.debug("Excel file path: {}", filePath)
 
-        return aiStructureGenerator.generateExcelStructure(title, request.content)
+        return Mono.justOrEmpty(excelStructure)
             .flatMap { sheetData ->
                 Mono.fromCallable {
                     XSSFWorkbook().use { workbook ->
@@ -63,7 +61,7 @@ class ExcelGenerator(
                         Mono.defer {
                             val fileName = filePath.fileName.toString()
                             val fileUrl = filePath.toUri().toURL().toString()
-                            val downloadUrl = aiServiceProperties.file?.downloadUrl
+                            val downloadUrl = documentServiceProperties.file?.downloadUrl
 
                             documentManager.updateStatus(documentId, fileName, fileUrl, "$downloadUrl/excel")
                                 .doOnSuccess { log.info("Excel document update finish. ID: $documentId") }
@@ -148,7 +146,7 @@ class ExcelGenerator(
     }
 
     private fun createFilePath(title: String): Path {
-        val filePath = aiServiceProperties.file?.filePath
+        val filePath = documentServiceProperties.file?.filePath
         val titleName = title.replace(Regex("[^a-zA-Z0-9가-힣]"), "_")
         val timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"))
         return Paths.get("$filePath/excel", "${titleName}_$timestamp.xlsx")

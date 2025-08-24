@@ -1,8 +1,8 @@
-package io.brieflyz.ai_service.service.ai.impl
+package io.brieflyz.ai_service.service.support.ai.impl
 
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
-import io.brieflyz.ai_service.service.ai.AiStructureGenerator
+import io.brieflyz.ai_service.service.support.ai.AiStructureGenerator
 import io.brieflyz.core.utils.logger
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono

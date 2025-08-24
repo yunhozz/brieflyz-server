@@ -1,15 +1,14 @@
-package io.brieflyz.ai_service.service.document.impl
+package io.brieflyz.document_service.service.impl
 
-import io.brieflyz.ai_service.common.enums.AiProvider
-import io.brieflyz.ai_service.config.AiServiceProperties
-import io.brieflyz.ai_service.model.dto.DocumentGenerateRequest
-import io.brieflyz.ai_service.model.dto.DocumentResponse
-import io.brieflyz.ai_service.model.entity.Document
-import io.brieflyz.ai_service.service.ai.AiStructureGeneratorFactory
-import io.brieflyz.ai_service.service.document.DocumentGenerator
-import io.brieflyz.ai_service.service.document.DocumentManager
+import com.fasterxml.jackson.core.type.TypeReference
+import com.fasterxml.jackson.databind.ObjectMapper
 import io.brieflyz.core.constants.DocumentType
 import io.brieflyz.core.utils.logger
+import io.brieflyz.document_service.config.DocumentServiceProperties
+import io.brieflyz.document_service.model.dto.DocumentResponse
+import io.brieflyz.document_service.model.entity.Document
+import io.brieflyz.document_service.service.DocumentGenerator
+import io.brieflyz.document_service.service.DocumentManager
 import org.apache.poi.sl.usermodel.TextParagraph
 import org.apache.poi.xslf.usermodel.SlideLayout
 import org.apache.poi.xslf.usermodel.XMLSlideShow
@@ -28,25 +27,23 @@ import kotlin.io.path.name
 
 @Component
 class PowerPointGenerator(
-    private val aiServiceProperties: AiServiceProperties,
-    private val aiStructureGeneratorFactory: AiStructureGeneratorFactory,
+    private val documentServiceProperties: DocumentServiceProperties,
     private val documentManager: DocumentManager,
+    private val objectMapper: ObjectMapper
 ) : DocumentGenerator {
 
     private val log = logger()
 
     override fun getDocumentType() = DocumentType.POWERPOINT
 
-    override fun generateDocument(aiProvider: AiProvider, request: DocumentGenerateRequest): Mono<DocumentResponse> {
-        val aiStructureGenerator = aiStructureGeneratorFactory.createByProvider(aiProvider)
+    override fun generateDocument(title: String, structure: Any): Mono<DocumentResponse> {
         val documentId = UUID.randomUUID().toString()
-
-        val title = request.title
         val filePath = createFilePath(title)
+        val pptStructure = objectMapper.convertValue(structure, object : TypeReference<List<Map<String, String>>>() {})
 
         log.debug("PPT file path: {}", filePath)
 
-        return aiStructureGenerator.generatePptStructure(title, request.content)
+        return Mono.justOrEmpty(pptStructure)
             .flatMap { slides ->
                 Mono.fromCallable {
                     XMLSlideShow().use { ppt ->
@@ -60,7 +57,7 @@ class PowerPointGenerator(
                         Mono.defer {
                             val fileName = filePath.fileName.toString()
                             val fileUrl = filePath.toUri().toURL().toString()
-                            val downloadUrl = aiServiceProperties.file?.downloadUrl
+                            val downloadUrl = documentServiceProperties.file?.downloadUrl
 
                             documentManager.updateStatus(documentId, fileName, fileUrl, "$downloadUrl/ppt")
                                 .doOnSuccess { log.info("PPT document update finish. ID: $documentId") }
@@ -145,7 +142,7 @@ class PowerPointGenerator(
     }
 
     private fun createFilePath(title: String): Path {
-        val filePath = aiServiceProperties.file?.filePath
+        val filePath = documentServiceProperties.file?.filePath
         val titleName = title.replace(Regex("[^a-zA-Z0-9가-힣]"), "_")
         val timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"))
         return Paths.get("$filePath/ppt", "${titleName}_$timestamp.pptx")

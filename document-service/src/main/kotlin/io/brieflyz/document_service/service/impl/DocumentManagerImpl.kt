@@ -1,18 +1,22 @@
-package io.brieflyz.ai_service.service.document.impl
+package io.brieflyz.document_service.service.impl
 
-import io.brieflyz.ai_service.model.dto.DocumentResponse
-import io.brieflyz.ai_service.model.entity.Document
-import io.brieflyz.ai_service.repository.DocumentRepository
-import io.brieflyz.ai_service.service.document.DocumentManager
+import io.brieflyz.core.beans.kafka.KafkaSender
 import io.brieflyz.core.utils.logger
+import io.brieflyz.document_service.model.dto.DocumentResponse
+import io.brieflyz.document_service.model.entity.Document
+import io.brieflyz.document_service.repository.DocumentRepository
+import io.brieflyz.document_service.service.DocumentManager
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 import reactor.core.publisher.Mono
 
 @Component
 class DocumentManagerImpl(
-    private val documentRepository: DocumentRepository
+    private val documentRepository: DocumentRepository,
+    private val kafkaSender: KafkaSender
 ) : DocumentManager {
+
+    // TODO: Kafka를 통해 AI Service로 문서 생성 결과 전송
 
     private val log = logger()
 
