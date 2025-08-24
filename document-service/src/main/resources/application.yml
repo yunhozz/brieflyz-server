@@ -1,0 +1,78 @@
+spring:
+  application:
+    name: document-service
+  profiles:
+    active: ${APPLICATION_PROFILE:local}
+  kafka:
+    consumer:
+      group-id: document-service-group
+  data:
+    redis:
+      connect-timeout: 3000
+      timeout: 3000
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    prometheus:
+      access: read_only
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+  health:
+    r2dbc:
+      enabled: false
+---
+server:
+  port: 8060
+spring:
+  config:
+    activate:
+      on-profile: local
+  cloud:
+    config:
+      enabled: false
+  r2dbc:
+    source:
+      url: r2dbc:postgresql://${POSTGRESQL_SOURCE_ADDR:localhost:15432}/brieflyz_document?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Seoul
+      username: ${postgresql.username}
+      password: ${postgresql.password}
+      pool:
+        initial-size: 5
+        min-idle: 3
+        max-size: 5
+    replica:
+      url: r2dbc:postgresql://${POSTGRESQL_REPLICA_ADDR:localhost:25432}/brieflyz_document?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Seoul
+      username: ${postgresql.username}
+      password: ${postgresql.password}
+      pool:
+        initial-size: 10
+        min-idle: 5
+        max-size: 10
+  data:
+    redis:
+      cluster:
+        nodes: ${REDIS_CLUSTER_NODES:localhost:6379}
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092,localhost:9093,localhost:9094}
+app:
+  document:
+    kafka:
+      num-of-partitions: 9
+      replication-factor: 3
+    file:
+      file-path: tmp
+      download-url: /download
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+    import: configserver:http://config-server:8888/
+  cloud:
+    config:
+      name: document-service
+      profile: dev
