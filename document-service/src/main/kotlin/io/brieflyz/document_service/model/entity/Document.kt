@@ -1,6 +1,6 @@
-package io.brieflyz.ai_service.model.entity
+package io.brieflyz.document_service.model.entity
 
-import io.brieflyz.ai_service.common.enums.DocumentStatus
+import io.brieflyz.document_service.common.enums.DocumentStatus
 import org.springframework.data.annotation.CreatedDate
 import org.springframework.data.annotation.Id
 import org.springframework.data.annotation.LastModifiedDate

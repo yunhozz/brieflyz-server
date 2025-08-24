@@ -1,4 +1,4 @@
-package io.brieflyz.ai_service.config
+package io.brieflyz.document_service.config
 
 import io.brieflyz.core.utils.logger
 import io.r2dbc.pool.ConnectionPool

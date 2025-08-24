@@ -1,7 +1,7 @@
-package io.brieflyz.ai_service.model.dto
+package io.brieflyz.document_service.model.dto
 
 import com.fasterxml.jackson.annotation.JsonInclude
-import io.brieflyz.ai_service.common.enums.DocumentStatus
+import io.brieflyz.document_service.common.enums.DocumentStatus
 import java.time.LocalDateTime
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
