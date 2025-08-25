@@ -1,14 +1,13 @@
-package io.brieflyz.document_service.service.impl
+package io.brieflyz.document_service.service.support.impl
 
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.brieflyz.core.constants.DocumentType
 import io.brieflyz.core.utils.logger
 import io.brieflyz.document_service.config.DocumentServiceProperties
-import io.brieflyz.document_service.model.dto.DocumentResponse
 import io.brieflyz.document_service.model.entity.Document
-import io.brieflyz.document_service.service.DocumentGenerator
-import io.brieflyz.document_service.service.DocumentManager
+import io.brieflyz.document_service.service.support.DocumentGenerator
+import io.brieflyz.document_service.service.support.DocumentServiceAdapter
 import org.apache.poi.ss.usermodel.BorderStyle
 import org.apache.poi.ss.usermodel.FillPatternType
 import org.apache.poi.ss.usermodel.HorizontalAlignment
@@ -31,7 +30,7 @@ import kotlin.io.path.name
 @Component
 class ExcelGenerator(
     private val documentServiceProperties: DocumentServiceProperties,
-    private val documentManager: DocumentManager,
+    private val documentServiceAdapter: DocumentServiceAdapter,
     private val objectMapper: ObjectMapper
 ) : DocumentGenerator {
 
@@ -39,13 +38,15 @@ class ExcelGenerator(
 
     override fun getDocumentType() = DocumentType.EXCEL
 
-    override fun generateDocument(title: String, structure: Any): Mono<DocumentResponse> {
+    override fun generateDocument(title: String, structure: Any): Mono<Void> {
         val documentId = UUID.randomUUID().toString()
         val filePath = createFilePath(title)
-        val excelStructure =
-            objectMapper.convertValue(structure, object : TypeReference<Map<String, List<List<String>>>>() {})
+        val excelStructure = objectMapper.convertValue(
+            structure,
+            object : TypeReference<Map<String, List<List<String>>>>() {}
+        )
 
-        log.debug("Excel file path: {}", filePath)
+        log.debug("Excel file path={}", filePath)
 
         return Mono.justOrEmpty(excelStructure)
             .flatMap { sheetData ->
@@ -54,30 +55,27 @@ class ExcelGenerator(
                         createExcel(workbook, sheetData)
                         Files.createDirectories(filePath.parent)
                         FileOutputStream(filePath.toFile()).use { workbook.write(it) }
-                        log.info("Create excel file completed. File path: ${filePath.name}")
+                        log.info("Create excel file completed. File path=${filePath.name}")
                     }
                 }.subscribeOn(Schedulers.boundedElastic())
                     .then(
                         Mono.defer {
-                            val fileName = filePath.fileName.toString()
-                            val fileUrl = filePath.toUri().toURL().toString()
                             val downloadUrl = documentServiceProperties.file?.downloadUrl
-
-                            documentManager.updateStatus(documentId, fileName, fileUrl, "$downloadUrl/excel")
-                                .doOnSuccess { log.info("Excel document update finish. ID: $documentId") }
+                            documentServiceAdapter.updateFileInfo(documentId, filePath, "$downloadUrl/excel")
+                                .doOnSuccess { log.info("Excel document update finish. ID=$documentId") }
                         }
                     )
-                    .doOnError { ex -> log.error("Background task failed: ${ex.message}", ex) }
+                    .doOnError { ex -> log.error("Background task failed", ex) }
                     .subscribe()
 
                 Mono.just(Document.forProcessing(documentId, title))
-                    .flatMap { documentManager.save(it) }
+                    .flatMap { documentServiceAdapter.save(it) }
             }
             .onErrorResume { ex ->
                 val errorMessage = ex.message
-                log.error("Failed to generate EXCEL: $errorMessage", ex)
+                log.error("Failed to generate excel", ex)
                 val failedDocument = Document.forFailed(documentId, title, errorMessage ?: "FAIL")
-                documentManager.save(failedDocument)
+                documentServiceAdapter.save(failedDocument)
             }
     }
 

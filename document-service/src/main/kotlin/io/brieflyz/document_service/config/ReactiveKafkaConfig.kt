@@ -18,7 +18,7 @@ class ReactiveKafkaConfig {
         ReceiverOptions.create<String, KafkaMessage>(props)
             .subscription(
                 listOf(
-                    KafkaTopic.DOCUMENT_CREATE_REQUEST_TOPIC
+                    KafkaTopic.DOCUMENT_STRUCTURE_RESPONSE_TOPIC
                 )
             )
     )

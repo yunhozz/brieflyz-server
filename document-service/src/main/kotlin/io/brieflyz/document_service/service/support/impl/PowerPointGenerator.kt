@@ -1,14 +1,13 @@
-package io.brieflyz.document_service.service.impl
+package io.brieflyz.document_service.service.support.impl
 
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.brieflyz.core.constants.DocumentType
 import io.brieflyz.core.utils.logger
 import io.brieflyz.document_service.config.DocumentServiceProperties
-import io.brieflyz.document_service.model.dto.DocumentResponse
 import io.brieflyz.document_service.model.entity.Document
-import io.brieflyz.document_service.service.DocumentGenerator
-import io.brieflyz.document_service.service.DocumentManager
+import io.brieflyz.document_service.service.support.DocumentGenerator
+import io.brieflyz.document_service.service.support.DocumentServiceAdapter
 import org.apache.poi.sl.usermodel.TextParagraph
 import org.apache.poi.xslf.usermodel.SlideLayout
 import org.apache.poi.xslf.usermodel.XMLSlideShow
@@ -28,7 +27,7 @@ import kotlin.io.path.name
 @Component
 class PowerPointGenerator(
     private val documentServiceProperties: DocumentServiceProperties,
-    private val documentManager: DocumentManager,
+    private val documentServiceAdapter: DocumentServiceAdapter,
     private val objectMapper: ObjectMapper
 ) : DocumentGenerator {
 
@@ -36,12 +35,15 @@ class PowerPointGenerator(
 
     override fun getDocumentType() = DocumentType.POWERPOINT
 
-    override fun generateDocument(title: String, structure: Any): Mono<DocumentResponse> {
+    override fun generateDocument(title: String, structure: Any): Mono<Void> {
         val documentId = UUID.randomUUID().toString()
         val filePath = createFilePath(title)
-        val pptStructure = objectMapper.convertValue(structure, object : TypeReference<List<Map<String, String>>>() {})
+        val pptStructure = objectMapper.convertValue(
+            structure,
+            object : TypeReference<List<Map<String, String>>>() {}
+        )
 
-        log.debug("PPT file path: {}", filePath)
+        log.debug("PPT file path={}", filePath)
 
         return Mono.justOrEmpty(pptStructure)
             .flatMap { slides ->
@@ -50,30 +52,27 @@ class PowerPointGenerator(
                         createPowerPoint(ppt, title, slides)
                         Files.createDirectories(filePath.parent)
                         FileOutputStream(filePath.toFile()).use { ppt.write(it) }
-                        log.info("Create PPT file completed. File path: ${filePath.name}")
+                        log.info("Create PPT file completed. File path=${filePath.name}")
                     }
                 }.subscribeOn(Schedulers.boundedElastic())
                     .then(
                         Mono.defer {
-                            val fileName = filePath.fileName.toString()
-                            val fileUrl = filePath.toUri().toURL().toString()
                             val downloadUrl = documentServiceProperties.file?.downloadUrl
-
-                            documentManager.updateStatus(documentId, fileName, fileUrl, "$downloadUrl/ppt")
-                                .doOnSuccess { log.info("PPT document update finish. ID: $documentId") }
+                            documentServiceAdapter.updateFileInfo(documentId, filePath, "$downloadUrl/ppt")
+                                .doOnSuccess { log.info("PPT document update finish. ID=$documentId") }
                         }
                     )
-                    .doOnError { ex -> log.error("Background task failed: ${ex.message}", ex) }
+                    .doOnError { ex -> log.error("Background task failed", ex) }
                     .subscribe()
 
                 Mono.just(Document.forProcessing(documentId, title))
-                    .flatMap { documentManager.save(it) }
+                    .flatMap { documentServiceAdapter.save(it) }
             }
             .onErrorResume { ex ->
                 val errorMessage = ex.message
-                log.error("Failed to generate PPT: $errorMessage", ex)
+                log.error("Failed to generate PPT", ex)
                 val failedDocument = Document.forFailed(documentId, title, errorMessage ?: "FAIL")
-                documentManager.save(failedDocument)
+                documentServiceAdapter.save(failedDocument)
             }
     }
 

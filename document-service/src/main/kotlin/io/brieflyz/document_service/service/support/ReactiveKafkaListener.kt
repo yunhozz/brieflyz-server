@@ -1,6 +1,7 @@
-package io.brieflyz.document_service.service
+package io.brieflyz.document_service.service.support
 
-import io.brieflyz.core.dto.kafka.DocumentCreateRequestMessage
+import io.brieflyz.core.constants.KafkaTopic
+import io.brieflyz.core.dto.kafka.DocumentStructureResponseMessage
 import io.brieflyz.core.dto.kafka.KafkaMessage
 import io.brieflyz.core.utils.logger
 import org.springframework.boot.context.event.ApplicationReadyEvent
@@ -11,7 +12,7 @@ import reactor.util.retry.Retry
 import java.time.Duration
 
 @Component
-class DocumentKafkaListener(
+class ReactiveKafkaListener(
     private val reactiveKafkaConsumerTemplate: ReactiveKafkaConsumerTemplate<String, KafkaMessage>,
     private val documentGeneratorFactory: DocumentGeneratorFactory
 ) {
@@ -20,12 +21,23 @@ class DocumentKafkaListener(
     @EventListener(ApplicationReadyEvent::class)
     fun documentRequestTopicConsumer() {
         reactiveKafkaConsumerTemplate.receiveAutoAck()
-            .flatMap { record ->
-                val message = record.value() as DocumentCreateRequestMessage
-                val documentGenerator = documentGeneratorFactory.createByDocumentType(message.documentType)
-                documentGenerator.generateDocument(message.title, message.structure)
+            .filter { it.topic() == KafkaTopic.DOCUMENT_STRUCTURE_RESPONSE_TOPIC }
+            .doOnNext { record ->
+                log.info("Received message from topic=${record.topic()}, key=${record.key()}")
             }
-            .doOnSubscribe { log.info("Start consumer about document request topic") }
+            .flatMap { record ->
+                val message = record.value() as DocumentStructureResponseMessage
+                val documentGenerator = documentGeneratorFactory.createByDocumentType(message.documentType)
+
+                documentGenerator.generateDocument(message.title, message.structure)
+                    .doOnSuccess {
+                        log.info("Generate document successfully for title=${message.title}")
+                    }
+                    .doOnError { ex ->
+                        log.error("Error while generating document for title=${message.title}", ex)
+                    }
+            }
+            .doOnSubscribe { log.info("Start consumer for topic=${KafkaTopic.DOCUMENT_STRUCTURE_RESPONSE_TOPIC}") }
             .retryWhen(Retry.backoff(3, Duration.ofSeconds(5)))
             .subscribe()
     }

@@ -1,4 +1,4 @@
-package io.brieflyz.document_service.service
+package io.brieflyz.document_service.service.support
 
 import io.brieflyz.core.constants.DocumentType
 import org.springframework.stereotype.Component
