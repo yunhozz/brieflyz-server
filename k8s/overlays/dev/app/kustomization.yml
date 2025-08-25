@@ -21,19 +21,24 @@ replicas:
     count: 3
   - name: ai-service
     count: 3
+  - name: document-service
+    count: 3
 
 images:
-  - name: api-gateway
+  - name: brieflyz-api-gateway
     newName: ghcr.io/yunhozz/brieflyz-api-gateway
     newTag: latest
-  - name: auth-service
+  - name: brieflyz-auth-service
     newName: ghcr.io/yunhozz/brieflyz-auth-service
     newTag: latest
-  - name: subscription-service
+  - name: brieflyz-subscription-service
     newName: ghcr.io/yunhozz/brieflyz-subscription-service
     newTag: latest
-  - name: ai-service
+  - name: brieflyz-ai-service
     newName: ghcr.io/yunhozz/brieflyz-ai-service
+    newTag: latest
+  - name: brieflyz-document-service
+    newName: ghcr.io/yunhozz/brieflyz-document-service
     newTag: latest
 
 configMapGenerator:
