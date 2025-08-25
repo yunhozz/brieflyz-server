@@ -4,8 +4,8 @@ import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.brieflyz.core.constants.DocumentType
 import io.brieflyz.core.utils.logger
+import io.brieflyz.document_service.common.enums.DocumentStatus
 import io.brieflyz.document_service.config.DocumentServiceProperties
-import io.brieflyz.document_service.model.entity.Document
 import io.brieflyz.document_service.service.support.DocumentGenerator
 import io.brieflyz.document_service.service.support.DocumentServiceAdapter
 import org.apache.poi.sl.usermodel.TextParagraph
@@ -21,7 +21,6 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import java.util.UUID
 import kotlin.io.path.name
 
 @Component
@@ -35,8 +34,7 @@ class PowerPointGenerator(
 
     override fun getDocumentType() = DocumentType.POWERPOINT
 
-    override fun generateDocument(title: String, structure: Any): Mono<Void> {
-        val documentId = UUID.randomUUID().toString()
+    override fun generateDocument(documentId: String, title: String, structure: Any): Mono<Void> {
         val filePath = createFilePath(title)
         val pptStructure = objectMapper.convertValue(
             structure,
@@ -55,6 +53,12 @@ class PowerPointGenerator(
                         log.info("Create PPT file completed. File path=${filePath.name}")
                     }
                 }.subscribeOn(Schedulers.boundedElastic())
+                    .onErrorResume { ex ->
+                        val errorMessage = ex.message
+                        log.error("Failed to generate PPT", ex)
+                        documentServiceAdapter.updateDocumentStatus(documentId, DocumentStatus.FAILED, errorMessage)
+                            .then(Mono.error(ex))
+                    }
                     .then(
                         Mono.defer {
                             val downloadUrl = documentServiceProperties.file?.downloadUrl
@@ -65,14 +69,7 @@ class PowerPointGenerator(
                     .doOnError { ex -> log.error("Background task failed", ex) }
                     .subscribe()
 
-                Mono.just(Document.forProcessing(documentId, title))
-                    .flatMap { documentServiceAdapter.save(it) }
-            }
-            .onErrorResume { ex ->
-                val errorMessage = ex.message
-                log.error("Failed to generate PPT", ex)
-                val failedDocument = Document.forFailed(documentId, title, errorMessage ?: "FAIL")
-                documentServiceAdapter.save(failedDocument)
+                documentServiceAdapter.updateDocumentStatus(documentId, DocumentStatus.PROCESSING)
             }
     }
 

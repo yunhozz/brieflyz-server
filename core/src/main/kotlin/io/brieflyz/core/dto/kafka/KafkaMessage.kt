@@ -7,6 +7,7 @@ sealed interface KafkaMessage
 
 data class DocumentStructureRequestMessage(
     val aiProvider: AiProvider,
+    val documentId: String,
     val title: String,
     val content: String,
     val documentType: DocumentType,
@@ -16,6 +17,7 @@ data class DocumentStructureRequestMessage(
 ) : KafkaMessage
 
 data class DocumentStructureResponseMessage(
+    val documentId: String,
     val title: String,
     val documentType: DocumentType,
     val structure: Any

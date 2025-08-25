@@ -5,5 +5,5 @@ import reactor.core.publisher.Mono
 
 interface DocumentGenerator {
     fun getDocumentType(): DocumentType
-    fun generateDocument(title: String, structure: Any): Mono<Void>
+    fun generateDocument(documentId: String, title: String, structure: Any): Mono<Void>
 }

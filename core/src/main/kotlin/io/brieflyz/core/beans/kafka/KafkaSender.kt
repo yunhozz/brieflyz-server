@@ -19,7 +19,7 @@ class KafkaSender(
             .thenAccept { result ->
                 val metadata = result.recordMetadata
                 log.debug(
-                    "[Kafka Send Success] Topic: {}, Partition: {}, Offset: {}, Producer Record: {}",
+                    "[Kafka Send Success] topic={}, partition={}, offset={}, producerRecord={}",
                     metadata.topic(),
                     metadata.partition(),
                     metadata.offset(),
@@ -36,7 +36,7 @@ class KafkaSender(
             .doOnNext { result ->
                 val metadata = result.recordMetadata()
                 log.debug(
-                    "[Kafka Send Success] Topic: {}, Partition: {}, Offset: {}",
+                    "[Kafka Send Success] topic={}, partition={}, offset={}",
                     metadata.topic(),
                     metadata.partition(),
                     metadata.offset()

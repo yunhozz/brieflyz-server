@@ -27,14 +27,15 @@ class ReactiveKafkaListener(
             }
             .flatMap { record ->
                 val message = record.value() as DocumentStructureResponseMessage
-                val documentGenerator = documentGeneratorFactory.createByDocumentType(message.documentType)
+                val (documentId, title, documentType, structure) = message
+                val documentGenerator = documentGeneratorFactory.createByDocumentType(documentType)
 
-                documentGenerator.generateDocument(message.title, message.structure)
+                documentGenerator.generateDocument(documentId, title, structure)
                     .doOnSuccess {
-                        log.info("Generate document successfully for title=${message.title}")
+                        log.info("Generate document successfully for document. ID=$documentId")
                     }
                     .doOnError { ex ->
-                        log.error("Error while generating document for title=${message.title}", ex)
+                        log.error("Error while generating document for document. ID=$documentId", ex)
                     }
             }
             .doOnSubscribe { log.info("Start consumer for topic=${KafkaTopic.DOCUMENT_STRUCTURE_RESPONSE_TOPIC}") }

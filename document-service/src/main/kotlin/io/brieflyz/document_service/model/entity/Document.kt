@@ -1,5 +1,6 @@
 package io.brieflyz.document_service.model.entity
 
+import io.brieflyz.core.constants.DocumentType
 import io.brieflyz.document_service.common.enums.DocumentStatus
 import org.springframework.data.annotation.CreatedDate
 import org.springframework.data.annotation.Id
@@ -9,24 +10,14 @@ import org.springframework.data.relational.core.mapping.Table
 import java.time.LocalDateTime
 
 @Table
-class Document private constructor(
+class Document(
     @Id
     val documentId: String?,
-    val title: String
+    val title: String,
+    val type: DocumentType
 ) : Persistable<String> {
 
-    companion object {
-        fun forProcessing(documentId: String, title: String) = Document(documentId, title)
-
-        fun forFailed(documentId: String, title: String, errorMessage: String): Document {
-            val document = Document(documentId, title)
-            document.errorMessage = errorMessage
-            document.status = DocumentStatus.FAILED
-            return document
-        }
-    }
-
-    var status: DocumentStatus = DocumentStatus.PROCESSING
+    var status: DocumentStatus = DocumentStatus.PENDING
         protected set
 
     var fileName: String? = null
@@ -53,10 +44,15 @@ class Document private constructor(
 
     override fun isNew(): Boolean = createdAt == null
 
+    fun updateStatus(status: DocumentStatus, errorMessage: String?) {
+        this.status = status
+        errorMessage?.let { this.errorMessage = it }
+    }
+
     fun updateForComplete(fileName: String, fileUrl: String, downloadUrl: String) {
         this.fileName = fileName
         this.fileUrl = fileUrl
         this.downloadUrl = downloadUrl
-        status = DocumentStatus.COMPLETED
+        this.status = DocumentStatus.COMPLETED
     }
 }

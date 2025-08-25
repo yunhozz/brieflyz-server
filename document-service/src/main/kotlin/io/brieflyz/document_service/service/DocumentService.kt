@@ -1,16 +1,25 @@
 package io.brieflyz.document_service.service
 
 import io.brieflyz.core.beans.kafka.KafkaSender
+import io.brieflyz.core.constants.DocumentType
 import io.brieflyz.core.constants.KafkaTopic
 import io.brieflyz.core.dto.kafka.DocumentStructureRequestMessage
 import io.brieflyz.core.utils.logger
+import io.brieflyz.document_service.common.enums.DocumentStatus
 import io.brieflyz.document_service.model.dto.DocumentCreateRequest
+import io.brieflyz.document_service.model.dto.DocumentResourceResponse
 import io.brieflyz.document_service.model.dto.DocumentResponse
 import io.brieflyz.document_service.model.entity.Document
 import io.brieflyz.document_service.repository.DocumentRepository
+import org.springframework.core.io.FileSystemResource
+import org.springframework.http.MediaType
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import reactor.core.publisher.Mono
+import reactor.kotlin.core.publisher.switchIfEmpty
+import java.net.URI
+import java.nio.file.Paths
+import java.util.UUID
 
 @Service
 class DocumentService(
@@ -19,17 +28,27 @@ class DocumentService(
 ) {
     private val log = logger()
 
-    fun sendDocumentStructureRequest(request: DocumentCreateRequest): Mono<Void> {
-        val message = DocumentStructureRequestMessage(
-            request.aiProvider,
-            request.title,
-            request.content,
-            request.documentType,
-            request.templateName,
-            request.sections,
-            request.additionalOptions
-        )
-        return kafkaSender.sendReactive(KafkaTopic.DOCUMENT_STRUCTURE_REQUEST_TOPIC, message)
+    @Transactional
+    fun createDocumentWithAi(request: DocumentCreateRequest): Mono<DocumentResponse> {
+        val documentId = UUID.randomUUID().toString()
+        val document = Document(documentId, request.title, request.documentType)
+
+        return documentRepository.save(document)
+            .flatMap { document ->
+                val message = DocumentStructureRequestMessage(
+                    request.aiProvider,
+                    documentId,
+                    title = document.title,
+                    request.content,
+                    documentType = document.type,
+                    request.templateName,
+                    request.sections,
+                    request.additionalOptions
+                )
+
+                kafkaSender.sendReactive(KafkaTopic.DOCUMENT_STRUCTURE_REQUEST_TOPIC, message)
+                    .then(Mono.just(document.toResponse()))
+            }
     }
 
     @Transactional
@@ -43,8 +62,17 @@ class DocumentService(
             .then()
 
     @Transactional
-    fun updateStatus(documentId: String, fileName: String, fileUrl: String, downloadUrl: String): Mono<Void> =
-        documentRepository.findById(documentId)
+    fun updateDocumentStatus(documentId: String, status: DocumentStatus, errorMessage: String?): Mono<Void> =
+        findDocumentById(documentId)
+            .flatMap { document ->
+                document.updateStatus(status, errorMessage)
+                documentRepository.save(document)
+            }
+            .then()
+
+    @Transactional
+    fun updateFileInfo(documentId: String, fileName: String, fileUrl: String, downloadUrl: String): Mono<Void> =
+        findDocumentById(documentId)
             .flatMap { document ->
                 document.updateForComplete(fileName, fileUrl, downloadUrl)
                 log.debug("Document info={}", document.toString())
@@ -56,7 +84,7 @@ class DocumentService(
                             "ID=${it.id}, " +
                             "title=${it.title}, " +
                             "file name=${it.fileName}, " +
-                            "URL=${it.fileUrl}"
+                            "file URL=${it.fileUrl}"
                 )
             }
             .onErrorResume { ex ->
@@ -66,8 +94,37 @@ class DocumentService(
             .then()
 
     @Transactional(readOnly = true)
-    fun getDocumentInfo(documentId: String): Mono<DocumentResponse> =
-        documentRepository.findById(documentId).map { it.toResponse() }
+    fun getDocumentInfo(documentId: String): Mono<DocumentResponse?> =
+        findDocumentById(documentId).map { it.toResponse() }
+
+    @Transactional(readOnly = true)
+    fun createDocumentResource(documentId: String): Mono<DocumentResourceResponse> =
+        findDocumentById(documentId)
+            .flatMap { document ->
+                if (document.status == DocumentStatus.COMPLETED) {
+                    val mediaType = when (document.type) {
+                        DocumentType.EXCEL -> MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+                        DocumentType.POWERPOINT -> MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.presentationml.presentation")
+                    }
+                    Mono.just(
+                        DocumentResourceResponse(
+                            fileName = document.fileName!!,
+                            resource = FileSystemResource(Paths.get(URI(document.fileUrl!!))),
+                            mediaType
+                        )
+                    )
+                } else {
+                    Mono.error(IllegalArgumentException("Document is not completed. ID=$documentId, status=${document.status}"))
+                }
+            }
+
+    private fun findDocumentById(documentId: String): Mono<Document> =
+        documentRepository.findById(documentId)
+            .switchIfEmpty {
+                Mono.error {
+                    IllegalArgumentException("Document not found. ID=$documentId")
+                }
+            }
 
     private fun Document.toResponse() = DocumentResponse(
         documentId = this.documentId,
