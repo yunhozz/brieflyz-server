@@ -5,6 +5,7 @@ import io.brieflyz.core.utils.logger
 import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.kafka.core.reactive.ReactiveKafkaProducerTemplate
 import org.springframework.stereotype.Component
+import reactor.core.publisher.Mono
 
 @Component
 class KafkaSender(
@@ -18,13 +19,11 @@ class KafkaSender(
             .thenAccept { result ->
                 val metadata = result.recordMetadata
                 log.debug(
-                    """
-                    [Kafka Send Success]
-                    Topic: ${metadata.topic()}
-                    Partition: ${metadata.partition()}
-                    Offset: ${metadata.offset()}
-                    Producer Record: ${result.producerRecord}
-                """.trimIndent()
+                    "[Kafka Send Success] Topic: {}, Partition: {}, Offset: {}, Producer Record: {}",
+                    metadata.topic(),
+                    metadata.partition(),
+                    metadata.offset(),
+                    result.producerRecord
                 )
             }.exceptionally { ex ->
                 log.error("Unable to send message due to : ${ex.message}", ex)
@@ -32,22 +31,19 @@ class KafkaSender(
             }
     }
 
-    fun sendReactive(topic: String, message: KafkaMessage) {
+    fun sendReactive(topic: String, message: KafkaMessage): Mono<Void> =
         reactiveKafkaProducerTemplate.send(topic, message)
             .doOnNext { result ->
                 val metadata = result.recordMetadata()
                 log.debug(
-                    """
-                    [Kafka Send Success]
-                    Topic: ${metadata.topic()}
-                    Partition: ${metadata.partition()}
-                    Offset: ${metadata.offset()}
-                """.trimIndent()
+                    "[Kafka Send Success] Topic: {}, Partition: {}, Offset: {}",
+                    metadata.topic(),
+                    metadata.partition(),
+                    metadata.offset()
                 )
             }
             .doOnError { ex ->
                 log.error("Unable to send message due to : ${ex.message}", ex)
             }
-            .subscribe()
-    }
+            .then()
 }

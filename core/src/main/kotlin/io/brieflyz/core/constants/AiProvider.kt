@@ -1,4 +1,4 @@
-package io.brieflyz.ai_service.common.enums
+package io.brieflyz.core.constants
 
 enum class AiProvider {
     OLLAMA, OPEN_AI

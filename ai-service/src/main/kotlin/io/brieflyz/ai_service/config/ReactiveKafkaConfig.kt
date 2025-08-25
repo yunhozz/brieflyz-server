@@ -7,7 +7,6 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.kafka.core.reactive.ReactiveKafkaConsumerTemplate
 import reactor.kafka.receiver.ReceiverOptions
-import java.util.Collections
 
 @Configuration
 class ReactiveKafkaConfig {
@@ -18,8 +17,8 @@ class ReactiveKafkaConfig {
     ): ReactiveKafkaConsumerTemplate<String, KafkaMessage> = ReactiveKafkaConsumerTemplate(
         ReceiverOptions.create<String, KafkaMessage>(props)
             .subscription(
-                Collections.singletonList(
-                    KafkaTopic.DOCUMENT_REQUEST_TOPIC
+                listOf(
+                    KafkaTopic.DOCUMENT_STRUCTURE_REQUEST_TOPIC
                 )
             )
     )

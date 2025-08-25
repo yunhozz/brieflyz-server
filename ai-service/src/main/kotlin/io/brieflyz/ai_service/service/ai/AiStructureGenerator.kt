@@ -1,6 +1,6 @@
-package io.brieflyz.ai_service.service.support.ai
+package io.brieflyz.ai_service.service.ai
 
-import io.brieflyz.ai_service.common.enums.AiProvider
+import io.brieflyz.core.constants.AiProvider
 import reactor.core.publisher.Mono
 
 interface AiStructureGenerator {
