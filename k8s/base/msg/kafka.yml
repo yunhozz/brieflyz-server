@@ -37,6 +37,7 @@ spec:
   selector:
     matchLabels:
       app: kafka
+  replicas: 3
   podManagementPolicy: Parallel
   template:
     metadata:
@@ -79,7 +80,7 @@ spec:
     - metadata:
         name: kafka-volume
       spec:
-        storageClassName: standard-rwo
+        storageClassName: local-path
         accessModes:
           - ReadWriteOnce
         resources:
