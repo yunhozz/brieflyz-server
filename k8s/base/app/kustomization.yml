@@ -8,3 +8,4 @@ resources:
   - subscription-service.yml
   - ai-service.yml
   - document-service.yml
+  - nginx.yml
