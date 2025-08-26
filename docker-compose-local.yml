@@ -12,12 +12,6 @@ services:
       DOCUMENT_SERVICE_URL: http://document-service:8070
     volumes:
       - log-volume:/app/logs
-    healthcheck:
-      test: [ "CMD-SHELL", "wget -q --spider http://localhost:8000/actuator/health || exit 1" ]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-      start_period: 60s
     restart: on-failure
     networks:
       - local
@@ -37,12 +31,6 @@ services:
       TZ: Asia/Seoul
     volumes:
       - log-volume:/app/logs
-    healthcheck:
-      test: [ "CMD-SHELL", "wget -q --spider http://localhost:8090/actuator/health || exit 1" ]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-      start_period: 60s
     restart: on-failure
     networks:
       - local
@@ -62,12 +50,6 @@ services:
       TZ: Asia/Seoul
     volumes:
       - log-volume:/app/logs
-    healthcheck:
-      test: [ "CMD-SHELL", "wget -q --spider http://localhost:8070/actuator/health || exit 1" ]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-      start_period: 60s
     restart: on-failure
     networks:
       - local
@@ -84,12 +66,6 @@ services:
       KAFKA_BOOTSTRAP_SERVERS: kafka-0:19092,kafka-1:19093,kafka-2:19094
     volumes:
       - log-volume:/app/logs
-    healthcheck:
-      test: [ "CMD-SHELL", "wget -q --spider http://localhost:8999/actuator/health || exit 1" ]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-      start_period: 60s
     restart: on-failure
     networks:
       - local
@@ -108,12 +84,6 @@ services:
       KAFKA_BOOTSTRAP_SERVERS: kafka-0:19092,kafka-1:19093,kafka-2:19094
     volumes:
       - log-volume:/app/logs
-    healthcheck:
-      test: [ "CMD-SHELL", "wget -q --spider http://localhost:8060/actuator/health || exit 1" ]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-      start_period: 60s
     restart: on-failure
     networks:
       - local
@@ -126,8 +96,6 @@ services:
     volumes:
       - ./conf/nginx/default.conf:/etc/nginx/conf.d/default.conf
       - ./conf/nginx/nginx.conf:/etc/nginx/nginx.conf
-    depends_on:
-      - api-gateway
     restart: always
     networks:
       - local
@@ -369,15 +337,15 @@ services:
     networks:
       - local
 
-  kibana:
-    image: kibana:9.0.2
-    container_name: kibana
-    ports:
-      - "15601:5601"
+  filebeat:
+    image: elastic/filebeat:9.0.2
+    container_name: filebeat
+    user: root
     volumes:
-      - ./conf/elk/kibana.yml:/usr/share/kibana/config/kibana.yml:ro
+      - ./conf/elk/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+      - log-volume:/logs:ro
     depends_on:
-      - elasticsearch
+      - logstash
     networks:
       - local
 
@@ -395,15 +363,15 @@ services:
     networks:
       - local
 
-  filebeat:
-    image: elastic/filebeat:9.0.2
-    container_name: filebeat
-    user: root
+  kibana:
+    image: kibana:9.0.2
+    container_name: kibana
+    ports:
+      - "15601:5601"
     volumes:
-      - ./conf/elk/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
-      - log-volume:/logs:ro
+      - ./conf/elk/kibana.yml:/usr/share/kibana/config/kibana.yml:ro
     depends_on:
-      - logstash
+      - elasticsearch
     networks:
       - local
 
