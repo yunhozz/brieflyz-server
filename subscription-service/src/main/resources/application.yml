@@ -70,15 +70,19 @@ spring:
         username: ${mysql.username}
         password: ${mysql.root-password}
         pool-name: subscription-service-source-pool
+        minimum-idle: 3
         maximum-pool-size: 3
-        minimum-idle: 1
+        max-lifetime: 60000
+        connection-timeout: 60000
       replica:
         jdbc-url: jdbc:mysql://${MYSQL_REPLICA_ADDR:localhost:23306}/brieflyz_subscription?createDatabaseIfNotExist=true
         username: ${mysql.username}
         password: ${mysql.root-password}
         pool-name: subscription-service-replica-pool
+        minimum-idle: 5
         maximum-pool-size: 5
-        minimum-idle: 3
+        max-lifetime: 60000
+        connection-timeout: 60000
         read-only: true
   data:
     redis:
