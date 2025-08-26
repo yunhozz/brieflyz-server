@@ -4,16 +4,10 @@ metadata:
   name: nginx
   labels:
     app: nginx
-  annotations:
-    nginx.ingress.kubernetes.io/ssl-redirect: "true"
 spec:
   ingressClassName: nginx
-  tls:
-    - hosts:
-        - brieflyz.kro.kr
-      secretName: tls-secret
   rules:
-    - host: brieflyz.kro.kr
+    - host: localhost
       http:
         paths:
           - path: /
