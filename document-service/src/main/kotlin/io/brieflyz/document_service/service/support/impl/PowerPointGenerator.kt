@@ -19,8 +19,6 @@ import java.io.FileOutputStream
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 import kotlin.io.path.name
 
 @Component
@@ -34,7 +32,7 @@ class PowerPointGenerator(
 
     override fun getDocumentType() = DocumentType.POWERPOINT
 
-    override fun generateDocument(documentId: String, title: String, structure: Any): Mono<Void> {
+    override fun generateDocument(documentId: String, title: String, structure: Any?): Mono<Void> {
         val filePath = createFilePath(title)
         val pptStructure = objectMapper.convertValue(
             structure,
@@ -71,6 +69,15 @@ class PowerPointGenerator(
 
                 documentServiceAdapter.updateDocumentStatus(documentId, DocumentStatus.PROCESSING)
             }
+    }
+
+    override fun updateDocumentFailed(documentId: String, errMsg: String): Mono<Void> {
+        log.warn("Failed to generate PPT. Reason=$errMsg")
+        return documentServiceAdapter.updateDocumentStatus(
+            documentId,
+            DocumentStatus.FAILED,
+            errMsg
+        ).then()
     }
 
     private fun createPowerPoint(ppt: XMLSlideShow, title: String, slides: List<Map<String, String>>) {
@@ -140,7 +147,7 @@ class PowerPointGenerator(
     private fun createFilePath(title: String): Path {
         val filePath = documentServiceProperties.file?.filePath
         val titleName = title.replace(Regex("[^a-zA-Z0-9가-힣]"), "_")
-        val timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"))
+        val timestamp = System.nanoTime()
         return Paths.get("$filePath/ppt", "${titleName}_$timestamp.pptx")
     }
 }

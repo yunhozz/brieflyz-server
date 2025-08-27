@@ -25,36 +25,29 @@ class ReactiveKafkaListener(
     private val log = logger()
 
     @EventListener(ApplicationReadyEvent::class)
-    fun documentRequestTopicConsumer() {
+    fun onApplicationReadyEvent() {
         reactiveKafkaConsumerTemplate.receiveAutoAck()
             .filter { it.topic() == KafkaTopic.DOCUMENT_STRUCTURE_REQUEST_TOPIC }
+            .doOnSubscribe { log.info("Start consumer for topic=${KafkaTopic.DOCUMENT_STRUCTURE_REQUEST_TOPIC}") }
             .doOnNext { record ->
                 log.info("Received message from topic=${record.topic()}, key=${record.key()}")
             }
             .flatMap { record ->
                 val message = record.value() as DocumentStructureRequestMessage
-                val (aiProvider, documentId, title, content) = message
+                val (aiProvider, documentId, title, content, documentType) = message
                 val aiStructureGenerator = aiStructureGeneratorFactory.createByProvider(aiProvider)
 
-                when (message.documentType) {
+                when (documentType) {
                     DocumentType.EXCEL -> aiStructureGenerator.generateExcelStructure(title, content)
-                        .flatMap {
-                            log.debug("Generate excel structure successfully. document ID=$documentId")
-                            sendStructureResponse(documentId, title, DocumentType.EXCEL, it)
-                        }
-
                     DocumentType.POWERPOINT -> aiStructureGenerator.generatePptStructure(title, content)
-                        .flatMap {
-                            log.debug("Generate PPT structure successfully. document ID=$documentId")
-                            sendStructureResponse(documentId, title, DocumentType.POWERPOINT, it)
-                        }
-                }.doOnSuccess {
+                }.flatMap { structure ->
                     log.info("Response sent successfully for document. ID=$documentId")
-                }.doOnError { ex ->
+                    sendStructureResponse(documentId, title, documentType, structure)
+                }.onErrorResume { ex ->
                     log.error("Error while processing message for document. ID=$documentId", ex)
+                    sendStructureResponse(documentId, title, documentType, null, ex.message)
                 }
             }
-            .doOnSubscribe { log.info("Start consumer for topic=${KafkaTopic.DOCUMENT_STRUCTURE_REQUEST_TOPIC}") }
             .retryWhen(Retry.backoff(3, Duration.ofSeconds(5)))
             .subscribe()
     }
@@ -63,10 +56,10 @@ class ReactiveKafkaListener(
         documentId: String,
         title: String,
         type: DocumentType,
-        structure: Any
-    ): Mono<Void> {
-        val topic = KafkaTopic.DOCUMENT_STRUCTURE_RESPONSE_TOPIC
-        log.debug("Sending structure data to topic={}", topic)
-        return kafkaSender.sendReactive(topic, DocumentStructureResponseMessage(documentId, title, type, structure))
-    }
+        structure: Any?,
+        errMsg: String? = null
+    ): Mono<Void> = kafkaSender.sendReactive(
+        KafkaTopic.DOCUMENT_STRUCTURE_RESPONSE_TOPIC,
+        DocumentStructureResponseMessage(documentId, title, type, structure, errMsg)
+    ).then()
 }

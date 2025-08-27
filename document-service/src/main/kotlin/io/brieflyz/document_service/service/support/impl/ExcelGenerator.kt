@@ -22,8 +22,6 @@ import java.io.FileOutputStream
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 import kotlin.io.path.name
 
 @Component
@@ -37,7 +35,7 @@ class ExcelGenerator(
 
     override fun getDocumentType() = DocumentType.EXCEL
 
-    override fun generateDocument(documentId: String, title: String, structure: Any): Mono<Void> {
+    override fun generateDocument(documentId: String, title: String, structure: Any?): Mono<Void> {
         val filePath = createFilePath(title)
         val excelStructure = objectMapper.convertValue(
             structure,
@@ -74,6 +72,15 @@ class ExcelGenerator(
 
                 documentServiceAdapter.updateDocumentStatus(documentId, DocumentStatus.PROCESSING)
             }
+    }
+
+    override fun updateDocumentFailed(documentId: String, errMsg: String): Mono<Void> {
+        log.warn("Failed to generate excel. Reason=$errMsg")
+        return documentServiceAdapter.updateDocumentStatus(
+            documentId,
+            DocumentStatus.FAILED,
+            errMsg
+        ).then()
     }
 
     private fun createExcel(workbook: XSSFWorkbook, sheetData: Map<String, List<List<String>>>) {
@@ -143,7 +150,7 @@ class ExcelGenerator(
     private fun createFilePath(title: String): Path {
         val filePath = documentServiceProperties.file?.filePath
         val titleName = title.replace(Regex("[^a-zA-Z0-9가-힣]"), "_")
-        val timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"))
+        val timestamp = System.nanoTime()
         return Paths.get("$filePath/excel", "${titleName}_$timestamp.xlsx")
     }
 }

@@ -19,26 +19,26 @@ class ReactiveKafkaListener(
     private val log = logger()
 
     @EventListener(ApplicationReadyEvent::class)
-    fun documentRequestTopicConsumer() {
+    fun onApplicationReadyEvent() {
         reactiveKafkaConsumerTemplate.receiveAutoAck()
             .filter { it.topic() == KafkaTopic.DOCUMENT_STRUCTURE_RESPONSE_TOPIC }
+            .doOnSubscribe { log.info("Start consumer for topic=${KafkaTopic.DOCUMENT_STRUCTURE_RESPONSE_TOPIC}") }
             .doOnNext { record ->
                 log.info("Received message from topic=${record.topic()}, key=${record.key()}")
             }
             .flatMap { record ->
                 val message = record.value() as DocumentStructureResponseMessage
-                val (documentId, title, documentType, structure) = message
+                val (documentId, title, documentType, structure, errMsg) = message
                 val documentGenerator = documentGeneratorFactory.createByDocumentType(documentType)
 
-                documentGenerator.generateDocument(documentId, title, structure)
-                    .doOnSuccess {
-                        log.info("Generate document successfully for document. ID=$documentId")
-                    }
-                    .doOnError { ex ->
-                        log.error("Error while generating document for document. ID=$documentId", ex)
-                    }
+                if (errMsg.isNullOrBlank()) {
+                    log.info("Start generating document. ID=$documentId, title=$title")
+                    documentGenerator.generateDocument(documentId, title, structure)
+                } else {
+                    log.error("Error while generating structure from AI server. Error message=$errMsg")
+                    documentGenerator.updateDocumentFailed(documentId, errMsg)
+                }
             }
-            .doOnSubscribe { log.info("Start consumer for topic=${KafkaTopic.DOCUMENT_STRUCTURE_RESPONSE_TOPIC}") }
             .retryWhen(Retry.backoff(3, Duration.ofSeconds(5)))
             .subscribe()
     }

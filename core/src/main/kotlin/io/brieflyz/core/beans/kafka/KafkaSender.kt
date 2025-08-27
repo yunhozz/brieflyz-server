@@ -6,6 +6,7 @@ import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.kafka.core.reactive.ReactiveKafkaProducerTemplate
 import org.springframework.stereotype.Component
 import reactor.core.publisher.Mono
+import reactor.kafka.sender.SenderResult
 
 @Component
 class KafkaSender(
@@ -31,7 +32,7 @@ class KafkaSender(
             }
     }
 
-    fun sendReactive(topic: String, message: KafkaMessage): Mono<Void> =
+    fun sendReactive(topic: String, message: KafkaMessage): Mono<SenderResult<Void>> =
         reactiveKafkaProducerTemplate.send(topic, message)
             .doOnNext { result ->
                 val metadata = result.recordMetadata()
@@ -45,5 +46,4 @@ class KafkaSender(
             .doOnError { ex ->
                 log.error("Unable to send message due to : ${ex.message}", ex)
             }
-            .then()
 }

@@ -20,5 +20,6 @@ data class DocumentStructureResponseMessage(
     val documentId: String,
     val title: String,
     val documentType: DocumentType,
-    val structure: Any
+    val structure: Any?,
+    val errMsg: String?
 ) : KafkaMessage

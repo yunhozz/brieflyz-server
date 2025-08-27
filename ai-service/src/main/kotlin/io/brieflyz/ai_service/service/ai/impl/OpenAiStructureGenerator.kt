@@ -25,8 +25,6 @@ class OpenAiStructureGenerator(
 
         return openAiChatModel.stream(aiPrompt)
             .flatMap { response ->
-                log.debug(response.toString())
-
                 val generation = response.result
 
                 if (generation.metadata.finishReason == "STOP") {
