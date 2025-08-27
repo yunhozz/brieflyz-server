@@ -13,6 +13,7 @@ import java.time.LocalDateTime
 class Document(
     @Id
     val documentId: String?,
+    val username: String,
     val title: String,
     val type: DocumentType
 ) : Persistable<String> {

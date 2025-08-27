@@ -25,7 +25,7 @@ enum class SuccessStatus(
     USER_INFORMATION_READ_SUCCESS(200 ok "유저 정보 조회에 성공하였습니다."),
     SUBSCRIPTION_INFO_READ_SUCCESS(200 ok "구독 정보 조회에 성공하였습니다."),
     USER_SIGNUP_VERIFY_SUCCESS(200 ok "회원가입 인증 성공하였습니다. 다시 로그인을 진행해주세요."),
-    DOCUMENT_INFO_READ_SUCCESS(200 ok "문서 정보 조회에 성공하였습니다."),
+    DOCUMENT_LIST_READ_SUCCESS(200 ok "문서 리스트 조회에 성공하였습니다."),
 
     // 201 Created
     SIGN_UP_SUCCESS(201 created "회원가입에 성공하였습니다. 이메일 인증을 진행해주세요."),

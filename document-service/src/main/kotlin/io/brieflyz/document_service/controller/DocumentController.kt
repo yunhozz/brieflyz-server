@@ -1,5 +1,6 @@
 package io.brieflyz.document_service.controller
 
+import io.brieflyz.core.annotation.JwtSubject
 import io.brieflyz.core.constants.SuccessStatus
 import io.brieflyz.core.dto.api.ApiResponse
 import io.brieflyz.document_service.model.dto.DocumentCreateRequest
@@ -28,18 +29,21 @@ class DocumentController(
 ) {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    fun createDocument(@RequestBody @Valid request: DocumentCreateRequest): Mono<ApiResponse<DocumentResponse>> =
-        documentService.createDocumentWithAi(request)
+    fun createDocument(
+        @JwtSubject username: String,
+        @RequestBody @Valid request: DocumentCreateRequest
+    ): Mono<ApiResponse<DocumentResponse>> =
+        documentService.createDocumentWithAi(username, request)
             .map { document ->
                 ApiResponse.success(SuccessStatus.DOCUMENT_CREATION_REQUEST_SUCCESS, document)
             }
 
-    @GetMapping("/{documentId}")
+    @GetMapping
     @ResponseStatus(HttpStatus.OK)
-    fun getDocumentInfo(@PathVariable documentId: String): Mono<ApiResponse<DocumentResponse>> =
-        documentService.getDocumentInfo(documentId)
-            .map { document ->
-                ApiResponse.success(SuccessStatus.DOCUMENT_INFO_READ_SUCCESS, document)
+    fun getDocumentList(@JwtSubject username: String): Mono<ApiResponse<List<DocumentResponse>>> =
+        documentService.getDocumentListByUsername(username)
+            .map { documentList ->
+                ApiResponse.success(SuccessStatus.DOCUMENT_LIST_READ_SUCCESS, documentList)
             }
 
     @GetMapping("/download/{documentId}")

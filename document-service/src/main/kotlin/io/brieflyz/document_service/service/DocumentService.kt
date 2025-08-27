@@ -29,9 +29,9 @@ class DocumentService(
     private val log = logger()
 
     @Transactional
-    fun createDocumentWithAi(request: DocumentCreateRequest): Mono<DocumentResponse> {
+    fun createDocumentWithAi(username: String, request: DocumentCreateRequest): Mono<DocumentResponse> {
         val documentId = UUID.randomUUID().toString()
-        val document = Document(documentId, request.title, request.documentType)
+        val document = Document(documentId, username, request.title, request.documentType)
 
         return documentRepository.save(document)
             .flatMap { document ->
@@ -94,8 +94,10 @@ class DocumentService(
             .then()
 
     @Transactional(readOnly = true)
-    fun getDocumentInfo(documentId: String): Mono<DocumentResponse?> =
-        findDocumentById(documentId).map { it.toResponse() }
+    fun getDocumentListByUsername(username: String): Mono<List<DocumentResponse>> =
+        documentRepository.findAllByUsernameOrderByUpdatedAtDesc(username)
+            .map { it.toResponse() }
+            .collectList()
 
     @Transactional(readOnly = true)
     fun createDocumentResource(documentId: String): Mono<DocumentResourceResponse> =
