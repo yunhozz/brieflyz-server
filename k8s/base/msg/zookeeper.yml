@@ -54,6 +54,7 @@ spec:
   selector:
     matchLabels:
       app: zk
+  replicas: 3
   podManagementPolicy: Parallel
   template:
     metadata:
@@ -116,7 +117,7 @@ spec:
     - metadata:
         name: zk-volume
       spec:
-        storageClassName: standard-rwo
+        storageClassName: local-path
         accessModes:
           - ReadWriteOnce
         resources:

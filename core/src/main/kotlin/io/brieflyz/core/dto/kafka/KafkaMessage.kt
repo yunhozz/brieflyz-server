@@ -1,15 +1,25 @@
 package io.brieflyz.core.dto.kafka
 
+import io.brieflyz.core.constants.AiProvider
 import io.brieflyz.core.constants.DocumentType
 
 sealed interface KafkaMessage
 
-// TODO: chat-service에서 ai-service로 비동기 문서 생성 요청
-data class DocumentRequestMessage(
+data class DocumentStructureRequestMessage(
+    val aiProvider: AiProvider,
+    val documentId: String,
     val title: String,
     val content: String,
     val documentType: DocumentType,
-    val templateName: String,
-    val sections: List<String>? = emptyList(),
-    val additionalOptions: Map<String, Any>? = null
+    val templateName: String?,
+    val sections: List<String>?,
+    val additionalOptions: Map<String, Any>?
+) : KafkaMessage
+
+data class DocumentStructureResponseMessage(
+    val documentId: String,
+    val title: String,
+    val documentType: DocumentType,
+    val structure: Any?,
+    val errMsg: String?
 ) : KafkaMessage

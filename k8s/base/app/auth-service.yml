@@ -22,6 +22,7 @@ spec:
   selector:
     matchLabels:
       app: auth-service
+  replicas: 2
   strategy:
     type: RollingUpdate
     rollingUpdate:
@@ -49,13 +50,13 @@ spec:
               weight: 100
       containers:
         - name: auth-service
-          image: auth-service:latest
-          imagePullPolicy: Always
+          image: brieflyz-auth-service:latest
+          imagePullPolicy: Never
           ports:
             - containerPort: 8090
-          envFrom:
-            - configMapRef:
-                name: app-profile-configmap
+          env:
+            - name: APPLICATION_PROFILE
+              value: dev
           volumeMounts:
             - name: nfs-logs-pvc-volume
               mountPath: /app/logs
@@ -63,5 +64,3 @@ spec:
         - name: nfs-logs-pvc-volume
           persistentVolumeClaim:
             claimName: nfs-logs-pvc
-      imagePullSecrets:
-        - name: ghcr-secret

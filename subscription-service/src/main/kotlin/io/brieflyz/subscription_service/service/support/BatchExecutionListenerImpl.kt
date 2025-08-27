@@ -37,7 +37,7 @@ class BatchExecutionListenerImpl(
 
     override fun sendEmail(chunk: Chunk<out ExpiredSubscription>) {
         val now = LocalDateTime.now()
-        val renewUrl = subscriptionServiceProperties.email?.renewUrl
+        val renewUrl = subscriptionServiceProperties.email.renewUrl
 
         val context = Context().apply {
             setVariable("sentAt", now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")))

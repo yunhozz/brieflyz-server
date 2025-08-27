@@ -17,7 +17,7 @@ management:
         enabled: true
 ---
 server:
-  port: 80
+  port: 8000
 spring:
   config:
     activate:
@@ -40,6 +40,10 @@ spring:
               uri: ${SUBSCRIPTION_SERVICE_URL:http://localhost:8070}
               predicates:
                 - Path=/api/subscriptions/**,/api/admin/subscriptions/**
+            - id: document-service
+              uri: ${DOCUMENT_SERVICE_URL:http://localhost:8060}
+              predicates:
+                - Path=/api/documents/**
 ---
 spring:
   config:

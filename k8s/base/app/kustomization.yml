@@ -7,3 +7,4 @@ resources:
   - auth-service.yml
   - subscription-service.yml
   - ai-service.yml
+  - document-service.yml

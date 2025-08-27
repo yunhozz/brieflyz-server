@@ -27,10 +27,3 @@ replicas:
     count: 3
   - name: redis
     count: 3
-
-configMapGenerator:
-  - name: mysql-configmap
-    literals:
-      - TZ=Asia/Seoul
-      - MYSQL_CHARSET=utf8mb4
-      - MYSQL_COLLATION=utf8mb4_general_ci

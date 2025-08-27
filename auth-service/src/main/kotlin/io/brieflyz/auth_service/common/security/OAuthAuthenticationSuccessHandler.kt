@@ -29,7 +29,7 @@ class OAuthAuthenticationSuccessHandler(
         response: HttpServletResponse,
         authentication: Authentication
     ) {
-        val authorizedRedirectUris = authServiceProperties.oauth?.authorizedRedirectUris!!
+        val authorizedRedirectUris = authServiceProperties.oauth.authorizedRedirectUris
         val requestedRedirectUri = CookieUtils.getCookie(request, CookieName.REDIRECT_URI_PARAM_COOKIE_NAME)?.value
 
         log.debug("Requested Redirect URI: $requestedRedirectUri")

@@ -4,5 +4,6 @@ include(
     ":api-gateway",
     ":auth-service",
     ":subscription-service",
-    ":ai-service"
+    ":ai-service",
+    ":document-service"
 )

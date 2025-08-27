@@ -1,84 +1,17 @@
 apiVersion: v1
-kind: Service
+kind: PersistentVolume
 metadata:
-  name: nfs-documents-server
-  labels:
-    app: nfs-documents-server
+  name: nfs-documents-pv
 spec:
-  selector:
-    app: nfs-documents-server
-  clusterIP: None
-  ports:
-    - name: nfs
-      port: 2049
-    - name: mountd
-      port: 20048
-    - name: rpcbind
-      port: 111
-
----
-
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: nfs-documents-server
-  labels:
-    app: nfs-documents-server
-spec:
-  selector:
-    matchLabels:
-      app: nfs-documents-server
-  template:
-    metadata:
-      labels:
-        app: nfs-documents-server
-    spec:
-      securityContext:
-        fsGroup: 65534
-      containers:
-        - name: nfs-server
-          image: itsthenetwork/nfs-server-alpine:latest
-          ports:
-            - containerPort: 2049
-            - containerPort: 20048
-            - containerPort: 111
-          securityContext:
-            privileged: true
-          env:
-            - name: SHARED_DIRECTORY
-              value: /exports
-          volumeMounts:
-            - name: nfs-documents-server-pvc-volume
-              mountPath: /exports
-      volumes:
-        - name: nfs-documents-server-pvc-volume
-          persistentVolumeClaim:
-            claimName: nfs-documents-server-pvc
-
----
-
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: nfs-documents-server-pvc
-spec:
-  storageClassName: standard-rwo
+  capacity:
+    storage: 1Gi
   accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 10Gi
-
----
-
-apiVersion: storage.k8s.io/v1
-kind: StorageClass
-metadata:
-  name: nfs-documents-storage
-provisioner: nfs.csi.k8s.io
-parameters:
-  server: nfs-documents-server.dev.svc.cluster.local
-  share: /
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  nfs:
+    path: /data/shared
+    server: 192.168.49.2
+    readOnly: false
 
 ---
 
@@ -87,9 +20,9 @@ kind: PersistentVolumeClaim
 metadata:
   name: nfs-documents-pvc
 spec:
-  storageClassName: nfs-documents-storage
+  storageClassName: ""
   accessModes:
     - ReadWriteMany
   resources:
     requests:
-      storage: 10Gi
+      storage: 1Gi

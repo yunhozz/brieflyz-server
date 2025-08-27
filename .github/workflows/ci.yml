@@ -7,7 +7,7 @@ on:
 env:
   ACTIONS_STEP_DEBUG: true
   ACTIONS_RUNNER_DEBUG: true
-  SERVICES_DB: mysql-source mysql-replica pg-source pg-replica redis-0 redis-1 redis-2
+  SERVICES_DB: mysql-source mysql-replica pg-source pg-replica redis redis-0 redis-1 redis-2
   SERVICES_MESSAGE: zookeeper-0 zookeeper-1 zookeeper-2 kafka-0 kafka-1 kafka-2
 
 jobs:
@@ -55,9 +55,9 @@ jobs:
 
       - name: Set up Docker Containers
         run: |
-          docker compose --env-file .env up -d ${{ env.SERVICES_DB }} ${{ env.SERVICES_MESSAGE }}
+          docker compose -f docker-compose-local.yml --env-file .env up -d ${{ env.SERVICES_DB }} ${{ env.SERVICES_MESSAGE }}
           sleep 10
-          docker compose ps
+          docker ps
           
           printf "%s" "${{ secrets.INIT_PG_SQL }}" | docker exec -i pg-source psql -U postgres
 
@@ -130,4 +130,4 @@ jobs:
       - name: Clean up Docker Containers
         if: always()
         run: |
-          docker compose down --volumes --remove-orphans
+          docker compose -f docker-compose-local.yml down --volumes --remove-orphans

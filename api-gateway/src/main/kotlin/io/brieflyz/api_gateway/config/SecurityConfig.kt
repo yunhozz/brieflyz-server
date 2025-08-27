@@ -34,7 +34,7 @@ class SecurityConfig {
             it.pathMatchers("/api/auth/**", "/oauth2/authorization/**", "/login/oauth2/code/**").permitAll()
             it.pathMatchers("/api/admin/**").hasAuthority(Authority.ROLE_ADMIN.name)
             it.pathMatchers(HttpMethod.GET, "/api/members/**").hasAuthority(Authority.ROLE_ADMIN.name)
-            it.pathMatchers("/api/subscriptions/**").hasAuthority(Authority.ROLE_USER.name)
+            it.pathMatchers("/api/subscriptions/**", "/api/documents/**").hasAuthority(Authority.ROLE_USER.name)
             it.anyExchange().authenticated()
         }
         .exceptionHandling {

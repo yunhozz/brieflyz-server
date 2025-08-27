@@ -14,8 +14,8 @@ class PropertyConfig {
 @ConfigurationProperties(prefix = "app.subscription")
 @EnableConfigurationProperties(SubscriptionServiceProperties::class)
 data class SubscriptionServiceProperties(
-    var kafka: KafkaProperties? = null,
-    var email: EmailProperties? = null
+    var kafka: KafkaProperties = KafkaProperties(),
+    var email: EmailProperties = EmailProperties()
 ) {
     data class KafkaProperties(
         var numOfPartitions: Int = 0,

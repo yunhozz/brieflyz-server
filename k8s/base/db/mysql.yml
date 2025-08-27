@@ -102,7 +102,7 @@ spec:
     - metadata:
         name: mysql-auth-source-volume
       spec:
-        storageClassName: standard-rwo
+        storageClassName: local-path
         accessModes:
           - ReadWriteOnce
         resources:
@@ -155,7 +155,7 @@ spec:
     - metadata:
         name: mysql-subscription-source-volume
       spec:
-        storageClassName: standard-rwo
+        storageClassName: local-path
         accessModes:
           - ReadWriteOnce
         resources:
@@ -175,6 +175,7 @@ spec:
   selector:
     matchLabels:
       app: mysql-auth-replica
+  replicas: 3
   template:
     metadata:
       labels:
@@ -221,7 +222,7 @@ spec:
     - metadata:
         name: mysql-auth-replica-volume
       spec:
-        storageClassName: standard-rwo
+        storageClassName: local-path
         accessModes:
           - ReadWriteOnce
         resources:
@@ -241,6 +242,7 @@ spec:
   selector:
     matchLabels:
       app: mysql-subscription-replica
+  replicas: 3
   template:
     metadata:
       labels:
@@ -287,7 +289,7 @@ spec:
     - metadata:
         name: mysql-subscription-replica-volume
       spec:
-        storageClassName: standard-rwo
+        storageClassName: local-path
         accessModes:
           - ReadWriteOnce
         resources:
@@ -460,3 +462,14 @@ spec:
             name: mysql-replication-configmap
       restartPolicy: OnFailure
   ttlSecondsAfterFinished: 0
+
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-configmap
+data:
+  TZ: Asia/Seoul
+  MYSQL_CHARSET: utf8mb4
+  MYSQL_COLLATION: utf8mb4_general_ci

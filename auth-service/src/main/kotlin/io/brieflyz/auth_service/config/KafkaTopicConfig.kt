@@ -10,8 +10,8 @@ class KafkaTopicConfig(
 ) {
     @Bean
     fun authServiceTopics(): NewTopics {
-        val np = authServiceProperties.kafka?.numOfPartitions ?: 0
-        val rf = authServiceProperties.kafka?.replicationFactor ?: 0
+        val np = authServiceProperties.kafka.numOfPartitions
+        val rf = authServiceProperties.kafka.replicationFactor
 
         return NewTopics()
     }

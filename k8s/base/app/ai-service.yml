@@ -22,6 +22,7 @@ spec:
   selector:
     matchLabels:
       app: ai-service
+  replicas: 2
   strategy:
     type: RollingUpdate
     rollingUpdate:
@@ -49,24 +50,17 @@ spec:
               weight: 100
       containers:
         - name: ai-service
-          image: ai-service:latest
-          imagePullPolicy: Always
+          image: brieflyz-ai-service:latest
+          imagePullPolicy: Never
           ports:
             - containerPort: 8999
-          envFrom:
-            - configMapRef:
-                name: app-profile-configmap
+          env:
+            - name: APPLICATION_PROFILE
+              value: dev
           volumeMounts:
             - name: nfs-logs-pvc-volume
               mountPath: /app/logs
-            - name: nfs-documents-pvc-volume
-              mountPath: /app/documents
       volumes:
         - name: nfs-logs-pvc-volume
           persistentVolumeClaim:
             claimName: nfs-logs-pvc
-        - name: nfs-documents-pvc-volume
-          persistentVolumeClaim:
-            claimName: nfs-documents-pvc
-      imagePullSecrets:
-        - name: ghcr-secret

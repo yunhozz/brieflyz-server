@@ -3,8 +3,7 @@ kind: Kustomization
 
 resources:
   - ../../../base/nginx
-
-namespace: dev
+  - nginx.yml
 
 labels:
   - pairs:

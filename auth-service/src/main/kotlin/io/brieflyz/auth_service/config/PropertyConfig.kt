@@ -14,9 +14,9 @@ class PropertyConfig {
 @ConfigurationProperties(prefix = "app.auth")
 @EnableConfigurationProperties(AuthServiceProperties::class)
 data class AuthServiceProperties(
-    var oauth: OAuthProperties? = null,
-    var kafka: KafkaProperties? = null,
-    var email: EmailProperties? = null
+    var oauth: OAuthProperties = OAuthProperties(),
+    var kafka: KafkaProperties = KafkaProperties(),
+    var email: EmailProperties = EmailProperties()
 ) {
     data class OAuthProperties(
         var authorizationUri: String = "",

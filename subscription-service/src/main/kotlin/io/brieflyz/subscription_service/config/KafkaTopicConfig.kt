@@ -10,8 +10,8 @@ class KafkaTopicConfig(
 ) {
     @Bean
     fun subscriptionServiceTopics(): NewTopics {
-        val np = subscriptionServiceProperties.kafka?.numOfPartitions ?: 0
-        val rf = subscriptionServiceProperties.kafka?.replicationFactor ?: 0
+        val np = subscriptionServiceProperties.kafka.numOfPartitions
+        val rf = subscriptionServiceProperties.kafka.replicationFactor
 
         return NewTopics()
     }
