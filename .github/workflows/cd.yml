@@ -183,7 +183,7 @@ jobs:
 
       - name: Deploy to GKE
         env:
-          IMAGE_URI: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-${{ env.SERVICE_NAME }}:latest
+          IMAGE_URI: ${{ steps.meta.outputs.tags }}
         run: |
           if kubectl get deployment ${{ env.SERVICE_NAME }} -n ${{ env.NAMESPACE }} >/dev/null 2>&1; then
             kubectl set image deployment/${{ env.SERVICE_NAME }} ${{ env.SERVICE_NAME }}=${{ env.IMAGE_URI }} -n ${{ env.NAMESPACE }}
@@ -255,7 +255,7 @@ jobs:
 
       - name: Deploy to GKE
         env:
-          IMAGE_URI: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-${{ env.SERVICE_NAME }}:latest
+          IMAGE_URI: ${{ steps.meta.outputs.tags }}
         run: |
           if kubectl get deployment ${{ env.SERVICE_NAME }} -n ${{ env.NAMESPACE }} >/dev/null 2>&1; then
             kubectl set image deployment/${{ env.SERVICE_NAME }} ${{ env.SERVICE_NAME }}=${{ env.IMAGE_URI }} -n ${{ env.NAMESPACE }}
@@ -327,7 +327,7 @@ jobs:
 
       - name: Deploy to GKE
         env:
-          IMAGE_URI: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-${{ env.SERVICE_NAME }}:latest
+          IMAGE_URI: ${{ steps.meta.outputs.tags }}
         run: |
           if kubectl get deployment ${{ env.SERVICE_NAME }} -n ${{ env.NAMESPACE }} >/dev/null 2>&1; then
             kubectl set image deployment/${{ env.SERVICE_NAME }} ${{ env.SERVICE_NAME }}=${{ env.IMAGE_URI }} -n ${{ env.NAMESPACE }}
@@ -399,7 +399,7 @@ jobs:
 
       - name: Deploy to GKE
         env:
-          IMAGE_URI: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-${{ env.SERVICE_NAME }}:latest
+          IMAGE_URI: ${{ steps.meta.outputs.tags }}
         run: |
           if kubectl get deployment ${{ env.SERVICE_NAME }} -n ${{ env.NAMESPACE }} >/dev/null 2>&1; then
             kubectl set image deployment/${{ env.SERVICE_NAME }} ${{ env.SERVICE_NAME }}=${{ env.IMAGE_URI }} -n ${{ env.NAMESPACE }}
