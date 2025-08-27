@@ -59,7 +59,7 @@ class PowerPointGenerator(
                     }
                     .then(
                         Mono.defer {
-                            val downloadUrl = documentServiceProperties.file?.downloadUrl
+                            val downloadUrl = documentServiceProperties.file.downloadUrl
                             documentServiceAdapter.updateFileInfo(documentId, filePath, "$downloadUrl/ppt")
                                 .doOnSuccess { log.info("PPT document update finish. ID=$documentId") }
                         }
@@ -145,7 +145,7 @@ class PowerPointGenerator(
     }
 
     private fun createFilePath(title: String): Path {
-        val filePath = documentServiceProperties.file?.filePath
+        val filePath = documentServiceProperties.file.filePath
         val titleName = title.replace(Regex("[^a-zA-Z0-9가-힣]"), "_")
         val timestamp = System.nanoTime()
         return Paths.get("$filePath/ppt", "${titleName}_$timestamp.pptx")

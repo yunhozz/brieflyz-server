@@ -62,7 +62,7 @@ class ExcelGenerator(
                     }
                     .then(
                         Mono.defer {
-                            val downloadUrl = documentServiceProperties.file?.downloadUrl
+                            val downloadUrl = documentServiceProperties.file.downloadUrl
                             documentServiceAdapter.updateFileInfo(documentId, filePath, "$downloadUrl/excel")
                                 .doOnSuccess { log.info("Excel document update finish. ID=$documentId") }
                         }
@@ -148,7 +148,7 @@ class ExcelGenerator(
     }
 
     private fun createFilePath(title: String): Path {
-        val filePath = documentServiceProperties.file?.filePath
+        val filePath = documentServiceProperties.file.filePath
         val titleName = title.replace(Regex("[^a-zA-Z0-9가-힣]"), "_")
         val timestamp = System.nanoTime()
         return Paths.get("$filePath/excel", "${titleName}_$timestamp.xlsx")

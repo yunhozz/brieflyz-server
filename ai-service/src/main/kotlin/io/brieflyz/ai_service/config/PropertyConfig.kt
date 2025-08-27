@@ -14,7 +14,7 @@ class PropertyConfig {
 @ConfigurationProperties(prefix = "app.ai")
 @EnableConfigurationProperties(AiServiceProperties::class)
 data class AiServiceProperties(
-    var kafka: KafkaProperties? = null
+    var kafka: KafkaProperties = KafkaProperties()
 ) {
     data class KafkaProperties(
         var numOfPartitions: Int = 0,

@@ -14,8 +14,8 @@ class PropertyConfig {
 @ConfigurationProperties(prefix = "app.document")
 @EnableConfigurationProperties(DocumentServiceProperties::class)
 data class DocumentServiceProperties(
-    var kafka: KafkaProperties? = null,
-    var file: FileProperties? = null
+    var kafka: KafkaProperties = KafkaProperties(),
+    var file: FileProperties = FileProperties()
 ) {
     data class KafkaProperties(
         var numOfPartitions: Int = 0,

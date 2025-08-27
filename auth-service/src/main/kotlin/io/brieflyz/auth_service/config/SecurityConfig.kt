@@ -37,7 +37,7 @@ class SecurityConfig {
         .oauth2Login {
             it.userInfoEndpoint { cfg -> cfg.userService(oAuthUserCustomService) }
             it.authorizationEndpoint { cfg ->
-                cfg.baseUri(authServiceProperties.oauth?.authorizationUri)
+                cfg.baseUri(authServiceProperties.oauth.authorizationUri)
                 cfg.authorizationRequestRepository(oAuthAuthorizationRequestCookieRepository)
             }
             it.successHandler(oAuthAuthenticationSuccessHandler)

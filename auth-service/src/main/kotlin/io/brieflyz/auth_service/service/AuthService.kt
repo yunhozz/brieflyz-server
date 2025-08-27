@@ -40,7 +40,7 @@ class AuthService(
         val guest = Member.forLocal(email, passwordEncoder.encode(password), nickname)
         memberRepository.save(guest)
 
-        val verifyUrl = authServiceProperties.email?.verifyUrl
+        val verifyUrl = authServiceProperties.email.verifyUrl
         val token = generateVerificationToken()
         val ttl = 24 * 3600 * 1000L // 24 hours
 
