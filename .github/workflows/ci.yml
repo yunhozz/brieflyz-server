@@ -7,7 +7,7 @@ on:
 env:
   ACTIONS_STEP_DEBUG: true
   ACTIONS_RUNNER_DEBUG: true
-  SERVICES_DB: mysql-source mysql-replica pg-source pg-replica redis-0 redis-1 redis-2
+  SERVICES_DB: mysql-source mysql-replica pg-source pg-replica redis redis-0 redis-1 redis-2
   SERVICES_MESSAGE: zookeeper-0 zookeeper-1 zookeeper-2 kafka-0 kafka-1 kafka-2
 
 jobs:
