@@ -18,50 +18,49 @@ import org.springframework.transaction.annotation.EnableTransactionManagement
 import org.springframework.transaction.reactive.TransactionSynchronizationManager
 import reactor.core.publisher.Mono
 import java.time.Duration
+import java.util.concurrent.atomic.AtomicInteger
 
 @Configuration
 @EnableR2dbcAuditing
 @EnableTransactionManagement
 class R2dbcConfig {
 
-    enum class DataSourceType {
-        SOURCE,
-        REPLICA
-    }
-
-    data class R2dbcConnectionProperties(
-        var url: String = "",
-        var username: String = "",
-        var password: String = "",
-        var pool: Pool? = null
+    data class R2dbcProperties(
+        var source: ConnectionProperties = ConnectionProperties(),
+        var replicas: List<ConnectionProperties> = listOf(ConnectionProperties())
     ) {
-        data class Pool(
-            var initialSize: Int = 0,
-            var minIdle: Int = 0,
-            var maxSize: Int = 0,
-            var maxAcquireTime: Long = 0,
-            var maxLifeTime: Long = 0
-        )
+        data class ConnectionProperties(
+            var url: String = "",
+            var username: String = "",
+            var password: String = "",
+            var pool: Pool = Pool()
+        ) {
+            data class Pool(
+                var initialSize: Int = 0,
+                var minIdle: Int = 0,
+                var maxSize: Int = 0,
+                var maxAcquireTime: Long = 0,
+                var maxLifeTime: Long = 0
+            )
+        }
     }
 
     @Bean
-    @ConfigurationProperties(prefix = "spring.r2dbc.source")
-    fun sourceConnectionProperties() = R2dbcConnectionProperties()
+    @ConfigurationProperties(prefix = "spring.r2dbc")
+    fun r2dbcProperties() = R2dbcProperties()
 
     @Bean
-    @ConfigurationProperties(prefix = "spring.r2dbc.replica")
-    fun replicaConnectionProperties() = R2dbcConnectionProperties()
+    fun sourceConnectionFactory(): ConnectionFactory = createConnectionFactory(r2dbcProperties().source)
 
     @Bean
-    fun sourceConnectionFactory(): ConnectionFactory = createConnectionFactory(sourceConnectionProperties())
-
-    @Bean
-    fun replicaConnectionFactory(): ConnectionFactory = createConnectionFactory(replicaConnectionProperties())
+    fun replicaConnectionFactories(): List<ConnectionFactory> =
+        r2dbcProperties().replicas.map { createConnectionFactory(it) }
 
     @Bean
     @Primary
     fun routingConnectionFactory(): ConnectionFactory = object : AbstractRoutingConnectionFactory() {
         private val log = logger()
+        private var replicaIndex = AtomicInteger(0)
 
         override fun determineCurrentLookupKey(): Mono<in Any> =
             TransactionSynchronizationManager.forCurrentTransaction()
@@ -70,9 +69,11 @@ class R2dbcConfig {
                     log.debug("Current transaction read-only: ${txManager.isCurrentTransactionReadOnly}")
                     log.debug("Actual transaction active: ${txManager.isActualTransactionActive}")
 
-                    when (txManager.isCurrentTransactionReadOnly) {
-                        true -> DataSourceType.REPLICA
-                        false -> DataSourceType.SOURCE
+                    if (txManager.isCurrentTransactionReadOnly) {
+                        val replicas = replicaConnectionFactories()
+                        replicas[Math.floorMod(replicaIndex.getAndIncrement(), replicas.size)] // round-robin
+                    } else {
+                        sourceConnectionFactory()
                     } as Any
                 }
                 .doOnError { ex -> log.error(ex.message, ex) }
@@ -80,10 +81,8 @@ class R2dbcConfig {
         setLenientFallback(true)
         setDefaultTargetConnectionFactory(sourceConnectionFactory())
         setTargetConnectionFactories(
-            mapOf(
-                DataSourceType.SOURCE to sourceConnectionFactory(),
-                DataSourceType.REPLICA to replicaConnectionFactory()
-            )
+            mapOf(sourceConnectionFactory() to sourceConnectionFactory())
+                    + replicaConnectionFactories().associateWith { it }
         )
     }
 
@@ -93,8 +92,8 @@ class R2dbcConfig {
             TransactionAwareConnectionFactoryProxy(routingConnectionFactory())
         )
 
-    private fun createConnectionFactory(props: R2dbcConnectionProperties): ConnectionFactory {
-        val pool = props.pool!!
+    private fun createConnectionFactory(props: R2dbcProperties.ConnectionProperties): ConnectionFactory {
+        val pool = props.pool
         val connectionFactory = ConnectionFactoryBuilder.withUrl(props.url)
             .username(props.username)
             .password(props.password)
