@@ -277,11 +277,20 @@ services:
     networks:
       - local
 
+  redis:
+    image: redis:latest
+    container_name: redis
+    ports:
+      - "6379:6379"
+    restart: always
+    networks:
+      - local
+
   redis-0:
     image: redis:latest
     container_name: redis-0
     ports:
-      - "6379:6379"
+      - "6380:6379"
       - "16379:16379"
     command: >
       bash -c "
@@ -300,7 +309,7 @@ services:
     image: redis:latest
     container_name: redis-1
     ports:
-      - "6380:6379"
+      - "6381:6379"
       - "16380:16379"
     command: redis-server /etc/redis.conf
     volumes:
@@ -313,7 +322,7 @@ services:
     image: redis:latest
     container_name: redis-2
     ports:
-      - "6381:6379"
+      - "6382:6379"
       - "16381:16379"
     command: redis-server /etc/redis.conf
     volumes:
