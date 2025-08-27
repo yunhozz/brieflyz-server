@@ -70,19 +70,19 @@ spring:
         username: ${mysql.username}
         password: ${mysql.root-password}
         pool-name: auth-service-source-pool
-        minimum-idle: 3
-        maximum-pool-size: 3
-        max-lifetime: 60000
-        connection-timeout: 60000
+        minimum-idle: 5
+        maximum-pool-size: 5
+        connection-timeout: 30000 # 30 sec
+        max-lifetime: 1800000 # 30 min
       replica:
         jdbc-url: jdbc:mysql://${MYSQL_REPLICA_ADDR:localhost:23306}/brieflyz_auth?createDatabaseIfNotExist=true
         username: ${mysql.username}
         password: ${mysql.root-password}
         pool-name: auth-service-replica-pool
-        minimum-idle: 5
-        maximum-pool-size: 5
-        max-lifetime: 60000
-        connection-timeout: 60000
+        minimum-idle: 10
+        maximum-pool-size: 10
+        connection-timeout: 30000 # 30 sec
+        max-lifetime: 1800000 # 30 min
         read-only: true
   security:
     oauth2:

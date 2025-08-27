@@ -17,6 +17,7 @@ import org.springframework.transaction.ReactiveTransactionManager
 import org.springframework.transaction.annotation.EnableTransactionManagement
 import org.springframework.transaction.reactive.TransactionSynchronizationManager
 import reactor.core.publisher.Mono
+import java.time.Duration
 
 @Configuration
 @EnableR2dbcAuditing
@@ -37,7 +38,9 @@ class R2dbcConfig {
         data class Pool(
             var initialSize: Int = 0,
             var minIdle: Int = 0,
-            var maxSize: Int = 0
+            var maxSize: Int = 0,
+            var maxAcquireTime: Long = 0,
+            var maxLifeTime: Long = 0
         )
     }
 
@@ -100,8 +103,13 @@ class R2dbcConfig {
             .initialSize(pool.initialSize)
             .minIdle(pool.minIdle)
             .maxSize(pool.maxSize)
+            .maxAcquireTime(Duration.ofMillis(pool.maxAcquireTime))
+            .maxLifeTime(Duration.ofMillis(pool.maxLifeTime))
             .build()
 
-        return ConnectionPool(connectionPoolConfig)
+        val connectionPool = ConnectionPool(connectionPoolConfig)
+        connectionPool.warmup().subscribe()
+
+        return connectionPool
     }
 }
