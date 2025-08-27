@@ -411,7 +411,7 @@ jobs:
   deploy-summary:
     name: Deployment Summary
     runs-on: ubuntu-latest
-    needs: [ filter, deploy-api-gateway, deploy-auth-service, deploy-subscription-service, deploy-ai-service ]
+    needs: [ filter, deploy-api-gateway, deploy-auth-service, deploy-subscription-service, deploy-ai-service, deploy-document-service ]
     if: always()
     steps:
       - name: Generate Deployment Summary
@@ -423,6 +423,7 @@ jobs:
           echo "- **Auth Service**: ${{ needs.filter.outputs.auth-service == 'true' && '✅ Changed' || '⚪ No changes' }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Subscription Service**: ${{ needs.filter.outputs.subscription-service == 'true' && '✅ Changed' || '⚪ No changes' }}" >> $GITHUB_STEP_SUMMARY
           echo "- **AI Service**: ${{ needs.filter.outputs.ai-service == 'true' && '✅ Changed' || '⚪ No changes' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Document Service**: ${{ needs.filter.outputs.document-service == 'true' && '✅ Changed' || '⚪ No changes' }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Deployment Status" >> $GITHUB_STEP_SUMMARY
 
