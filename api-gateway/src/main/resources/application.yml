@@ -1,50 +1,13 @@
+server:
+  port: 8000
 spring:
   application:
     name: api-gateway
   profiles:
     active: ${APPLICATION_PROFILE:local}
-management:
-  endpoints:
-    web:
-      exposure:
-        include: "*"
-  endpoint:
-    prometheus:
-      access: read_only
-  prometheus:
-    metrics:
-      export:
-        enabled: true
+
 ---
-server:
-  port: 8000
-spring:
-  config:
-    activate:
-      on-profile: local
-  cloud:
-    config:
-      enabled: false
-    gateway:
-      server:
-        webflux:
-          discovery:
-            locator:
-              enabled: true
-          routes:
-            - id: auth-service
-              uri: ${AUTH_SERVICE_URL:http://localhost:8090}
-              predicates:
-                - Path=/api/auth/**,/api/members/**,/oauth2/authorization/**,/login/oauth2/code/**
-            - id: subscription-service
-              uri: ${SUBSCRIPTION_SERVICE_URL:http://localhost:8070}
-              predicates:
-                - Path=/api/subscriptions/**,/api/admin/subscriptions/**
-            - id: document-service
-              uri: ${DOCUMENT_SERVICE_URL:http://localhost:8060}
-              predicates:
-                - Path=/api/documents/**
----
+
 spring:
   config:
     activate:
@@ -54,3 +17,15 @@ spring:
     config:
       name: api-gateway
       profile: dev
+
+---
+
+spring:
+  config:
+    activate:
+      on-profile: prod
+    import: configserver:http://config-server:8888/
+  cloud:
+    config:
+      name: api-gateway
+      profile: prod

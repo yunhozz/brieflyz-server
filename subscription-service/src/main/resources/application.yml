@@ -1,103 +1,13 @@
+server:
+  port: 8070
 spring:
   application:
     name: subscription-service
   profiles:
     active: ${APPLICATION_PROFILE:local}
-  jpa:
-    open-in-view: false
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.MySQLDialect
-        default_batch_fetch_size: 100
-        query.in_clause_parameter_padding: true
-  batch:
-    job:
-      enabled: false
-    jdbc:
-      initialize-schema: always
-  kafka:
-    consumer:
-      group-id: subscription-service-group
-  data:
-    redis:
-      connect-timeout: 3000
-      timeout: 3000
-  mail:
-    host: ${gmail.host}
-    port: ${gmail.port}
-    username: ${gmail.username}
-    password: ${gmail.password}
-    properties:
-      mail:
-        smtp:
-          auth: true
-          starttls:
-            enable: true
-            required: true
-management:
-  endpoints:
-    web:
-      exposure:
-        include: "*"
-  endpoint:
-    prometheus:
-      access: read_only
-  prometheus:
-    metrics:
-      export:
-        enabled: true
+
 ---
-server:
-  port: 8070
-spring:
-  config:
-    activate:
-      on-profile: local
-  cloud:
-    config:
-      enabled: false
-  jpa:
-    hibernate:
-      ddl-auto: create
-    properties:
-      hibernate:
-        show_sql: true
-        format_sql: true
-  datasource:
-    hikari:
-      source:
-        jdbc-url: jdbc:mysql://${MYSQL_SOURCE_ADDR:localhost:13306}/brieflyz_subscription?createDatabaseIfNotExist=true
-        username: ${mysql.username}
-        password: ${mysql.root-password}
-        pool-name: subscription-service-source-pool
-        minimum-idle: 5
-        maximum-pool-size: 5
-        connection-timeout: 30000 # 30 sec
-        max-lifetime: 1800000 # 30 min
-      replica:
-        jdbc-url: jdbc:mysql://${MYSQL_REPLICA_ADDR:localhost:23306}/brieflyz_subscription?createDatabaseIfNotExist=true
-        username: ${mysql.username}
-        password: ${mysql.root-password}
-        pool-name: subscription-service-replica-pool
-        minimum-idle: 10
-        maximum-pool-size: 10
-        connection-timeout: 30000 # 30 sec
-        max-lifetime: 1800000 # 30 min
-        read-only: true
-  data:
-    redis:
-      cluster:
-        nodes: ${REDIS_CLUSTER_NODES:localhost:6379}
-  kafka:
-    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092,localhost:9093,localhost:9094}
-app:
-  subscription:
-    kafka:
-      num-of-partitions: 9
-      replication-factor: 3
-  email:
-    renew-url: http://localhost:3000/subscriptions
----
+
 spring:
   config:
     activate:
@@ -107,3 +17,15 @@ spring:
     config:
       name: subscription-service
       profile: dev
+
+---
+
+spring:
+  config:
+    activate:
+      on-profile: prod
+    import: configserver:http://config-server:8888/
+  cloud:
+    config:
+      name: subscription-service
+      profile: prod
