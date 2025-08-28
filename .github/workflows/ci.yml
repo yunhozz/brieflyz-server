@@ -31,7 +31,7 @@ jobs:
           distribution: 'temurin'
 
       - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@af1da67850ed9a4cedd57bfd976089dd991e2582
+        uses: gradle/actions/setup-gradle@v4
 
       - name: Set up Configurations
         run: |
@@ -39,6 +39,12 @@ jobs:
           
           mkdir -p core/src/main/resources
           printf "%s" "${{ secrets.APPLICATION_JWT_YML }}" > ./core/src/main/resources/application-jwt.yml
+          
+          printf "%s" "${{ secrets.APPLICATION_YML_API }}" > ./api-gateway/src/main/resources/application-local.yml
+          printf "%s" "${{ secrets.APPLICATION_YML_AUTH }}" > ./auth-service/src/main/resources/application-local.yml
+          printf "%s" "${{ secrets.APPLICATION_YML_SUB }}" > ./subscription-service/src/main/resources/application-local.yml
+          printf "%s" "${{ secrets.APPLICATION_YML_AI }}" > ./ai-service/src/main/resources/application-local.yml
+          printf "%s" "${{ secrets.APPLICATION_YML_DOC }}" > ./document-service/src/main/resources/application-local.yml
           
           mkdir -p conf/mysql
           echo "${{ secrets.MY_SOURCE_CNF }}" > ./conf/mysql/my-source.cnf
@@ -61,8 +67,8 @@ jobs:
           
           printf "%s" "${{ secrets.INIT_PG_SQL }}" | docker exec -i pg-source psql -U postgres
 
-      - name: Run Tests with Gradle
-        run: ./gradlew test --stacktrace
+      - name: Build with Gradle
+        run: ./gradlew build --stacktrace
 
       - name: Upload Test Reports
         if: always()
@@ -72,7 +78,7 @@ jobs:
           path: |
             **/build/reports/tests/test/
             **/build/test-results/test/
-          retention-days: 7
+          retention-days: 1
 
       - name: Generate Test Summary
         if: always()
@@ -127,7 +133,19 @@ jobs:
             echo "❌ **Some tests failed. Please check the detailed reports.**" >> $GITHUB_STEP_SUMMARY
           fi
 
-      - name: Clean up Docker Containers
-        if: always()
-        run: |
-          docker compose -f docker-compose-local.yml down --volumes --remove-orphans
+  dependency-submission:
+    name: Run Dependency Submission
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Generate and submit dependency graph
+        uses: gradle/actions/dependency-submission@v4
