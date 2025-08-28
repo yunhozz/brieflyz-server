@@ -45,3 +45,6 @@ configMapGenerator:
   - name: app-profile-configmap
     literals:
       - APPLICATION_PROFILE=dev
+
+patches:
+  - path: dev-patch.yml

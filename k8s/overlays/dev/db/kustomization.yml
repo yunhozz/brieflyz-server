@@ -21,9 +21,12 @@ replicas:
     count: 1
   - name: mysql-subscription-replica
     count: 3
-  - name: pg-ai-source
+  - name: pg-document-source
     count: 1
-  - name: pg-ai-replica
+  - name: pg-document-replica
     count: 3
   - name: redis
     count: 3
+
+patches:
+  - path: dev-patch.yml

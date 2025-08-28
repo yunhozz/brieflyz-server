@@ -3,13 +3,7 @@ kind: Deployment
 metadata:
   name: api-gateway
 spec:
-  selector:
-    matchLabels:
-      app: api-gateway
   template:
-    metadata:
-      labels:
-        app: api-gateway
     spec:
       containers:
         - name: api-gateway
@@ -27,13 +21,7 @@ kind: Deployment
 metadata:
   name: auth-service
 spec:
-  selector:
-    matchLabels:
-      app: auth-service
   template:
-    metadata:
-      labels:
-        app: auth-service
     spec:
       containers:
         - name: auth-service
@@ -51,13 +39,7 @@ kind: Deployment
 metadata:
   name: subscription-service
 spec:
-  selector:
-    matchLabels:
-      app: subscription-service
   template:
-    metadata:
-      labels:
-        app: subscription-service
     spec:
       containers:
         - name: subscription-service
@@ -75,13 +57,7 @@ kind: Deployment
 metadata:
   name: ai-service
 spec:
-  selector:
-    matchLabels:
-      app: ai-service
   template:
-    metadata:
-      labels:
-        app: ai-service
     spec:
       containers:
         - name: ai-service
@@ -99,13 +75,7 @@ kind: Deployment
 metadata:
   name: document-service
 spec:
-  selector:
-    matchLabels:
-      app: document-service
   template:
-    metadata:
-      labels:
-        app: document-service
     spec:
       containers:
         - name: document-service

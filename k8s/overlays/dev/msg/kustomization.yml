@@ -17,3 +17,6 @@ replicas:
     count: 3
   - name: zk
     count: 3
+
+patches:
+  - path: dev-patch.yml
