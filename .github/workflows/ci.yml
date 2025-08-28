@@ -68,7 +68,7 @@ jobs:
           printf "%s" "${{ secrets.INIT_PG_SQL }}" | docker exec -i pg-source psql -U postgres
 
       - name: Build with Gradle
-        run: ./gradlew build --stacktrace
+        run: ./gradlew build
 
       - name: Upload Test Reports
         if: always()
@@ -141,10 +141,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up JDK 17
+      - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
-          java-version: '17'
+          java-version: '21'
           distribution: 'temurin'
 
       - name: Generate and submit dependency graph
