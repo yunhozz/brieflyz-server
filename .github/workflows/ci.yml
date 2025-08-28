@@ -38,7 +38,7 @@ jobs:
           echo "${{ secrets.ENV }}" > .env
           
           mkdir -p core/src/main/resources
-          echo "${{ secrets.APPLICATION_PROPERTIES }}" > ./core/src/main/resources/application.properties
+          printf "%s" "${{ secrets.APPLICATION_JWT_YML }}" > ./core/src/main/resources/application-jwt.yml
           
           mkdir -p conf/mysql
           echo "${{ secrets.MY_SOURCE_CNF }}" > ./conf/mysql/my-source.cnf
