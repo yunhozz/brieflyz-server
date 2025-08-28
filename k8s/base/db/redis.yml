@@ -81,29 +81,3 @@ spec:
         resources:
           requests:
             storage: 1Gi
-
----
-
-apiVersion: batch/v1
-kind: Job
-metadata:
-  name: redis-cluster-job
-spec:
-  template:
-    spec:
-      containers:
-        - name: create-redis-cluster
-          image: redis:latest
-          command:
-            - sh
-            - -c
-          args:
-            - >
-              redis-cli -h redis-0.redis -p 6379 cluster info | grep 'cluster_state:ok' ||
-              redis-cli --cluster create
-              redis-0.redis:6379
-              redis-1.redis:6379
-              redis-2.redis:6379
-              --cluster-yes
-      restartPolicy: OnFailure
-  ttlSecondsAfterFinished: 0
