@@ -1,116 +1,14 @@
+server:
+  port: 8090
 spring:
   application:
     name: auth-service
   profiles:
     active: ${APPLICATION_PROFILE:local}
     include: oauth
-  jpa:
-    open-in-view: false
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.MySQLDialect
-        default_batch_fetch_size: 100
-        query.in_clause_parameter_padding: true
-  kafka:
-    consumer:
-      group-id: auth-service-group
-  data:
-    redis:
-      connect-timeout: 3000
-      timeout: 3000
-  mail:
-    host: ${gmail.host}
-    port: ${gmail.port}
-    username: ${gmail.username}
-    password: ${gmail.password}
-    properties:
-      mail:
-        smtp:
-          auth: true
-          starttls:
-            enable: true
-            required: true
-management:
-  endpoints:
-    web:
-      exposure:
-        include: "*"
-  endpoint:
-    prometheus:
-      access: read_only
-  prometheus:
-    metrics:
-      export:
-        enabled: true
-app:
-  auth:
-    oauth:
-      authorization-uri: ${oauth.authorization-uri}
+
 ---
-server:
-  port: 8090
-spring:
-  config:
-    activate:
-      on-profile: local
-  cloud:
-    config:
-      enabled: false
-  jpa:
-    hibernate:
-      ddl-auto: create
-    properties:
-      hibernate:
-        show_sql: true
-        format_sql: true
-  datasource:
-    hikari:
-      source:
-        jdbc-url: jdbc:mysql://${MYSQL_SOURCE_ADDR:localhost:13306}/brieflyz_auth?createDatabaseIfNotExist=true
-        username: ${mysql.username}
-        password: ${mysql.root-password}
-        pool-name: auth-service-source-pool
-        minimum-idle: 5
-        maximum-pool-size: 5
-        connection-timeout: 30000 # 30 sec
-        max-lifetime: 1800000 # 30 min
-      replica:
-        jdbc-url: jdbc:mysql://${MYSQL_REPLICA_ADDR:localhost:23306}/brieflyz_auth?createDatabaseIfNotExist=true
-        username: ${mysql.username}
-        password: ${mysql.root-password}
-        pool-name: auth-service-replica-pool
-        minimum-idle: 10
-        maximum-pool-size: 10
-        connection-timeout: 30000 # 30 sec
-        max-lifetime: 1800000 # 30 min
-        read-only: true
-  security:
-    oauth2:
-      client:
-        registration:
-          google:
-            redirect-uri: http://localhost/login/oauth2/code/google
-          kakao:
-            redirect-uri: http://localhost/login/oauth2/code/kakao
-          naver:
-            redirect-uri: http://localhost/login/oauth2/code/naver
-  data:
-    redis:
-      cluster:
-        nodes: ${REDIS_CLUSTER_NODES:localhost:6379}
-  kafka:
-    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092,localhost:9093,localhost:9094}
-app:
-  auth:
-    oauth:
-      redirect-uri: http://localhost/login/oauth2/code/{registrationId}
-      authorized-redirect-uris: ${oauth.authorized-redirect-uris}
-    kafka:
-      num-of-partitions: 9
-      replication-factor: 3
-    email:
-      verify-url: http://localhost/api/auth/verify
----
+
 spring:
   config:
     activate:
@@ -120,3 +18,15 @@ spring:
     config:
       name: auth-service
       profile: dev
+
+---
+
+spring:
+  config:
+    activate:
+      on-profile: prod
+    import: configserver:http://config-server:8888/
+  cloud:
+    config:
+      name: auth-service
+      profile: prod

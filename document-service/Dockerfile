@@ -19,6 +19,6 @@ FROM eclipse-temurin:21-jdk-alpine
 
 WORKDIR /app
 
-COPY --from=builder /app/document-service/build/libs/*.jar app.jar
+COPY --from=builder /app/document-service/build/libs/*.jar ./app.jar
 
 ENTRYPOINT ["java", "-jar", "app.jar"]
