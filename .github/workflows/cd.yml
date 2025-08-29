@@ -21,6 +21,7 @@ jobs:
   filter:
     name: Filter Updated Modules
     runs-on: ubuntu-latest
+    environment: ${{ github.ref == 'refs/heads/master' && 'prod' || 'dev' }}
     outputs:
       api-gateway: ${{ steps.filter.outputs.api-gateway }}
       auth-service: ${{ steps.filter.outputs.auth-service }}
