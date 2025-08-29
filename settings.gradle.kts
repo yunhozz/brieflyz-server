@@ -1,4 +1,4 @@
-rootProject.name = "brieflyz"
+rootProject.name = "brieflyz-server"
 include(
     ":core",
     ":api-gateway",
