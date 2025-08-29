@@ -17,7 +17,7 @@ spring:
   cloud:
     config:
       name: auth-service
-      profile: dev
+      profile: dev, oauth
 
 ---
 
@@ -29,4 +29,4 @@ spring:
   cloud:
     config:
       name: auth-service
-      profile: prod
+      profile: prod, oauth
