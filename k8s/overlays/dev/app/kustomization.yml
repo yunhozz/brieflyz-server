@@ -30,16 +30,16 @@ images:
     newTag: dev-f801fe9
   - name: brieflyz-auth-service
     newName: ghcr.io/yunhozz/brieflyz-auth-service
-    newTag: dev-f801fe9
+    newTag: dev-87c78c4
   - name: brieflyz-subscription-service
     newName: ghcr.io/yunhozz/brieflyz-subscription-service
-    newTag: dev-f801fe9
+    newTag: dev-f7bbb42
   - name: brieflyz-ai-service
     newName: ghcr.io/yunhozz/brieflyz-ai-service
-    newTag: dev-f801fe9
+    newTag: dev-f7bbb42
   - name: brieflyz-document-service
     newName: ghcr.io/yunhozz/brieflyz-document-service
-    newTag: dev-f801fe9
+    newTag: dev-f7bbb42
 
 configMapGenerator:
   - name: app-profile-configmap
