@@ -3,10 +3,14 @@ kind: Kustomization
 
 resources:
   - ../../../base/nginx
-  - nginx.yml
+
+namespace: dev
 
 labels:
   - pairs:
       role: nginx
     includeSelectors: true
     includeTemplates: true
+
+patches:
+  - path: dev-patch.yml
