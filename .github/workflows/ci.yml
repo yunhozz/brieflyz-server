@@ -38,7 +38,7 @@ jobs:
           echo "${{ secrets.ENV }}" > .env
           
           mkdir -p core/src/main/resources
-          printf "%s" "${{ secrets.APPLICATION_JWT_YML }}" > ./core/src/main/resources/application-jwt.yml
+          echo "${{ secrets.APPLICATION_PROPERTIES }}" > ./core/src/main/resources/application.properties
           
           echo "${{ secrets.APPLICATION_YML_API }}" | base64 --decode > ./api-gateway/src/main/resources/application-local.yml
           echo "${{ secrets.APPLICATION_YML_AUTH }}" | base64 --decode > ./auth-service/src/main/resources/application-local.yml
