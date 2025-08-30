@@ -1,41 +1,43 @@
-package io.brieflyz.subscription_service.service.support
+package io.brieflyz.subscription_service.service
 
 import io.brieflyz.core.utils.logger
 import io.brieflyz.subscription_service.config.SubscriptionServiceProperties
 import io.brieflyz.subscription_service.model.entity.ExpiredSubscription
 import io.brieflyz.subscription_service.repository.ExpiredSubscriptionRepository
 import io.brieflyz.subscription_service.repository.SubscriptionRepository
-import io.brieflyz.subscription_service.service.MailService
-import org.springframework.batch.item.Chunk
-import org.springframework.stereotype.Component
+import io.brieflyz.subscription_service.service.support.MailProducer
+import org.springframework.stereotype.Service
 import org.thymeleaf.context.Context
 import java.time.LocalDateTime
 import java.time.Year
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.CompletableFuture
 
-@Component
-class BatchExecutionListenerImpl(
+@Service
+class BatchExecutionService(
     private val subscriptionRepository: SubscriptionRepository,
     private val expiredSubscriptionRepository: ExpiredSubscriptionRepository,
-    private val mailService: MailService,
+    private val mailProducer: MailProducer,
     private val subscriptionServiceProperties: SubscriptionServiceProperties
-) : BatchExecutionListener {
-
+) {
     private val log = logger()
 
-    override fun saveExpiredSubscriptionList(chunk: Chunk<out ExpiredSubscription>) {
-        expiredSubscriptionRepository.saveAll(chunk.toList())
-        log.info("A total of ${chunk.size()} subscriptions will be deleted")
+    companion object {
+        const val EMAIL_SUBJECT = "[Brieflyz] 구독 만료 안내 메일입니다."
+        const val TEMPLATE_NAME = "subscription-expired-email"
     }
 
-    override fun softDeleteSubscriptionsInIds(chunk: Chunk<out ExpiredSubscription>) {
-        val expiredSubscriptionIds = chunk.map { it.id }
+    fun saveExpiredSubscriptionList(expiredSubscriptionList: List<ExpiredSubscription>) {
+        expiredSubscriptionRepository.saveAll(expiredSubscriptionList)
+        log.info("A total of ${expiredSubscriptionList.size} subscriptions will be deleted")
+    }
+
+    fun softDeleteSubscriptionsInIds(expiredSubscriptionIds: List<Long>) {
         subscriptionRepository.softDeleteSubscriptionsInIdsQuery(expiredSubscriptionIds)
         log.info("A total of ${expiredSubscriptionIds.size} subscriptions have been successfully deleted")
     }
 
-    override fun sendEmail(chunk: Chunk<out ExpiredSubscription>) {
+    fun sendEmail(expiredSubscriptionList: List<ExpiredSubscription>) {
         val now = LocalDateTime.now()
         val renewUrl = subscriptionServiceProperties.email.renewUrl
 
@@ -51,14 +53,14 @@ class BatchExecutionListenerImpl(
 
         val futures = mutableListOf<CompletableFuture<Boolean>>()
 
-        chunk.forEach { expiredSubscription ->
-            val email = expiredSubscription.email
-            val planName = expiredSubscription.plan
+        expiredSubscriptionList.forEach {
+            val email = it.email
+            val planName = it.plan
 
             context.setVariable("email", email)
             context.setVariable("planName", planName)
 
-            val future = mailService.sendAsync(email, context)
+            val future = mailProducer.sendAsync(email, EMAIL_SUBJECT, TEMPLATE_NAME, context)
             futures.add(future)
         }
 
@@ -73,7 +75,7 @@ class BatchExecutionListenerImpl(
         }
     }
 
-    override fun cleanupExpiredSubscriptionList() {
+    fun cleanupExpiredSubscriptionList() {
         expiredSubscriptionRepository.deleteAllInBatch()
         log.info("Clean up expired subscription table")
     }

@@ -1,4 +1,4 @@
-package io.brieflyz.subscription_service.service
+package io.brieflyz.subscription_service.common.component.batch
 
 import io.brieflyz.subscription_service.common.annotation.DistributedLock
 import org.springframework.batch.core.Job
@@ -9,12 +9,12 @@ import org.springframework.batch.core.JobParametersBuilder
 import org.springframework.batch.core.launch.JobLauncher
 import org.springframework.scheduling.annotation.EnableScheduling
 import org.springframework.scheduling.annotation.Scheduled
-import org.springframework.stereotype.Service
+import org.springframework.stereotype.Component
 import java.util.UUID
 
-@Service
+@Component
 @EnableScheduling
-class BatchService(
+class BatchScheduler(
     private val jobLauncher: JobLauncher,
     private val deleteExpiredSubscriptionsJob: Job
 ) {

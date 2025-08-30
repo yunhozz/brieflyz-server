@@ -1,4 +1,4 @@
-package io.brieflyz.subscription_service.service.support
+package io.brieflyz.subscription_service.common.component.batch
 
 import io.brieflyz.subscription_service.model.entity.ExpiredSubscription
 import org.springframework.batch.item.Chunk
