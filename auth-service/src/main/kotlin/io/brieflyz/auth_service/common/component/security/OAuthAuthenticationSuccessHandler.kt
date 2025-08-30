@@ -1,4 +1,4 @@
-package io.brieflyz.auth_service.common.security
+package io.brieflyz.auth_service.common.component.security
 
 import io.brieflyz.auth_service.common.component.JwtProvider
 import io.brieflyz.auth_service.common.component.RedisHandler
