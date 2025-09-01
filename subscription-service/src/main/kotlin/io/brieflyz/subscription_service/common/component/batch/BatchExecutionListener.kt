@@ -6,6 +6,6 @@ import org.springframework.batch.item.Chunk
 interface BatchExecutionListener {
     fun saveExpiredSubscriptionList(chunk: Chunk<out ExpiredSubscription>)
     fun softDeleteSubscriptionsInIds(chunk: Chunk<out ExpiredSubscription>)
-    fun sendEmail(chunk: Chunk<out ExpiredSubscription>)
+    fun sendEmailAndPublishEvent(chunk: Chunk<out ExpiredSubscription>)
     fun cleanupExpiredSubscriptionList()
 }

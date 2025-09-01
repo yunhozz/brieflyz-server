@@ -3,6 +3,7 @@ package io.brieflyz.auth_service.common.component
 import io.brieflyz.auth_service.common.exception.JwtTokenNotValidException
 import io.brieflyz.auth_service.model.security.CustomUserDetails
 import io.brieflyz.core.beans.jwt.JwtManager
+import io.brieflyz.core.constants.Role
 import io.brieflyz.core.utils.logger
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.SignatureAlgorithm
@@ -30,6 +31,8 @@ class JwtProvider(
     fun generateToken(username: String, rolesStr: String): JwtTokens {
         val now = Date()
         val roles = rolesStr.split("|")
+            .filter { it.isNotBlank() }
+            .map { Role.of(it) }
 
         val secretKey = jwtManager.getEncryptedSecretKey()
         val (_, tokenType, accessTokenValidTime, refreshTokenValidTime) = jwtManager.getProperties()
@@ -57,11 +60,9 @@ class JwtProvider(
         val userDetails = CustomUserDetails(claims.subject, roles)
 
         log.debug(
-            """
-            [User Details]
-            username: ${userDetails.username}
-            authorities: ${userDetails.authorities}
-        """.trimIndent()
+            "[User Details] username={}, authorities={}",
+            userDetails.username,
+            userDetails.authorities
         )
 
         return UsernamePasswordAuthenticationToken(userDetails, "", userDetails.authorities)
@@ -70,7 +71,7 @@ class JwtProvider(
     private fun createToken(
         secretKey: SecretKey,
         username: String,
-        roles: List<String>,
+        roles: List<Role>,
         iat: Date,
         tokenValidTime: Long
     ): String = Jwts.builder()

@@ -2,7 +2,7 @@ package io.brieflyz.subscription_service.service
 
 import io.brieflyz.core.beans.kafka.KafkaSender
 import io.brieflyz.core.constants.KafkaTopic
-import io.brieflyz.core.dto.kafka.SubscriptionCompletedMessage
+import io.brieflyz.core.dto.kafka.SubscriptionMessage
 import io.brieflyz.core.utils.logger
 import io.brieflyz.subscription_service.common.constants.PaymentMethod
 import io.brieflyz.subscription_service.common.constants.SubscriptionPlan
@@ -92,8 +92,8 @@ class SubscriptionService(
         }
         mailProducer.sendAsync(email, EMAIL_SUBJECT, TEMPLATE_NAME, context)
 
-        val message = SubscriptionCompletedMessage(email)
-        kafkaSender.send(KafkaTopic.SUBSCRIPTION_COMPLETED_TOPIC, message)
+        val message = SubscriptionMessage(email, isCreated = true)
+        kafkaSender.send(KafkaTopic.SUBSCRIPTION_TOPIC, message)
 
         return subscriptionRepository.save(subscription).id
     }

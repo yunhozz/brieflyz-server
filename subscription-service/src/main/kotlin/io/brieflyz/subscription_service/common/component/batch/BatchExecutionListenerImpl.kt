@@ -20,9 +20,9 @@ class BatchExecutionListenerImpl(
         batchExecutionService.softDeleteSubscriptionsInIds(expiredSubscriptionIds)
     }
 
-    override fun sendEmail(chunk: Chunk<out ExpiredSubscription>) {
+    override fun sendEmailAndPublishEvent(chunk: Chunk<out ExpiredSubscription>) {
         val expiredSubscriptionList = chunk.toList()
-        batchExecutionService.sendEmail(expiredSubscriptionList)
+        batchExecutionService.sendEmailAndPublishEvent(expiredSubscriptionList)
     }
 
     override fun cleanupExpiredSubscriptionList() {

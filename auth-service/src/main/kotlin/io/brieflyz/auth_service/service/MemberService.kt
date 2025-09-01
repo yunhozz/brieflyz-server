@@ -10,7 +10,7 @@ import io.brieflyz.auth_service.model.entity.Member
 import io.brieflyz.auth_service.repository.MemberRepository
 import io.brieflyz.core.constants.KafkaTopic
 import io.brieflyz.core.dto.kafka.KafkaMessage
-import io.brieflyz.core.dto.kafka.SubscriptionCompletedMessage
+import io.brieflyz.core.dto.kafka.SubscriptionMessage
 import io.brieflyz.core.utils.logger
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.kafka.annotation.KafkaListener
@@ -30,8 +30,8 @@ class MemberService(
     private val log = logger()
 
     @Transactional
-    @KafkaListener(topics = [KafkaTopic.SUBSCRIPTION_COMPLETED_TOPIC])
-    fun updateBySubscription(
+    @KafkaListener(topics = [KafkaTopic.SUBSCRIPTION_TOPIC])
+    fun updateBySubscriptionStatus(
         @Header(KafkaHeaders.RECEIVED_KEY, required = false) key: String?,
         @Header(KafkaHeaders.RECEIVED_TOPIC) topic: String,
         @Header(KafkaHeaders.RECEIVED_PARTITION) partition: Int,
@@ -40,11 +40,19 @@ class MemberService(
         @Payload message: KafkaMessage,
         ack: Acknowledgment
     ) {
-        log.debug("[Kafka Received] key=$key, topic=$topic, partition=$partition, offset=$offset, timestamp=$timestamp")
-        require(message is SubscriptionCompletedMessage)
-        log.debug("Received message={}", message)
+        log.debug(
+            "[Kafka Received] key={}, topic={}, partition={}, offset={}, timestamp={}, message={}",
+            key,
+            topic,
+            partition,
+            offset,
+            timestamp,
+            message
+        )
+        require(message is SubscriptionMessage)
 
         val member = findMemberByEmail(message.email)
+        member.updateBySubscription(message.isCreated)
 
         ack.acknowledge()
     }

@@ -10,7 +10,8 @@ open class CustomUserDetails(
 ) : OAuth2User {
     override fun getName() = username
     override fun getAuthorities() = roles
-        .map { role -> SimpleGrantedAuthority(role) }.toMutableSet()
+        .map { SimpleGrantedAuthority(it) }
+        .toMutableSet()
 
     override fun getAttributes() = attributes
 }

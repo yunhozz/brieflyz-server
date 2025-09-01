@@ -1,5 +1,8 @@
 package io.brieflyz.subscription_service.service
 
+import io.brieflyz.core.beans.kafka.KafkaSender
+import io.brieflyz.core.constants.KafkaTopic
+import io.brieflyz.core.dto.kafka.SubscriptionMessage
 import io.brieflyz.core.utils.logger
 import io.brieflyz.subscription_service.config.SubscriptionServiceProperties
 import io.brieflyz.subscription_service.model.entity.ExpiredSubscription
@@ -18,6 +21,7 @@ class BatchExecutionService(
     private val subscriptionRepository: SubscriptionRepository,
     private val expiredSubscriptionRepository: ExpiredSubscriptionRepository,
     private val mailProducer: MailProducer,
+    private val kafkaSender: KafkaSender,
     private val subscriptionServiceProperties: SubscriptionServiceProperties
 ) {
     private val log = logger()
@@ -37,7 +41,7 @@ class BatchExecutionService(
         log.info("A total of ${expiredSubscriptionIds.size} subscriptions have been successfully deleted")
     }
 
-    fun sendEmail(expiredSubscriptionList: List<ExpiredSubscription>) {
+    fun sendEmailAndPublishEvent(expiredSubscriptionList: List<ExpiredSubscription>) {
         val now = LocalDateTime.now()
         val renewUrl = subscriptionServiceProperties.email.renewUrl
 
@@ -49,7 +53,6 @@ class BatchExecutionService(
             setVariable("unsubscribeUrl", "")
             setVariable("year", Year.now().toString())
         }
-        // TODO: 고객 지원, 구독 취소 URL 생성
 
         val futures = mutableListOf<CompletableFuture<Boolean>>()
 
@@ -61,6 +64,10 @@ class BatchExecutionService(
             context.setVariable("planName", planName)
 
             val future = mailProducer.sendAsync(email, EMAIL_SUBJECT, TEMPLATE_NAME, context)
+
+            val message = SubscriptionMessage(email, isCreated = false)
+            kafkaSender.send(KafkaTopic.SUBSCRIPTION_TOPIC, message)
+
             futures.add(future)
         }
 
