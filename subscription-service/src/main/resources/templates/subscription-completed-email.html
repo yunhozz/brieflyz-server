@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <title>[Brieflyz] 구독 완료 안내</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- 모바일에서 폰트 크기 보정 방지 -->
+    <meta http-equiv="x-apple-disable-message-reformatting">
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #f6f8fb;
+        }
+
+        table {
+            border-collapse: collapse;
+        }
+
+        img {
+            border: 0;
+            outline: none;
+            text-decoration: none;
+            display: block;
+        }
+
+        a {
+            text-decoration: none;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            body {
+                background: #0b0c10 !important;
+            }
+        }
+
+        @media screen and (max-width: 600px) {
+            .container {
+                width: 100% !important;
+            }
+
+            .px {
+                padding-left: 20px !important;
+                padding-right: 20px !important;
+            }
+
+            .btn {
+                width: 100% !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
+<!-- 프리헤더 -->
+<div style="display:none; max-height:0; overflow:hidden; opacity:0;"
+     th:text="'Brieflyz 구독이 성공적으로 완료되었습니다. 모든 기능을 이용해 보세요!'">
+    Brieflyz 구독이 성공적으로 완료되었습니다. 모든 기능을 이용해 보세요!
+</div>
+
+<table role="presentation" width="100%" bgcolor="#f6f8fb">
+    <tr>
+        <td align="center" style="padding:20px;">
+            <!-- 카드 -->
+            <table role="presentation" class="container" width="600"
+                   style="max-width:600px; background:#ffffff; border-radius:12px; overflow:hidden; box-shadow:0 4px 16px rgba(18,38,63,0.06);">
+                <!-- 헤더 -->
+                <tr>
+                    <td align="left" style="background:#111827; padding:20px 24px;">
+                        <table role="presentation" width="100%">
+                            <tr>
+                                <td align="left">
+                                    <span style="font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial; color:#ffffff; font-size:18px; font-weight:700;">
+                                        Brieflyz
+                                    </span>
+                                </td>
+                                <td align="right">
+                                    <span style="font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial; color:#9ca3af; font-size:12px;"
+                                          th:text="${sentAt}">
+                                        2025-09-01 11:00
+                                    </span>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+
+                <!-- 본문 -->
+                <tr>
+                    <td class="px" style="padding:28px 32px;">
+                        <h1 style="margin:0 0 10px; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial; font-size:22px; line-height:1.4; color:#111827;">
+                            구독이 완료되었어요
+                        </h1>
+                        <p style="margin:0 0 18px; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial; font-size:15px; line-height:1.7; color:#374151;"
+                           th:text="'선택하신 ' + ${planName} + ' 플랜 구독이 성공적으로 완료되었습니다. 이제 Brieflyz의 모든 기능을 자유롭게 이용하실 수 있습니다.'">
+                            선택하신 BASIC 플랜 구독이 성공적으로 완료되었습니다. 이제 Brieflyz의 모든 기능을 자유롭게 이용하실 수 있습니다.
+                        </p>
+
+                        <!-- 요약 카드 -->
+                        <table role="presentation" width="100%"
+                               style="background:#f9fafb; border:1px solid #e5e7eb; border-radius:10px;">
+                            <tr>
+                                <td style="padding:16px 18px; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial; font-size:14px; color:#111827;">
+                                    <table role="presentation" width="100%">
+                                        <tr>
+                                            <td style="padding:6px 0; width:120px; color:#6b7280;">이메일</td>
+                                            <td style="padding:6px 0;" th:text="${email}">user@example.com</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding:6px 0; color:#6b7280;">구독 플랜</td>
+                                            <td style="padding:6px 0;" th:text="${planName}">BASIC</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding:6px 0; color:#6b7280;">시작일</td>
+                                            <td style="padding:6px 0;" th:text="${startDate}">2025-09-01</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding:6px 0; color:#6b7280;">결제 금액</td>
+                                            <td style="padding:6px 0;" th:text="${price}">₩9,900</td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <!-- CTA 버튼 -->
+                        <table role="presentation" align="center" style="margin:22px auto 10px;">
+                            <tr>
+                                <td>
+                                    <a class="btn"
+                                       th:href="${dashboardUrl}"
+                                       style="display:inline-block; background:#2563eb; color:#ffffff; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial; font-size:15px; font-weight:700; padding:12px 22px; border-radius:8px;">
+                                        서비스 바로가기
+                                    </a>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <!-- 보조 링크 -->
+                        <p style="margin:12px 0 0; text-align:center; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial; font-size:13px; color:#6b7280;">
+                            결제나 구독 관련 문제가 있으신가요?&nbsp;
+                            <a th:href="${supportUrl}" style="color:#2563eb;">고객 지원</a>으로 문의해 주세요.
+                        </p>
+                    </td>
+                </tr>
+
+                <!-- 푸터 -->
+                <tr>
+                    <td style="padding:18px 24px; background:#ffffff; border-top:1px solid #f1f5f9;">
+                        <p style="margin:0 0 6px; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial; font-size:12px; color:#6b7280;">
+                            이 메일은 <span th:text="${email}">user@example.com</span> 계정의 구독 상태와 관련하여 발송되었습니다.
+                        </p>
+                        <p style="margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial; font-size:12px; color:#9ca3af;">
+                            수신을 원치 않으시면 <a th:href="${unsubscribeUrl}"
+                                           style="color:#6b7280; text-decoration:underline;">수신 거부</a>를 선택하세요.
+                        </p>
+                    </td>
+                </tr>
+
+            </table>
+
+            <!-- 저작권/회사 정보 -->
+            <table role="presentation" width="600" class="container" style="max-width:600px; margin-top:10px;">
+                <tr>
+                    <td align="center" style="padding:8px 10px;">
+                        <p style="margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial; font-size:11px; color:#9ca3af;"
+                           th:text="'© ' + ${year} + ' Brieflyz. All rights reserved.'">
+                            © 2025 Brieflyz. All rights reserved.
+                        </p>
+                    </td>
+                </tr>
+            </table>
+
+        </td>
+    </tr>
+</table>
+</body>
+</html>

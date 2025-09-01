@@ -5,6 +5,10 @@ import io.brieflyz.core.constants.DocumentType
 
 sealed interface KafkaMessage
 
+data class SubscriptionCompletedMessage(
+    val email: String
+) : KafkaMessage
+
 data class DocumentStructureRequestMessage(
     val aiProvider: AiProvider,
     val documentId: String,

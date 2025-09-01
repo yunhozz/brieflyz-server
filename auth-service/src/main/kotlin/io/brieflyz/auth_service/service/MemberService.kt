@@ -8,7 +8,16 @@ import io.brieflyz.auth_service.model.dto.response.MemberResponse
 import io.brieflyz.auth_service.model.dto.response.TokenResponse
 import io.brieflyz.auth_service.model.entity.Member
 import io.brieflyz.auth_service.repository.MemberRepository
+import io.brieflyz.core.constants.KafkaTopic
+import io.brieflyz.core.dto.kafka.KafkaMessage
+import io.brieflyz.core.dto.kafka.SubscriptionCompletedMessage
+import io.brieflyz.core.utils.logger
 import org.springframework.data.repository.findByIdOrNull
+import org.springframework.kafka.annotation.KafkaListener
+import org.springframework.kafka.support.Acknowledgment
+import org.springframework.kafka.support.KafkaHeaders
+import org.springframework.messaging.handler.annotation.Header
+import org.springframework.messaging.handler.annotation.Payload
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -18,6 +27,28 @@ class MemberService(
     private val jwtProvider: JwtProvider,
     private val redisHandler: RedisHandler
 ) {
+    private val log = logger()
+
+    @Transactional
+    @KafkaListener(topics = [KafkaTopic.SUBSCRIPTION_COMPLETED_TOPIC])
+    fun updateBySubscription(
+        @Header(KafkaHeaders.RECEIVED_KEY, required = false) key: String?,
+        @Header(KafkaHeaders.RECEIVED_TOPIC) topic: String,
+        @Header(KafkaHeaders.RECEIVED_PARTITION) partition: Int,
+        @Header(KafkaHeaders.OFFSET, required = false) offset: Long?,
+        @Header(KafkaHeaders.RECEIVED_TIMESTAMP) timestamp: Long,
+        @Payload message: KafkaMessage,
+        ack: Acknowledgment
+    ) {
+        log.debug("[Kafka Received] key=$key, topic=$topic, partition=$partition, offset=$offset, timestamp=$timestamp")
+        require(message is SubscriptionCompletedMessage)
+        log.debug("Received message={}", message)
+
+        val member = findMemberByEmail(message.email)
+
+        ack.acknowledge()
+    }
+
     fun refreshToken(username: String): TokenResponse {
         if (!redisHandler.exists(username)) throw RefreshTokenNotFoundException() // re-login
 
@@ -36,8 +67,7 @@ class MemberService(
 
     @Transactional
     fun withdraw(username: String) {
-        val member = memberRepository.findByEmail(username)
-            ?: throw UserNotFoundException("Email: $username")
+        val member = findMemberByEmail(username)
         deleteRefreshToken(member.email)
         memberRepository.delete(member)
     }
@@ -48,10 +78,14 @@ class MemberService(
 
     @Transactional(readOnly = true)
     fun findMemberById(memberId: Long): MemberResponse {
-        val member = (memberRepository.findByIdOrNull(memberId)
-            ?: throw UserNotFoundException("Member ID: $memberId"))
+        val member = memberRepository.findByIdOrNull(memberId)
+            ?: throw UserNotFoundException("Member ID: $memberId")
         return member.toResponse()
     }
+
+    private fun findMemberByEmail(email: String) =
+        memberRepository.findByEmail(email)
+            ?: throw UserNotFoundException("Email: $email")
 
     private fun Member.toResponse() = MemberResponse(
         id = this.id,

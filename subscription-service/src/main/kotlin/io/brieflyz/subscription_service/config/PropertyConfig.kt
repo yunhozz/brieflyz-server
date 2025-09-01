@@ -21,6 +21,7 @@ data class SubscriptionServiceProperties(
     )
 
     data class EmailProperties(
+        var dashboardUrl: String = "",
         var renewUrl: String = "",
     )
 }
