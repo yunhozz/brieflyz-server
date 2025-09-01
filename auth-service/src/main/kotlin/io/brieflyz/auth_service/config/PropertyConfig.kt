@@ -18,7 +18,6 @@ data class AuthServiceProperties(
 ) {
     data class OAuthProperties(
         var authorizationUri: String = "",
-        var redirectUri: String = "",
         var authorizedRedirectUris: List<String> = emptyList()
     )
 

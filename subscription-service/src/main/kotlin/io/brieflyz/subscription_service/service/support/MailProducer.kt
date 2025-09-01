@@ -1,31 +1,31 @@
-package io.brieflyz.subscription_service.service
+package io.brieflyz.subscription_service.service.support
 
 import io.brieflyz.core.utils.logger
 import org.springframework.mail.javamail.JavaMailSender
 import org.springframework.mail.javamail.MimeMessageHelper
 import org.springframework.scheduling.annotation.Async
-import org.springframework.stereotype.Service
+import org.springframework.stereotype.Component
 import org.thymeleaf.TemplateEngine
 import org.thymeleaf.context.Context
 import java.util.concurrent.CompletableFuture
 
-@Service
-class MailService(
+@Component
+class MailProducer(
     private val mailSender: JavaMailSender,
     private val templateEngine: TemplateEngine
 ) {
     private val log = logger()
 
     @Async
-    fun sendAsync(email: String, context: Context): CompletableFuture<Boolean> =
+    fun sendAsync(email: String, subject: String, template: String, context: Context): CompletableFuture<Boolean> =
         CompletableFuture.supplyAsync {
             val message = mailSender.createMimeMessage()
 
             try {
                 MimeMessageHelper(message, true, "UTF-8").apply {
                     setTo(email)
-                    setSubject("[Brieflyz] 구독 만료 안내 메일입니다.")
-                    setText(templateEngine.process("subscription-expired-email", context), true)
+                    setSubject(subject)
+                    setText(templateEngine.process(template, context), true)
                 }
 
                 mailSender.send(message)

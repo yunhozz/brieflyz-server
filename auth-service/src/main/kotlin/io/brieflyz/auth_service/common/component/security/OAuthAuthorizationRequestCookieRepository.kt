@@ -1,4 +1,4 @@
-package io.brieflyz.auth_service.common.security
+package io.brieflyz.auth_service.common.component.security
 
 import io.brieflyz.auth_service.common.constants.CookieName
 import io.brieflyz.auth_service.common.utils.CookieUtils

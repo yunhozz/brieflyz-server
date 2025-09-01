@@ -1,8 +1,8 @@
 package io.brieflyz.subscription_service.config
 
+import io.brieflyz.subscription_service.common.component.batch.BatchExecutionListener
 import io.brieflyz.subscription_service.model.entity.ExpiredSubscription
 import io.brieflyz.subscription_service.model.entity.Subscription
-import io.brieflyz.subscription_service.service.support.BatchExecutionListener
 import jakarta.persistence.EntityManagerFactory
 import org.springframework.batch.core.Job
 import org.springframework.batch.core.Step
@@ -91,7 +91,7 @@ class BatchConfig(
             .chunk<ExpiredSubscription, ExpiredSubscription>(CHUNK_SIZE, transactionManager)
             .reader(expiredSubscriptionListItemReader())
             .writer { chunk ->
-                batchExecutionListener.sendEmail(chunk)
+                batchExecutionListener.sendEmailAndPublishEvent(chunk)
             }
             .build()
 

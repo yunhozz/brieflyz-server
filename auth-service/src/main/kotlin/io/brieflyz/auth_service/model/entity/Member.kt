@@ -18,7 +18,7 @@ class Member private constructor(
     val password: String?,
     nickname: String,
     loginType: LoginType,
-    roles: String = Role.GUEST.auth
+    roles: String = Role.GUEST.name
 ) : BaseEntity() {
 
     companion object {
@@ -51,27 +51,34 @@ class Member private constructor(
         nickname = newNickname
     }
 
-    fun getRoles(): List<String> = roles.split("|").map { role ->
-        role.replace("ROLE_", "")
-    }
-
-    fun addRoles(vararg newRoles: Role) {
-        val newAuthorities = newRoles.joinToString("") { role ->
-            val authority = role.auth
-            require(!roles.contains(authority)) { "Already Authorized on $authority" }
-            "|$authority"
-        }
-        roles += newAuthorities
-    }
+    fun getRoles(): List<String> = roles.split("|")
 
     fun updateByEmailVerify() {
-        if (!roles.contains(Role.USER.auth)) addRoles(Role.USER)
+        addRoles(Role.USER)
     }
 
     fun updateBySocialLogin() {
         loginType = LoginType.SOCIAL
-        if (!roles.contains(Role.USER.auth)) addRoles(Role.USER)
+        addRoles(Role.USER)
     }
 
-    fun isLoginBy(type: LoginType): Boolean = loginType == type
+    fun updateBySubscription(subscribe: Boolean) {
+        if (subscribe) {
+            addRoles(Role.MEMBER)
+        } else {
+            deleteRoles(Role.MEMBER)
+        }
+    }
+
+    private fun addRoles(vararg roles: Role) {
+        val existingRoles = this.roles.split("|").filter { it.isNotBlank() }
+        val newRoles = existingRoles + roles.map { it.name }
+        this.roles = newRoles.distinct().joinToString("|")
+    }
+
+    private fun deleteRoles(vararg roles: Role) {
+        val existingRoles = this.roles.split("|").filter { it.isNotBlank() }
+        val newRoles = existingRoles - roles.map { it.name }.toSet()
+        this.roles = newRoles.distinct().joinToString("|")
+    }
 }

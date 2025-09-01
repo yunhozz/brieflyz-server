@@ -1,8 +1,8 @@
 package io.brieflyz.auth_service.config
 
-import io.brieflyz.auth_service.common.security.OAuthAuthenticationFailureHandler
-import io.brieflyz.auth_service.common.security.OAuthAuthenticationSuccessHandler
-import io.brieflyz.auth_service.common.security.OAuthAuthorizationRequestCookieRepository
+import io.brieflyz.auth_service.common.component.security.OAuthAuthenticationFailureHandler
+import io.brieflyz.auth_service.common.component.security.OAuthAuthenticationSuccessHandler
+import io.brieflyz.auth_service.common.component.security.OAuthAuthorizationRequestCookieRepository
 import io.brieflyz.auth_service.service.OAuthUserCustomService
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -14,20 +14,19 @@ import org.springframework.security.web.SecurityFilterChain
 
 @Configuration
 @EnableWebSecurity
-class SecurityConfig {
+class SecurityConfig(
+    private val authServiceProperties: AuthServiceProperties,
+    private val oAuthUserCustomService: OAuthUserCustomService,
+    private val oAuthAuthorizationRequestCookieRepository: OAuthAuthorizationRequestCookieRepository,
+    private val oAuthAuthenticationSuccessHandler: OAuthAuthenticationSuccessHandler,
+    private val oAuthAuthenticationFailureHandler: OAuthAuthenticationFailureHandler
+) {
 
     @Bean
     fun passwordEncoder(): BCryptPasswordEncoder = BCryptPasswordEncoder()
 
     @Bean
-    fun securityFilterChain(
-        http: HttpSecurity,
-        authServiceProperties: AuthServiceProperties,
-        oAuthUserCustomService: OAuthUserCustomService,
-        oAuthAuthorizationRequestCookieRepository: OAuthAuthorizationRequestCookieRepository,
-        oAuthAuthenticationSuccessHandler: OAuthAuthenticationSuccessHandler,
-        oAuthAuthenticationFailureHandler: OAuthAuthenticationFailureHandler
-    ): SecurityFilterChain = http
+    fun securityFilterChain(http: HttpSecurity): SecurityFilterChain = http
         .cors { it.disable() }
         .csrf { it.disable() }
         .headers { it.frameOptions { cfg -> cfg.sameOrigin() } }

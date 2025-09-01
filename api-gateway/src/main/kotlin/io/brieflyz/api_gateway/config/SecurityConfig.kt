@@ -3,13 +3,13 @@ package io.brieflyz.api_gateway.config
 import io.brieflyz.api_gateway.exception.JwtAccessDeniedHandler
 import io.brieflyz.api_gateway.exception.JwtAuthenticationEntryPoint
 import io.brieflyz.api_gateway.filter.JwtFilter
+import io.brieflyz.core.constants.Role
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.http.HttpMethod
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity
 import org.springframework.security.config.web.server.SecurityWebFiltersOrder
 import org.springframework.security.config.web.server.ServerHttpSecurity
-import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.web.server.SecurityWebFilterChain
 import org.springframework.web.cors.CorsConfiguration
 import org.springframework.web.cors.reactive.CorsConfigurationSource
@@ -32,9 +32,10 @@ class SecurityConfig {
         .authorizeExchange {
             it.pathMatchers("/favicon.ico", "/health", "/actuator/**").permitAll()
             it.pathMatchers("/api/auth/**", "/oauth2/authorization/**", "/login/oauth2/code/**").permitAll()
-            it.pathMatchers("/api/admin/**").hasAuthority(Authority.ROLE_ADMIN.name)
-            it.pathMatchers(HttpMethod.GET, "/api/members/**").hasAuthority(Authority.ROLE_ADMIN.name)
-            it.pathMatchers("/api/subscriptions/**", "/api/documents/**").hasAuthority(Authority.ROLE_USER.name)
+            it.pathMatchers("/api/admin/**").hasAuthority(Role.ADMIN.name)
+            it.pathMatchers(HttpMethod.GET, "/api/members/**").hasAuthority(Role.ADMIN.name)
+            it.pathMatchers("/api/subscriptions/**").hasAuthority(Role.USER.name)
+            it.pathMatchers("/api/documents/**").hasAuthority(Role.MEMBER.name)
             it.anyExchange().authenticated()
         }
         .exceptionHandling {
@@ -53,12 +54,5 @@ class SecurityConfig {
         return UrlBasedCorsConfigurationSource().apply {
             registerCorsConfiguration("/**", configuration)
         }
-    }
-
-    enum class Authority : GrantedAuthority {
-        ROLE_GUEST, ROLE_USER, ROLE_ADMIN
-        ;
-
-        override fun getAuthority(): String? = this.name
     }
 }

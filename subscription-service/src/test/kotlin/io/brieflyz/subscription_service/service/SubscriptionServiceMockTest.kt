@@ -1,9 +1,11 @@
 package io.brieflyz.subscription_service.service
 
+import io.brieflyz.core.beans.kafka.KafkaSender
 import io.brieflyz.subscription_service.common.constants.SubscriptionPlan
 import io.brieflyz.subscription_service.common.exception.AlreadyHaveSubscriptionException
 import io.brieflyz.subscription_service.common.exception.AlreadyHaveUnlimitedSubscriptionException
 import io.brieflyz.subscription_service.common.exception.SubscriptionNotFoundException
+import io.brieflyz.subscription_service.config.SubscriptionServiceProperties
 import io.brieflyz.subscription_service.model.dto.request.CreditCardDetailsRequest
 import io.brieflyz.subscription_service.model.dto.request.PaymentCreateRequest
 import io.brieflyz.subscription_service.model.dto.request.SubscriptionCreateRequest
@@ -15,6 +17,7 @@ import io.brieflyz.subscription_service.model.entity.Subscription
 import io.brieflyz.subscription_service.repository.PaymentDetailsRepository
 import io.brieflyz.subscription_service.repository.PaymentRepository
 import io.brieflyz.subscription_service.repository.SubscriptionRepository
+import io.brieflyz.subscription_service.service.support.MailProducer
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -47,6 +50,15 @@ class SubscriptionServiceMockTest {
 
     @Mock
     private lateinit var paymentDetailsRepository: PaymentDetailsRepository
+
+    @Mock
+    private lateinit var kafkaSender: KafkaSender
+
+    @Mock
+    private lateinit var mailProducer: MailProducer
+
+    @Mock
+    private lateinit var subscriptionServiceProperties: SubscriptionServiceProperties
 
     private inline fun <reified T> T.setId(id: Long) {
         val field = this!!::class.java.getDeclaredField("id")
@@ -99,6 +111,13 @@ class SubscriptionServiceMockTest {
             given(paymentRepository.save(any(Payment::class.java))).willReturn(payment)
             given(paymentDetailsRepository.save(any(PaymentDetails::class.java))).willReturn(paymentDetails)
 
+            given(subscriptionServiceProperties.email).willReturn(
+                SubscriptionServiceProperties.EmailProperties(
+                    dashboardUrl = "http://localhost/subscriptions/dashboard",
+                    renewUrl = "http://localhost/subscriptions/renew"
+                )
+            )
+
             // when
             val result = subscriptionService.createSubscription(email, request)
 
@@ -129,6 +148,13 @@ class SubscriptionServiceMockTest {
             given(subscriptionRepository.save(any(Subscription::class.java))).willReturn(existingSubscription)
             given(paymentRepository.save(any(Payment::class.java))).willReturn(payment)
             given(paymentDetailsRepository.save(any(PaymentDetails::class.java))).willReturn(paymentDetails)
+
+            given(subscriptionServiceProperties.email).willReturn(
+                SubscriptionServiceProperties.EmailProperties(
+                    dashboardUrl = "http://localhost/subscriptions/dashboard",
+                    renewUrl = "http://localhost/subscriptions/renew"
+                )
+            )
 
             // when
             val result = subscriptionService.createSubscription(email, request)

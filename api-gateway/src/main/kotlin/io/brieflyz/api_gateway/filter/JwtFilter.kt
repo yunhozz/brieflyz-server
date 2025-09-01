@@ -32,11 +32,11 @@ class JwtFilter(
             log.debug("Resolved token : $token")
             val claims = jwtManager.createClaimsJws(token)?.body
                 ?: throw JwtTokenNotValidException()
-            val authorities = claims["roles"] as List<String>
+            val roles = claims["roles"] as List<String>
 
             log.debug("claims : {}", claims)
 
-            val userDetails = CustomUserDetails(claims.subject, authorities)
+            val userDetails = CustomUserDetails(claims.subject, roles)
             val authentication = UsernamePasswordAuthenticationToken(userDetails, "", userDetails.authorities)
 
             val mutatedExchange = exchange.mutate()
@@ -56,12 +56,12 @@ class JwtFilter(
 
     data class CustomUserDetails(
         private val username: String,
-        private val authorities: List<String>
+        private val roles: List<String>
     ) : UserDetails {
         override fun getUsername() = username
         override fun getPassword() = null
-        override fun getAuthorities() = authorities
-            .map { auth -> SimpleGrantedAuthority(auth) }
+        override fun getAuthorities() = roles
+            .map { SimpleGrantedAuthority(it) }
             .toMutableSet()
 
         override fun isAccountNonExpired() = true
