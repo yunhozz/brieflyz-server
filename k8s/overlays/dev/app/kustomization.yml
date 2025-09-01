@@ -27,13 +27,13 @@ replicas:
 images:
   - name: brieflyz-api-gateway
     newName: ghcr.io/yunhozz/brieflyz-api-gateway
-    newTag: dev-f801fe9
+    newTag: dev-6ccabfc
   - name: brieflyz-auth-service
     newName: ghcr.io/yunhozz/brieflyz-auth-service
-    newTag: dev-87c78c4
+    newTag: dev-6ccabfc
   - name: brieflyz-subscription-service
     newName: ghcr.io/yunhozz/brieflyz-subscription-service
-    newTag: dev-f7bbb42
+    newTag: dev-6ccabfc
   - name: brieflyz-ai-service
     newName: ghcr.io/yunhozz/brieflyz-ai-service
     newTag: dev-f7bbb42
