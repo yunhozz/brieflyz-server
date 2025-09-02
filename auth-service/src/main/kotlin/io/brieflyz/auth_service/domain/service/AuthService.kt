@@ -1,13 +1,9 @@
 package io.brieflyz.auth_service.domain.service
 
-import io.brieflyz.auth_service.common.constants.LoginType
 import io.brieflyz.auth_service.domain.entity.Member
-import io.brieflyz.auth_service.domain.exception.PasswordNotMatchException
 import io.brieflyz.auth_service.domain.exception.UserAlreadyExistsException
 import io.brieflyz.auth_service.domain.exception.UserNotFoundException
-import io.brieflyz.auth_service.domain.exception.UserRegisteredBySocialException
 import io.brieflyz.auth_service.domain.repository.MemberRepository
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.stereotype.Service
 
 @Service
@@ -25,17 +21,6 @@ class AuthService(
         member.updateByEmailVerify() // add USER role
     }
 
-    fun validatePassword(email: String, password: String, encoder: BCryptPasswordEncoder): Member {
-        val member = findMemberByEmail(email)
-
-        if (member.loginType == LoginType.SOCIAL)
-            throw UserRegisteredBySocialException()
-        if (!encoder.matches(password, member.password))
-            throw PasswordNotMatchException()
-
-        return member
-    }
-
-    private fun findMemberByEmail(email: String): Member = memberRepository.findByEmail(email)
+    fun findMemberByEmail(email: String): Member = memberRepository.findByEmail(email)
         ?: throw UserNotFoundException("Email: $email")
 }

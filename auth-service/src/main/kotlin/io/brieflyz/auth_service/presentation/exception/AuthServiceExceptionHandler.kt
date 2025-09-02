@@ -1,5 +1,7 @@
 package io.brieflyz.auth_service.presentation.exception
 
+import io.brieflyz.auth_service.application.exception.ApplicationException
+import io.brieflyz.auth_service.domain.exception.DomainException
 import io.brieflyz.core.constants.ErrorStatus
 import io.brieflyz.core.dto.api.ApiResponse
 import io.brieflyz.core.dto.api.ErrorData
@@ -19,10 +21,13 @@ class AuthServiceExceptionHandler {
 
     private val log = logger()
 
-    @ExceptionHandler(AuthServiceException::class)
-    fun handleAuthServiceException(e: AuthServiceException): ResponseEntity<ApiResponse<ErrorData>> {
-        val apiResponse = ApiResponse.fail(e.status, ErrorData.of(e))
-        return ResponseEntity.status(e.status.statusCode).body(apiResponse)
+    @ExceptionHandler(DomainException::class, ApplicationException::class)
+    fun handleAuthServiceException(e: RuntimeException): ResponseEntity<ApiResponse<ErrorData>> {
+        val status = (e as? DomainException)?.status
+            ?: (e as ApplicationException).status
+        val apiResponse = ApiResponse.fail(status, ErrorData.of(e))
+
+        return ResponseEntity.status(status.statusCode).body(apiResponse)
             .also { log.warn("[인증 서비스 오류] ${e::class.simpleName} 발생: ${e.localizedMessage}") }
     }
 

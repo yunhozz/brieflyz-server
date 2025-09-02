@@ -4,8 +4,12 @@ import io.brieflyz.auth_service.application.dto.SignInRequestDto
 import io.brieflyz.auth_service.application.dto.SignUpRequestDto
 import io.brieflyz.auth_service.application.dto.TokenResponseDto
 import io.brieflyz.auth_service.common.auth.JwtProvider
+import io.brieflyz.auth_service.common.constants.LoginType
 import io.brieflyz.auth_service.common.props.AuthServiceProperties
 import io.brieflyz.auth_service.common.redis.RedisHandler
+import io.brieflyz.auth_service.domain.entity.Member
+import io.brieflyz.auth_service.domain.exception.PasswordNotMatchException
+import io.brieflyz.auth_service.domain.exception.UserRegisteredBySocialException
 import io.brieflyz.auth_service.domain.service.AuthService
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.stereotype.Service
@@ -61,13 +65,23 @@ class AuthApplicationService(
     @Transactional(readOnly = true)
     fun login(dto: SignInRequestDto): TokenResponseDto {
         val (email, password) = dto
-        val member = authService.validatePassword(email, password, passwordEncoder)
+        val member = authService.findMemberByEmail(email)
+
+        validatePassword(member, password)
+
         val username = member.email
         val tokens = jwtProvider.generateToken(username, member.roles)
 
         redisHandler.save(username, tokens.refreshToken, tokens.refreshTokenValidTime)
 
         return TokenResponseDto(tokens.tokenType + tokens.accessToken, tokens.accessTokenValidTime)
+    }
+
+    private fun validatePassword(member: Member, password: String) {
+        if (member.loginType == LoginType.SOCIAL)
+            throw UserRegisteredBySocialException()
+        if (!passwordEncoder.matches(password, member.password))
+            throw PasswordNotMatchException()
     }
 
     private fun generateVerificationToken(): String {

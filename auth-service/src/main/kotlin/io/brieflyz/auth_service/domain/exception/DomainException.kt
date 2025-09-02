@@ -1,10 +1,9 @@
 package io.brieflyz.auth_service.domain.exception
 
-import io.brieflyz.auth_service.presentation.exception.AuthServiceException
 import io.brieflyz.core.constants.ErrorStatus
 
-sealed class DomainException(status: ErrorStatus, msg: String) :
-    AuthServiceException(status, "${status.message} $msg".trim())
+sealed class DomainException(val status: ErrorStatus, message: String) :
+    RuntimeException("${status.message} $message".trim())
 
 class UserAlreadyExistsException(msg: String) : DomainException(ErrorStatus.USER_ALREADY_EXIST, msg)
 class UserNotFoundException(msg: String) : DomainException(ErrorStatus.USER_NOT_FOUND, msg)
