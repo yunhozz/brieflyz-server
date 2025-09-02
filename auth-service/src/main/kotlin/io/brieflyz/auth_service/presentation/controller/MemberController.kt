@@ -1,6 +1,6 @@
 package io.brieflyz.auth_service.presentation.controller
 
-import io.brieflyz.auth_service.application.service.MemberService
+import io.brieflyz.auth_service.application.service.MemberApplicationService
 import io.brieflyz.auth_service.common.constants.CookieName
 import io.brieflyz.auth_service.common.utils.CookieUtils
 import io.brieflyz.auth_service.common.utils.SerializationUtils
@@ -24,26 +24,26 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/api/members")
 class MemberController(
-    private val memberService: MemberService
+    private val memberApplicationService: MemberApplicationService
 ) {
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
     fun lookupAllMembers(): ApiResponse<List<MemberResponse>> {
-        val members = memberService.findAllMembers()
+        val members = memberApplicationService.findAllMembers()
         return ApiResponse.success(SuccessStatus.USER_INFORMATION_READ_SUCCESS, members.toResponse())
     }
 
     @GetMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
     fun lookupMember(@PathVariable id: Long): ApiResponse<MemberResponse> {
-        val member = memberService.findMemberById(id)
+        val member = memberApplicationService.findMemberById(id)
         return ApiResponse.success(SuccessStatus.USER_INFORMATION_READ_SUCCESS, member.toResponse())
     }
 
     @PostMapping("/token")
     @ResponseStatus(HttpStatus.CREATED)
     fun refreshToken(@JwtSubject username: String, response: HttpServletResponse): ApiResponse<TokenResponse> {
-        val token = memberService.refreshToken(username)
+        val token = memberApplicationService.refreshToken(username)
         CookieUtils.addCookie(
             response,
             name = CookieName.ACCESS_TOKEN_COOKIE_NAME,
@@ -61,7 +61,7 @@ class MemberController(
         response: HttpServletResponse
     ): ApiResponse<Void> {
         CookieUtils.deleteCookie(request, response, CookieName.ACCESS_TOKEN_COOKIE_NAME)
-        memberService.deleteRefreshToken(username)
+        memberApplicationService.deleteRefreshToken(username)
         return ApiResponse.success(SuccessStatus.LOGOUT_SUCCESS)
     }
 
@@ -73,7 +73,7 @@ class MemberController(
         response: HttpServletResponse
     ): ApiResponse<Void> {
         CookieUtils.deleteAllCookies(request, response)
-        memberService.withdraw(username)
+        memberApplicationService.withdraw(username)
         return ApiResponse.success(SuccessStatus.USER_WITHDRAW_SUCCESS)
     }
 }

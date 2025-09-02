@@ -3,16 +3,10 @@ package io.brieflyz.auth_service.application.service
 import io.brieflyz.auth_service.application.dto.SignInRequestDto
 import io.brieflyz.auth_service.application.dto.SignUpRequestDto
 import io.brieflyz.auth_service.application.dto.TokenResponseDto
-import io.brieflyz.auth_service.application.exception.PasswordNotMatchException
-import io.brieflyz.auth_service.application.exception.UserAlreadyExistsException
-import io.brieflyz.auth_service.application.exception.UserNotFoundException
-import io.brieflyz.auth_service.application.exception.UserRegisteredBySocialException
 import io.brieflyz.auth_service.common.auth.JwtProvider
-import io.brieflyz.auth_service.common.constants.LoginType
 import io.brieflyz.auth_service.common.props.AuthServiceProperties
 import io.brieflyz.auth_service.common.redis.RedisHandler
-import io.brieflyz.auth_service.domain.entity.Member
-import io.brieflyz.auth_service.domain.repository.MemberRepository
+import io.brieflyz.auth_service.domain.service.AuthService
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -22,8 +16,8 @@ import java.time.Year
 import java.util.Base64
 
 @Service
-class AuthService(
-    private val memberRepository: MemberRepository,
+class AuthApplicationService(
+    private val authService: AuthService,
     private val passwordEncoder: BCryptPasswordEncoder,
     private val mailProducer: MailProducer,
     private val jwtProvider: JwtProvider,
@@ -33,10 +27,7 @@ class AuthService(
     @Transactional
     fun join(dto: SignUpRequestDto): Long {
         val (email, password, nickname) = dto
-        if (memberRepository.existsByEmail(email)) throw UserAlreadyExistsException("Email: $email")
-
-        val guest = Member.forLocal(email, passwordEncoder.encode(password), nickname)
-        memberRepository.save(guest)
+        val guest = authService.saveGuest(email, passwordEncoder.encode(password), nickname)
 
         val verifyUrl = authServiceProperties.email.verifyUrl
         val token = generateVerificationToken()
@@ -60,9 +51,8 @@ class AuthService(
     fun verifyEmail(token: String) {
         val verifyKey = "VERIFY:$token"
         val email = redisHandler.find(verifyKey)
-        val member = findMemberByEmail(email)
 
-        member.updateByEmailVerify() // add USER role
+        authService.updateByEmailVerify(email)
 
         if (redisHandler.exists(email)) redisHandler.delete(email)
         redisHandler.delete(verifyKey)
@@ -71,11 +61,7 @@ class AuthService(
     @Transactional(readOnly = true)
     fun login(dto: SignInRequestDto): TokenResponseDto {
         val (email, password) = dto
-        val member = findMemberByEmail(email)
-
-        if (member.loginType == LoginType.SOCIAL) throw UserRegisteredBySocialException()
-        if (!passwordEncoder.matches(password, member.password)) throw PasswordNotMatchException()
-
+        val member = authService.validatePassword(email, password, passwordEncoder)
         val username = member.email
         val tokens = jwtProvider.generateToken(username, member.roles)
 
@@ -83,9 +69,6 @@ class AuthService(
 
         return TokenResponseDto(tokens.tokenType + tokens.accessToken, tokens.accessTokenValidTime)
     }
-
-    private fun findMemberByEmail(email: String): Member = memberRepository.findByEmail(email)
-        ?: throw UserNotFoundException("Email: $email")
 
     private fun generateVerificationToken(): String {
         val random = SecureRandom()

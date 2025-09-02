@@ -1,6 +1,6 @@
 package io.brieflyz.auth_service.presentation.controller
 
-import io.brieflyz.auth_service.application.service.AuthService
+import io.brieflyz.auth_service.application.service.AuthApplicationService
 import io.brieflyz.auth_service.common.constants.CookieName
 import io.brieflyz.auth_service.common.utils.CookieUtils
 import io.brieflyz.auth_service.common.utils.SerializationUtils
@@ -26,12 +26,12 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/api/auth")
 class AuthController(
-    private val authService: AuthService
+    private val authApplicationService: AuthApplicationService
 ) {
     @PostMapping("/sign-up")
     @ResponseStatus(HttpStatus.CREATED)
     fun signUp(@Valid @RequestBody request: SignUpRequest): ApiResponse<Long> {
-        val memberId = authService.join(request.toDto())
+        val memberId = authApplicationService.join(request.toDto())
         return ApiResponse.success(SuccessStatus.SIGN_UP_SUCCESS, memberId)
     }
 
@@ -42,7 +42,7 @@ class AuthController(
         request: HttpServletRequest,
         response: HttpServletResponse
     ): ApiResponse<Void> {
-        authService.verifyEmail(token)
+        authApplicationService.verifyEmail(token)
         CookieUtils.deleteCookie(request, response, CookieName.ACCESS_TOKEN_COOKIE_NAME)
         return ApiResponse.success(SuccessStatus.USER_SIGNUP_VERIFY_SUCCESS)
     }
@@ -53,7 +53,7 @@ class AuthController(
         @Valid @RequestBody request: SignInRequest,
         response: HttpServletResponse
     ): ApiResponse<TokenResponse> {
-        val token = authService.login(request.toDto())
+        val token = authApplicationService.login(request.toDto())
         CookieUtils.addCookie(
             response,
             name = CookieName.ACCESS_TOKEN_COOKIE_NAME,
