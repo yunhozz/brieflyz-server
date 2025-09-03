@@ -1,7 +1,7 @@
 package io.brieflyz.auth_service.application.service
 
-import io.brieflyz.auth_service.application.dto.MemberResponseDto
-import io.brieflyz.auth_service.application.dto.TokenResponseDto
+import io.brieflyz.auth_service.application.dto.MemberResult
+import io.brieflyz.auth_service.application.dto.TokenResult
 import io.brieflyz.auth_service.application.exception.RefreshTokenNotFoundException
 import io.brieflyz.auth_service.common.auth.JwtProvider
 import io.brieflyz.auth_service.common.redis.RedisHandler
@@ -27,7 +27,7 @@ class MemberApplicationService(
 ) {
     private val log = logger()
 
-    fun refreshToken(username: String): TokenResponseDto {
+    fun refreshToken(username: String): TokenResult {
         if (!redisHandler.exists(username)) throw RefreshTokenNotFoundException() // re-login
 
         val refreshToken = redisHandler.find(username)
@@ -36,7 +36,7 @@ class MemberApplicationService(
 
         redisHandler.save(username, tokens.refreshToken, tokens.refreshTokenValidTime)
 
-        return TokenResponseDto(tokens.tokenType + tokens.accessToken, tokens.accessTokenValidTime)
+        return TokenResult(tokens.tokenType + tokens.accessToken, tokens.accessTokenValidTime)
     }
 
     fun deleteRefreshToken(username: String) {
@@ -75,16 +75,16 @@ class MemberApplicationService(
     }
 
     @Transactional(readOnly = true)
-    fun findAllMembers(): List<MemberResponseDto> = memberService.findAllMembers()
-        .map { member -> member.toDto() }
+    fun findAllMembers(): List<MemberResult> = memberService.findAllMembers()
+        .map { member -> member.toResult() }
 
     @Transactional(readOnly = true)
-    fun findMemberById(memberId: Long): MemberResponseDto {
+    fun findMemberById(memberId: Long): MemberResult {
         val member = memberService.findMember(memberId)
-        return member.toDto()
+        return member.toResult()
     }
 
-    private fun Member.toDto() = MemberResponseDto(
+    private fun Member.toResult() = MemberResult(
         id = this.id,
         email = this.email,
         nickname = this.email,

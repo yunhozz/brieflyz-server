@@ -1,8 +1,8 @@
 package io.brieflyz.auth_service.application.service
 
-import io.brieflyz.auth_service.application.dto.SignInRequestDto
-import io.brieflyz.auth_service.application.dto.SignUpRequestDto
-import io.brieflyz.auth_service.application.dto.TokenResponseDto
+import io.brieflyz.auth_service.application.dto.SignInCommand
+import io.brieflyz.auth_service.application.dto.SignUpCommand
+import io.brieflyz.auth_service.application.dto.TokenResult
 import io.brieflyz.auth_service.common.auth.JwtProvider
 import io.brieflyz.auth_service.common.constants.LoginType
 import io.brieflyz.auth_service.common.props.AuthServiceProperties
@@ -29,8 +29,8 @@ class AuthApplicationService(
     private val authServiceProperties: AuthServiceProperties
 ) {
     @Transactional
-    fun join(dto: SignUpRequestDto): Long {
-        val (email, password, nickname) = dto
+    fun join(command: SignUpCommand): Long {
+        val (email, password, nickname) = command
         val guest = authService.saveGuest(email, passwordEncoder.encode(password), nickname)
 
         val verifyUrl = authServiceProperties.email.verifyUrl
@@ -63,8 +63,8 @@ class AuthApplicationService(
     }
 
     @Transactional(readOnly = true)
-    fun login(dto: SignInRequestDto): TokenResponseDto {
-        val (email, password) = dto
+    fun login(command: SignInCommand): TokenResult {
+        val (email, password) = command
         val member = authService.findMemberByEmail(email)
 
         validatePassword(member, password)
@@ -74,7 +74,7 @@ class AuthApplicationService(
 
         redisHandler.save(username, tokens.refreshToken, tokens.refreshTokenValidTime)
 
-        return TokenResponseDto(tokens.tokenType + tokens.accessToken, tokens.accessTokenValidTime)
+        return TokenResult(tokens.tokenType + tokens.accessToken, tokens.accessTokenValidTime)
     }
 
     private fun validatePassword(member: Member, password: String) {

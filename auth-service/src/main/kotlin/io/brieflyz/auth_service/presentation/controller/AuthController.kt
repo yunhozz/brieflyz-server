@@ -4,7 +4,7 @@ import io.brieflyz.auth_service.application.service.AuthApplicationService
 import io.brieflyz.auth_service.common.constants.CookieName
 import io.brieflyz.auth_service.common.utils.CookieUtils
 import io.brieflyz.auth_service.common.utils.SerializationUtils
-import io.brieflyz.auth_service.presentation.dto.mapper.toDto
+import io.brieflyz.auth_service.presentation.dto.mapper.toCommand
 import io.brieflyz.auth_service.presentation.dto.mapper.toResponse
 import io.brieflyz.auth_service.presentation.dto.request.SignInRequest
 import io.brieflyz.auth_service.presentation.dto.request.SignUpRequest
@@ -31,7 +31,7 @@ class AuthController(
     @PostMapping("/sign-up")
     @ResponseStatus(HttpStatus.CREATED)
     fun signUp(@Valid @RequestBody request: SignUpRequest): ApiResponse<Long> {
-        val memberId = authApplicationService.join(request.toDto())
+        val memberId = authApplicationService.join(request.toCommand())
         return ApiResponse.success(SuccessStatus.SIGN_UP_SUCCESS, memberId)
     }
 
@@ -53,7 +53,7 @@ class AuthController(
         @Valid @RequestBody request: SignInRequest,
         response: HttpServletResponse
     ): ApiResponse<TokenResponse> {
-        val token = authApplicationService.login(request.toDto())
+        val token = authApplicationService.login(request.toCommand())
         CookieUtils.addCookie(
             response,
             name = CookieName.ACCESS_TOKEN_COOKIE_NAME,
