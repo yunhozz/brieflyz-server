@@ -18,8 +18,9 @@ class EmailAdapter(
     private val log = logger()
 
     @Async
-    override fun send(email: String, context: Context) {
+    override fun send(email: String, contextMap: Map<String, Any>) {
         val message = mailSender.createMimeMessage()
+        val context = Context().apply { setVariables(contextMap) }
 
         try {
             MimeMessageHelper(message, true, "UTF-8").apply {

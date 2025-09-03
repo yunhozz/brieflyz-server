@@ -21,7 +21,6 @@ import io.brieflyz.auth_service.domain.model.Member
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import org.thymeleaf.context.Context
 import java.security.SecureRandom
 import java.time.Year
 import java.util.Base64
@@ -51,14 +50,14 @@ class JoinService(
 
         cachePort.save("VERIFY:$token", email, ttl)
 
-        val context = Context().apply {
-            setVariable("email", email)
-            setVariable("nickname", nickname)
-            setVariable("verifyUrl", "$verifyUrl?token=$token")
-            setVariable("unsubscribeUrl", "")
-            setVariable("year", Year.now().toString())
-        }
-        emailPort.send(email, context)
+        val contextMap = mapOf(
+            "email" to email,
+            "nickname" to nickname,
+            "verifyUrl" to "$verifyUrl?token=$token",
+            "unsubscribeUrl" to "",
+            "year" to Year.now().toString()
+        )
+        emailPort.send(email, contextMap)
 
         return savedMember.id
     }
