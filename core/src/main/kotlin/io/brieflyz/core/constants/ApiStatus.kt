@@ -61,9 +61,8 @@ enum class ErrorStatus(
 
     // 404 Not Found
     USER_NOT_FOUND(404 notFound "해당 유저를 찾을 수 없습니다."),
-    USER_INFORMATION_NOT_FOUND(404 notFound "해당 유저에 대한 상세 정보를 조회할 수 없습니다."),
-    REDIS_KEY_NOT_FOUND(404 notFound "Redis에 해당 key가 존재하지 않습니다."),
     REFRESH_TOKEN_NOT_FOUND(404 notFound "로그인을 다시 진행해주세요."),
+    VERIFY_TOKEN_NOT_FOUND(404 notFound "인증 토큰이 만료되었습니다."),
     SUBSCRIPTION_NOT_FOUND(404 notFound "해당 구독 정보를 찾을 수 없습니다."),
 
     // 405 Method Not Allowed
