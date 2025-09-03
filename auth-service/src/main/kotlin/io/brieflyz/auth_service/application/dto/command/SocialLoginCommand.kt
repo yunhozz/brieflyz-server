@@ -1,7 +1,5 @@
 package io.brieflyz.auth_service.application.dto.command
 
-import org.springframework.security.oauth2.client.registration.ClientRegistration
-
 data class SocialLoginCommand private constructor(
     val provider: String,
     val providerId: String,
@@ -12,16 +10,12 @@ data class SocialLoginCommand private constructor(
     val attributes: Map<String, Any>
 ) {
     companion object {
-        fun of(attributes: Map<String, Any>, registration: ClientRegistration): SocialLoginCommand {
-            val userNameAttributeName = registration.providerDetails.userInfoEndpoint.userNameAttributeName
-            val provider = registration.registrationId
-
-            return when (OAuthProvider.of(provider)) {
+        fun of(attributes: Map<String, Any>, userNameAttributeName: String, provider: String): SocialLoginCommand =
+            when (OAuthProvider.of(provider)) {
                 OAuthProvider.GOOGLE -> ofGoogle(provider, userNameAttributeName, attributes)
                 OAuthProvider.KAKAO -> ofKakao(provider, userNameAttributeName, attributes)
                 OAuthProvider.NAVER -> ofNaver(provider, userNameAttributeName, attributes)
             }
-        }
 
         private fun ofGoogle(
             provider: String,

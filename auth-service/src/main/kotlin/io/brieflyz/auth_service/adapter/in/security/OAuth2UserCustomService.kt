@@ -25,7 +25,10 @@ class OAuth2UserCustomService(
         val oAuth2User = delegate.loadUser(userRequest)
         val registration = userRequest.clientRegistration
 
-        val command = SocialLoginCommand.of(oAuth2User.attributes, registration)
+        val userNameAttributeName = registration.providerDetails.userInfoEndpoint.userNameAttributeName
+        val provider = registration.registrationId
+
+        val command = SocialLoginCommand.of(oAuth2User.attributes, userNameAttributeName, provider)
         val result = socialLoginUseCase.loginOrRegisterSocialUser(command)
 
         return UserDetailsAdapter(result.email, result.roles, result.attributes)
