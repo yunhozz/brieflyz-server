@@ -1,23 +1,24 @@
 package io.brieflyz.subscription_service.service
 
 import io.brieflyz.core.beans.kafka.KafkaSender
+import io.brieflyz.subscription_service.application.service.MailProducer
+import io.brieflyz.subscription_service.application.service.SubscriptionService
 import io.brieflyz.subscription_service.common.constants.SubscriptionPlan
 import io.brieflyz.subscription_service.common.exception.AlreadyHaveSubscriptionException
 import io.brieflyz.subscription_service.common.exception.AlreadyHaveUnlimitedSubscriptionException
 import io.brieflyz.subscription_service.common.exception.SubscriptionNotFoundException
 import io.brieflyz.subscription_service.config.SubscriptionServiceProperties
-import io.brieflyz.subscription_service.model.dto.request.CreditCardDetailsRequest
-import io.brieflyz.subscription_service.model.dto.request.PaymentCreateRequest
-import io.brieflyz.subscription_service.model.dto.request.SubscriptionCreateRequest
-import io.brieflyz.subscription_service.model.dto.request.SubscriptionQueryRequest
-import io.brieflyz.subscription_service.model.dto.response.SubscriptionQueryResponse
-import io.brieflyz.subscription_service.model.entity.Payment
-import io.brieflyz.subscription_service.model.entity.PaymentDetails
-import io.brieflyz.subscription_service.model.entity.Subscription
-import io.brieflyz.subscription_service.repository.PaymentDetailsRepository
-import io.brieflyz.subscription_service.repository.PaymentRepository
-import io.brieflyz.subscription_service.repository.SubscriptionRepository
-import io.brieflyz.subscription_service.service.support.MailProducer
+import io.brieflyz.subscription_service.domain.model.Payment
+import io.brieflyz.subscription_service.domain.model.PaymentDetails
+import io.brieflyz.subscription_service.domain.model.Subscription
+import io.brieflyz.subscription_service.infrastructure.repository.PaymentDetailsJpaRepository
+import io.brieflyz.subscription_service.infrastructure.repository.PaymentJpaRepository
+import io.brieflyz.subscription_service.infrastructure.repository.SubscriptionJpaRepository
+import io.brieflyz.subscription_service.presentation.dto.request.CreditCardDetailsRequest
+import io.brieflyz.subscription_service.presentation.dto.request.PaymentCreateRequest
+import io.brieflyz.subscription_service.presentation.dto.request.SubscriptionCreateRequest
+import io.brieflyz.subscription_service.presentation.dto.request.SubscriptionQueryRequest
+import io.brieflyz.subscription_service.presentation.dto.response.SubscriptionQueryResponse
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -28,6 +29,7 @@ import org.mockito.BDDMockito.mock
 import org.mockito.BDDMockito.then
 import org.mockito.InjectMocks
 import org.mockito.Mock
+import org.mockito.Mockito.mock
 import org.mockito.Mockito.spy
 import org.mockito.junit.jupiter.MockitoExtension
 import org.springframework.data.domain.PageImpl
@@ -43,13 +45,13 @@ class SubscriptionServiceMockTest {
     private lateinit var subscriptionService: SubscriptionService
 
     @Mock
-    private lateinit var subscriptionRepository: SubscriptionRepository
+    private lateinit var subscriptionJpaRepository: SubscriptionJpaRepository
 
     @Mock
-    private lateinit var paymentRepository: PaymentRepository
+    private lateinit var paymentJpaRepository: PaymentJpaRepository
 
     @Mock
-    private lateinit var paymentDetailsRepository: PaymentDetailsRepository
+    private lateinit var paymentDetailsJpaRepository: PaymentDetailsJpaRepository
 
     @Mock
     private lateinit var kafkaSender: KafkaSender
@@ -106,10 +108,10 @@ class SubscriptionServiceMockTest {
             val paymentDetails = mock(PaymentDetails::class.java)
             val payment = mock(Payment::class.java)
 
-            given(subscriptionRepository.findByEmail(email)).willReturn(null)
-            given(subscriptionRepository.save(any(Subscription::class.java))).willReturn(subscription)
-            given(paymentRepository.save(any(Payment::class.java))).willReturn(payment)
-            given(paymentDetailsRepository.save(any(PaymentDetails::class.java))).willReturn(paymentDetails)
+            given(subscriptionJpaRepository.findByEmail(email)).willReturn(null)
+            given(subscriptionJpaRepository.save(any(Subscription::class.java))).willReturn(subscription)
+            given(paymentJpaRepository.save(any(Payment::class.java))).willReturn(payment)
+            given(paymentDetailsJpaRepository.save(any(PaymentDetails::class.java))).willReturn(paymentDetails)
 
             given(subscriptionServiceProperties.email).willReturn(
                 SubscriptionServiceProperties.EmailProperties(
@@ -123,10 +125,10 @@ class SubscriptionServiceMockTest {
 
             // then
             assertEquals(subscriptionId, result)
-            then(subscriptionRepository).should().findByEmail(email)
-            then(subscriptionRepository).should().save(any(Subscription::class.java))
-            then(paymentRepository).should().save(any(Payment::class.java))
-            then(paymentDetailsRepository).should().save(any(PaymentDetails::class.java))
+            then(subscriptionJpaRepository).should().findByEmail(email)
+            then(subscriptionJpaRepository).should().save(any(Subscription::class.java))
+            then(paymentJpaRepository).should().save(any(Payment::class.java))
+            then(paymentDetailsJpaRepository).should().save(any(PaymentDetails::class.java))
         }
 
         @Test
@@ -141,13 +143,13 @@ class SubscriptionServiceMockTest {
             val paymentDetails = mock(PaymentDetails::class.java)
             val payment = mock(Payment::class.java)
 
-            given(subscriptionRepository.findByEmail(email)).willReturn(existingSubscription)
+            given(subscriptionJpaRepository.findByEmail(email)).willReturn(existingSubscription)
             given(existingSubscription.isActivated()).willReturn(false)
             given(existingSubscription.isSubscriptionPlanEquals(SubscriptionPlan.UNLIMITED)).willReturn(false)
 
-            given(subscriptionRepository.save(any(Subscription::class.java))).willReturn(existingSubscription)
-            given(paymentRepository.save(any(Payment::class.java))).willReturn(payment)
-            given(paymentDetailsRepository.save(any(PaymentDetails::class.java))).willReturn(paymentDetails)
+            given(subscriptionJpaRepository.save(any(Subscription::class.java))).willReturn(existingSubscription)
+            given(paymentJpaRepository.save(any(Payment::class.java))).willReturn(payment)
+            given(paymentDetailsJpaRepository.save(any(PaymentDetails::class.java))).willReturn(paymentDetails)
 
             given(subscriptionServiceProperties.email).willReturn(
                 SubscriptionServiceProperties.EmailProperties(
@@ -173,7 +175,7 @@ class SubscriptionServiceMockTest {
             val request = createSubscriptionRequest()
             val existingSubscription = spy(createSubscription(1L, email, SubscriptionPlan.UNLIMITED))
 
-            given(subscriptionRepository.findByEmail(email)).willReturn(existingSubscription)
+            given(subscriptionJpaRepository.findByEmail(email)).willReturn(existingSubscription)
             given(existingSubscription.isSubscriptionPlanEquals(SubscriptionPlan.UNLIMITED)).willReturn(true)
 
             // when & then
@@ -190,7 +192,7 @@ class SubscriptionServiceMockTest {
             val request = createSubscriptionRequest()
             val existingSubscription = spy(createSubscription(1L, email))
 
-            given(subscriptionRepository.findByEmail(email)).willReturn(existingSubscription)
+            given(subscriptionJpaRepository.findByEmail(email)).willReturn(existingSubscription)
             given(existingSubscription.isSubscriptionPlanEquals(SubscriptionPlan.UNLIMITED)).willReturn(false)
             given(existingSubscription.isActivated()).willReturn(true)
 
@@ -210,14 +212,14 @@ class SubscriptionServiceMockTest {
             val subscriptionId = 100L
             val queryResponse = mock(SubscriptionQueryResponse::class.java)
 
-            given(subscriptionRepository.findWithPaymentsByIdQuery(subscriptionId)).willReturn(queryResponse)
+            given(subscriptionJpaRepository.findWithPaymentsByIdQuery(subscriptionId)).willReturn(queryResponse)
 
             // when
             val result = subscriptionService.getSubscriptionDetailsById(subscriptionId)
 
             // then
             assertEquals(queryResponse, result)
-            then(subscriptionRepository).should().findWithPaymentsByIdQuery(subscriptionId)
+            then(subscriptionJpaRepository).should().findWithPaymentsByIdQuery(subscriptionId)
         }
 
         @Test
@@ -226,14 +228,14 @@ class SubscriptionServiceMockTest {
             // given
             val subscriptionId = 999L
 
-            given(subscriptionRepository.findWithPaymentsByIdQuery(subscriptionId)).willReturn(null)
+            given(subscriptionJpaRepository.findWithPaymentsByIdQuery(subscriptionId)).willReturn(null)
 
             // when & then
             val exception = assertFailsWith<SubscriptionNotFoundException> {
                 subscriptionService.getSubscriptionDetailsById(subscriptionId)
             }
             assertEquals("해당 구독 정보를 찾을 수 없습니다. Subscription ID : $subscriptionId", exception.message)
-            then(subscriptionRepository).should().findWithPaymentsByIdQuery(subscriptionId)
+            then(subscriptionJpaRepository).should().findWithPaymentsByIdQuery(subscriptionId)
         }
 
         @Test
@@ -246,14 +248,14 @@ class SubscriptionServiceMockTest {
                 mock(SubscriptionQueryResponse::class.java)
             )
 
-            given(subscriptionRepository.findListByMemberEmailQuery(email)).willReturn(subscriptions)
+            given(subscriptionJpaRepository.findListByMemberEmailQuery(email)).willReturn(subscriptions)
 
             // when
             val result = subscriptionService.getSubscriptionListByMemberEmail(email)
 
             // then
             assertEquals(2, result.size)
-            then(subscriptionRepository).should().findListByMemberEmailQuery(email)
+            then(subscriptionJpaRepository).should().findListByMemberEmailQuery(email)
         }
 
         @Test
@@ -265,14 +267,14 @@ class SubscriptionServiceMockTest {
             val subscriptions = listOf(mock(SubscriptionQueryResponse::class.java))
             val page = PageImpl(subscriptions, pageable, 1)
 
-            given(subscriptionRepository.findPageWithPaymentsQuery(request, pageable)).willReturn(page)
+            given(subscriptionJpaRepository.findPageWithPaymentsQuery(request, pageable)).willReturn(page)
 
             // when
             val result = subscriptionService.getSubscriptionPageByQuery(request, pageable)
 
             // then
             assertEquals(1, result.size)
-            then(subscriptionRepository).should().findPageWithPaymentsQuery(request, pageable)
+            then(subscriptionJpaRepository).should().findPageWithPaymentsQuery(request, pageable)
         }
     }
 
@@ -285,7 +287,7 @@ class SubscriptionServiceMockTest {
             val subscriptionId = 1L
             val subscription = spy(createSubscription(subscriptionId))
 
-            given(subscriptionRepository.findById(subscriptionId)).willReturn(Optional.of(subscription))
+            given(subscriptionJpaRepository.findById(subscriptionId)).willReturn(Optional.of(subscription))
             given(subscription.isActivated()).willReturn(true)
 
             // when
@@ -294,7 +296,7 @@ class SubscriptionServiceMockTest {
             // then
             assertEquals(subscriptionId, result)
             then(subscription).should().delete()
-            then(subscriptionRepository).should().findById(subscriptionId)
+            then(subscriptionJpaRepository).should().findById(subscriptionId)
         }
 
         @Test
@@ -302,14 +304,14 @@ class SubscriptionServiceMockTest {
         fun cancelSubscriptionFail() {
             // given
             val subscriptionId = 999L
-            given(subscriptionRepository.findById(subscriptionId)).willReturn(Optional.empty())
+            given(subscriptionJpaRepository.findById(subscriptionId)).willReturn(Optional.empty())
 
             // when & then
             val exception = assertFailsWith<SubscriptionNotFoundException> {
                 subscriptionService.cancelSubscriptionById(subscriptionId)
             }
             assertEquals("해당 구독 정보를 찾을 수 없습니다. Subscription ID: $subscriptionId", exception.message)
-            then(subscriptionRepository).should().findById(subscriptionId)
+            then(subscriptionJpaRepository).should().findById(subscriptionId)
         }
 
         @Test
@@ -319,7 +321,7 @@ class SubscriptionServiceMockTest {
             val subscriptionId = 1L
             val subscription = spy(createSubscription(subscriptionId))
 
-            given(subscriptionRepository.findById(subscriptionId)).willReturn(Optional.of(subscription))
+            given(subscriptionJpaRepository.findById(subscriptionId)).willReturn(Optional.of(subscription))
             given(subscription.isActivated()).willReturn(false)
 
             // when & then
@@ -340,17 +342,17 @@ class SubscriptionServiceMockTest {
             val subscription = createSubscription(subscriptionId)
             val payments = listOf(mock(Payment::class.java), mock(Payment::class.java))
 
-            given(subscriptionRepository.findById(subscriptionId)).willReturn(Optional.of(subscription))
-            given(paymentRepository.findAllBySubscription(subscription)).willReturn(payments)
+            given(subscriptionJpaRepository.findById(subscriptionId)).willReturn(Optional.of(subscription))
+            given(paymentJpaRepository.findAllBySubscription(subscription)).willReturn(payments)
 
             // when
             subscriptionService.hardDeleteSubscriptionById(subscriptionId)
 
             // then
-            then(subscriptionRepository).should().findById(subscriptionId)
-            then(paymentRepository).should().findAllBySubscription(subscription)
-            then(subscriptionRepository).should().delete(subscription)
-            then(paymentRepository).should().deleteAllInBatch(payments)
+            then(subscriptionJpaRepository).should().findById(subscriptionId)
+            then(paymentJpaRepository).should().findAllBySubscription(subscription)
+            then(subscriptionJpaRepository).should().delete(subscription)
+            then(paymentJpaRepository).should().deleteAllInBatch(payments)
         }
 
         @Test
@@ -358,14 +360,14 @@ class SubscriptionServiceMockTest {
         fun hardDeleteSubscriptionFail() {
             // given
             val subscriptionId = 999L
-            given(subscriptionRepository.findById(subscriptionId)).willReturn(Optional.empty())
+            given(subscriptionJpaRepository.findById(subscriptionId)).willReturn(Optional.empty())
 
             // when & then
             val exception = assertFailsWith<SubscriptionNotFoundException> {
                 subscriptionService.hardDeleteSubscriptionById(subscriptionId)
             }
             assertEquals("해당 구독 정보를 찾을 수 없습니다. Subscription ID: $subscriptionId", exception.message)
-            then(subscriptionRepository).should().findById(subscriptionId)
+            then(subscriptionJpaRepository).should().findById(subscriptionId)
         }
     }
 }

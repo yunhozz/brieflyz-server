@@ -1,5 +1,6 @@
 package io.brieflyz.subscription_service.config
 
+import io.brieflyz.subscription_service.common.props.SubscriptionServiceProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.kafka.core.KafkaAdmin.NewTopics
