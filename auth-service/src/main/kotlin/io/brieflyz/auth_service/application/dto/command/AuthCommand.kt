@@ -5,3 +5,8 @@ data class SignUpCommand(
     val password: String,
     val nickname: String
 )
+
+data class SignInCommand(
+    val email: String,
+    val password: String
+)

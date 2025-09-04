@@ -19,26 +19,17 @@ class MemberRepositoryAdapter(
 
     override fun existsByEmail(email: String): Boolean = memberRepository.existsByEmail(email)
 
-    override fun findMemberById(memberId: Long): Member? {
-        val memberEntity = memberRepository.findByIdOrNull(memberId)
-        return memberEntity?.toDomain()
-    }
+    override fun findMemberById(memberId: Long): Member? = memberRepository.findByIdOrNull(memberId)?.toDomain()
 
-    override fun findMemberByEmail(email: String): Member? {
-        val memberEntity = memberRepository.findByEmail(email)
-        return memberEntity?.toDomain()
-    }
+    override fun findMemberByEmail(email: String): Member? = memberRepository.findByEmail(email)?.toDomain()
 
-    override fun findAllMembers(): List<Member> {
-        val memberEntities = memberRepository.findAll()
-        return memberEntities.map { it.toDomain() }
-    }
+    override fun findAllMembers(): List<Member> = memberRepository.findAll().map { it.toDomain() }
 
     override fun delete(member: Member) {
         memberRepository.delete(member.toEntity())
     }
 }
 
-fun Member.toEntity() = MemberEntity(id, email, password, nickname, loginType, roles)
+private fun Member.toEntity() = MemberEntity(id, email, password, nickname, loginType, roles)
 
-fun MemberEntity.toDomain() = Member.of(id, email, password, nickname, loginType, roles)
+private fun MemberEntity.toDomain() = Member.of(id, email, password, nickname, loginType, roles)
