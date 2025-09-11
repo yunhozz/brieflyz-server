@@ -6,6 +6,6 @@ interface SubscriptionRepositoryPort {
     fun save(subscription: Subscription): Subscription
     fun findById(subscriptionId: Long): Subscription?
     fun findByEmail(email: String): Subscription?
-    fun delete(subscription: Subscription)
     fun softDeleteInIdsQuery(subscriptionIds: List<Long>)
+    fun deleteById(subscriptionId: Long)
 }

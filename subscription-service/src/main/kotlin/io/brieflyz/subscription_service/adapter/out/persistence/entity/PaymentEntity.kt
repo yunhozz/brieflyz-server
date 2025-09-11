@@ -24,6 +24,6 @@ class PaymentEntity(
     val charge: Double,
     @Enumerated(EnumType.STRING)
     val method: PaymentMethod,
-    @OneToOne(fetch = FetchType.EAGER, cascade = [CascadeType.REMOVE])
+    @OneToOne(fetch = FetchType.EAGER, cascade = [CascadeType.REMOVE], orphanRemoval = true)
     val details: PaymentDetailsEntity
 ) : BaseEntity()

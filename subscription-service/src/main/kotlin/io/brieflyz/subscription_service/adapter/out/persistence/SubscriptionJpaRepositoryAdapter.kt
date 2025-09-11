@@ -3,6 +3,7 @@ package io.brieflyz.subscription_service.adapter.out.persistence
 import io.brieflyz.subscription_service.adapter.out.persistence.entity.SubscriptionEntity
 import io.brieflyz.subscription_service.adapter.out.persistence.repository.SubscriptionRepository
 import io.brieflyz.subscription_service.application.port.out.SubscriptionRepositoryPort
+import io.brieflyz.subscription_service.common.exception.SubscriptionNotFoundException
 import io.brieflyz.subscription_service.domain.model.Subscription
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Component
@@ -23,12 +24,14 @@ class SubscriptionJpaRepositoryAdapter(
     override fun findByEmail(email: String): Subscription? =
         subscriptionRepository.findByEmail(email)?.toDomain()
 
-    override fun delete(subscription: Subscription) {
-        subscriptionRepository.delete(subscription.toEntity())
-    }
-
     override fun softDeleteInIdsQuery(subscriptionIds: List<Long>) {
         subscriptionRepository.softDeleteInIdsQuery(subscriptionIds)
+    }
+
+    override fun deleteById(subscriptionId: Long) {
+        val subscriptionEntity = subscriptionRepository.findByIdOrNull(subscriptionId)
+            ?: throw SubscriptionNotFoundException("Subscription ID=$subscriptionId")
+        subscriptionRepository.delete(subscriptionEntity)
     }
 }
 

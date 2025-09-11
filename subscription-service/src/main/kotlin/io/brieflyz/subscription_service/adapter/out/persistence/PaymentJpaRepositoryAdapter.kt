@@ -20,9 +20,9 @@ class PaymentJpaRepositoryAdapter(
     override fun findAllBySubscription(subscription: Subscription): List<Payment> =
         paymentRepository.findAllBySubscription(subscription.toEntity()).map { it.toDomain() }
 
-    override fun deleteAll(payments: List<Payment>) {
-        val paymentEntities = payments.map { it.toEntity() }
-        paymentRepository.deleteAllInBatch(paymentEntities)
+    override fun deleteAllBySubscriptionId(subscriptionId: Long) {
+        val paymentEntities = paymentRepository.findAllBySubscriptionId(subscriptionId)
+        paymentRepository.deleteAll(paymentEntities) // cascade remove 'PaymentDetails'
     }
 }
 

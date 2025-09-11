@@ -6,5 +6,5 @@ import io.brieflyz.subscription_service.domain.model.Subscription
 interface PaymentRepositoryPort {
     fun save(payment: Payment): Payment
     fun findAllBySubscription(subscription: Subscription): List<Payment>
-    fun deleteAll(payments: List<Payment>)
+    fun deleteAllBySubscriptionId(subscriptionId: Long)
 }

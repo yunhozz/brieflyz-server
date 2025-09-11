@@ -181,14 +181,8 @@ class DeleteSubscriptionService(
 
     @Transactional
     override fun delete(subscriptionId: Long) {
-        val subscription = subscriptionRepositoryPort.findById(subscriptionId)
-            ?: throw SubscriptionNotFoundException("Subscription ID=$subscriptionId")
-        println("subscription.id = ${subscription.id}")
-        val payments = paymentRepositoryPort.findAllBySubscription(subscription)
-        payments.forEach { payment -> println("payment.id = ${payment.id}") }
-
-        paymentRepositoryPort.deleteAll(payments)
-        subscriptionRepositoryPort.delete(subscription)
+        paymentRepositoryPort.deleteAllBySubscriptionId(subscriptionId)
+        subscriptionRepositoryPort.deleteById(subscriptionId)
 
         log.info("Subscription and payments have been successfully deleted.")
     }
