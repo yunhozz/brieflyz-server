@@ -1,7 +1,6 @@
 package io.brieflyz.subscription_service.application.service
 
-import io.brieflyz.core.constants.KafkaTopic
-import io.brieflyz.core.dto.kafka.SubscriptionMessage
+import io.brieflyz.core.dto.message.SubscriptionMessage
 import io.brieflyz.core.utils.logger
 import io.brieflyz.subscription_service.application.dto.command.CreateSubscriptionCommand
 import io.brieflyz.subscription_service.application.dto.query.SubscriptionQuery
@@ -103,7 +102,7 @@ class CreateSubscriptionService(
         emailPort.send(email, EMAIL_SUBJECT, TEMPLATE_NAME, contextMap)
 
         val message = SubscriptionMessage(email, isCreated = true)
-        messagePort.send(KafkaTopic.SUBSCRIPTION_TOPIC, message)
+        messagePort.sendSubscriptionMessage(message)
 
         return savedSubscription.id
     }

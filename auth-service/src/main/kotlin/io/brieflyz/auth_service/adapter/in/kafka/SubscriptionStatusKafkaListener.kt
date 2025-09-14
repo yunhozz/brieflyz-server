@@ -2,8 +2,8 @@ package io.brieflyz.auth_service.adapter.`in`.kafka
 
 import io.brieflyz.auth_service.application.port.`in`.UpdateSubscriptionStatusUseCase
 import io.brieflyz.core.constants.KafkaTopic
-import io.brieflyz.core.dto.kafka.KafkaMessage
-import io.brieflyz.core.dto.kafka.SubscriptionMessage
+import io.brieflyz.core.dto.message.KafkaMessage
+import io.brieflyz.core.dto.message.SubscriptionMessage
 import io.brieflyz.core.utils.logger
 import org.springframework.kafka.annotation.KafkaListener
 import org.springframework.kafka.support.Acknowledgment

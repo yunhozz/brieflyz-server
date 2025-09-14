@@ -1,6 +1,6 @@
 package io.brieflyz.core.beans.kafka
 
-import io.brieflyz.core.dto.kafka.KafkaMessage
+import io.brieflyz.core.dto.message.KafkaMessage
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.clients.producer.ProducerConfig
 import org.apache.kafka.common.serialization.StringDeserializer
@@ -47,17 +47,18 @@ class KafkaConfig(
         DefaultKafkaConsumerFactory(kafkaConsumerProperties())
 
     @Bean
-    fun kafkaListenerContainerFactory() = ConcurrentKafkaListenerContainerFactory<String, KafkaMessage>().apply {
-        consumerFactory = kafkaConsumerFactory()
-        containerProperties.ackMode = ContainerProperties.AckMode.MANUAL
-        setConcurrency(3)
-        setCommonErrorHandler(
-            DefaultErrorHandler(
-                DeadLetterPublishingRecoverer(kafkaTemplate()),
-                FixedBackOff(1000, 3)
+    fun kafkaListenerContainerFactory() =
+        ConcurrentKafkaListenerContainerFactory<String, KafkaMessage>().apply {
+            consumerFactory = kafkaConsumerFactory()
+            containerProperties.ackMode = ContainerProperties.AckMode.MANUAL
+            setConcurrency(3)
+            setCommonErrorHandler(
+                DefaultErrorHandler(
+                    DeadLetterPublishingRecoverer(kafkaTemplate()),
+                    FixedBackOff(1000, 3)
+                )
             )
-        )
-    }
+        }
 
     @Bean
     fun kafkaProducerProperties() = mapOf(

@@ -1,7 +1,6 @@
 package io.brieflyz.subscription_service.application.service
 
-import io.brieflyz.core.constants.KafkaTopic
-import io.brieflyz.core.dto.kafka.SubscriptionMessage
+import io.brieflyz.core.dto.message.SubscriptionMessage
 import io.brieflyz.core.utils.logger
 import io.brieflyz.subscription_service.application.dto.command.SaveExpiredSubscriptionsCommand
 import io.brieflyz.subscription_service.application.dto.command.SendSubscriptionExpiredEventCommand
@@ -85,7 +84,7 @@ class SendSubscriptionExpiredEventService(
             contextMap.putAll(mapOf("email" to email, "planName" to planName))
 
             val message = SubscriptionMessage(email, isCreated = false)
-            messagePort.send(KafkaTopic.SUBSCRIPTION_TOPIC, message)
+            messagePort.sendSubscriptionMessage(message)
 
             val future = emailPort.send(email, EMAIL_SUBJECT, TEMPLATE_NAME, contextMap)
             futures.add(future)

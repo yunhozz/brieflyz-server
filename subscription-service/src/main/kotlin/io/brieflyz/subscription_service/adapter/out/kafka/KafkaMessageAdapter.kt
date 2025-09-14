@@ -1,20 +1,23 @@
 package io.brieflyz.subscription_service.adapter.out.kafka
 
-import io.brieflyz.core.dto.kafka.KafkaMessage
+import io.brieflyz.core.constants.KafkaTopic
+import io.brieflyz.core.dto.message.KafkaMessage
+import io.brieflyz.core.dto.message.SubscriptionMessage
 import io.brieflyz.core.utils.logger
 import io.brieflyz.subscription_service.application.port.out.MessagePort
 import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.stereotype.Component
 
 @Component
-class KafkaAdapter(
+class KafkaMessageAdapter(
     private val kafkaTemplate: KafkaTemplate<String, KafkaMessage>
 ) : MessagePort {
 
     private val log = logger()
 
-    override fun send(topic: String, message: KafkaMessage) {
-        kafkaTemplate.send(topic, message)
+    override fun sendSubscriptionMessage(message: Any) {
+        require(message is SubscriptionMessage)
+        kafkaTemplate.send(KafkaTopic.SUBSCRIPTION_TOPIC, message)
             .thenAccept { result ->
                 val metadata = result.recordMetadata
                 log.debug(

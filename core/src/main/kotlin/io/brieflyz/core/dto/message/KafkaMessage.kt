@@ -1,4 +1,4 @@
-package io.brieflyz.core.dto.kafka
+package io.brieflyz.core.dto.message
 
 import io.brieflyz.core.constants.AiProvider
 import io.brieflyz.core.constants.DocumentType
@@ -27,4 +27,10 @@ data class DocumentStructureResponseMessage(
     val documentType: DocumentType,
     val structure: Any?,
     val errMsg: String?
+) : KafkaMessage
+
+data class FailedKafkaMessage(
+    val originalMessage: String,
+    val errorMessage: String,
+    val timestamp: Long
 ) : KafkaMessage
