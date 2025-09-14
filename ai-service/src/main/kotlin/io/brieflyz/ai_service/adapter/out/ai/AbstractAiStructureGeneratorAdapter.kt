@@ -1,15 +1,15 @@
-package io.brieflyz.ai_service.service.ai.impl
+package io.brieflyz.ai_service.adapter.out.ai
 
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
-import io.brieflyz.ai_service.service.ai.AiStructureGenerator
+import io.brieflyz.ai_service.application.port.out.AiStructureGeneratorPort
 import io.brieflyz.core.utils.logger
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 
-abstract class AbstractAiStructureGenerator(
+abstract class AbstractAiStructureGeneratorAdapter(
     private val objectMapper: ObjectMapper
-) : AiStructureGenerator {
+) : AiStructureGeneratorPort {
 
     private val log = logger()
 
