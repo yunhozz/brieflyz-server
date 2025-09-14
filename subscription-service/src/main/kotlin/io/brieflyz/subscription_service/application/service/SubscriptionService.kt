@@ -117,7 +117,7 @@ class CreateSubscriptionService(
 }
 
 @Service
-class FindSubscriptionDetailsService(
+class QuerySubscriptionDetailsService(
     private val subscriptionQueryPort: SubscriptionQueryPort
 ) : QuerySubscriptionDetailsUseCase {
 
@@ -128,7 +128,7 @@ class FindSubscriptionDetailsService(
 }
 
 @Service
-class FindSubscriptionListService(
+class QuerySubscriptionListService(
     private val subscriptionQueryPort: SubscriptionQueryPort
 ) : QuerySubscriptionListUseCase {
 
@@ -138,7 +138,7 @@ class FindSubscriptionListService(
 }
 
 @Service
-class FindSubscriptionPageService(
+class QuerySubscriptionPageService(
     private val subscriptionQueryPort: SubscriptionQueryPort
 ) : QuerySubscriptionPageUseCase {
 

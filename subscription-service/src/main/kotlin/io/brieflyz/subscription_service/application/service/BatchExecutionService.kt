@@ -1,6 +1,5 @@
 package io.brieflyz.subscription_service.application.service
 
-import io.brieflyz.core.beans.kafka.KafkaSender
 import io.brieflyz.core.constants.KafkaTopic
 import io.brieflyz.core.dto.kafka.SubscriptionMessage
 import io.brieflyz.core.utils.logger
@@ -12,6 +11,7 @@ import io.brieflyz.subscription_service.application.port.`in`.SendSubscriptionEx
 import io.brieflyz.subscription_service.application.port.`in`.SoftDeleteSubscriptionsUseCase
 import io.brieflyz.subscription_service.application.port.out.EmailPort
 import io.brieflyz.subscription_service.application.port.out.ExpiredSubscriptionRepositoryPort
+import io.brieflyz.subscription_service.application.port.out.MessagePort
 import io.brieflyz.subscription_service.application.port.out.SubscriptionRepositoryPort
 import io.brieflyz.subscription_service.common.props.SubscriptionServiceProperties
 import io.brieflyz.subscription_service.domain.model.ExpiredSubscription
@@ -52,7 +52,7 @@ class SoftDeleteSubscriptionsService(
 @Service
 class SendSubscriptionExpiredEventService(
     private val emailPort: EmailPort,
-    private val kafkaSender: KafkaSender,
+    private val messagePort: MessagePort,
     private val props: SubscriptionServiceProperties
 ) : SendSubscriptionExpiredEventUseCase {
 
@@ -85,7 +85,7 @@ class SendSubscriptionExpiredEventService(
             contextMap.putAll(mapOf("email" to email, "planName" to planName))
 
             val message = SubscriptionMessage(email, isCreated = false)
-            kafkaSender.send(KafkaTopic.SUBSCRIPTION_TOPIC, message)
+            messagePort.send(KafkaTopic.SUBSCRIPTION_TOPIC, message)
 
             val future = emailPort.send(email, EMAIL_SUBJECT, TEMPLATE_NAME, contextMap)
             futures.add(future)
