@@ -8,6 +8,7 @@ import io.brieflyz.subscription_service.common.exception.SubscriptionServiceExce
 import org.springframework.beans.BeansException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.validation.BindException
 import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.ResponseStatus
@@ -28,9 +29,10 @@ class SubscriptionServiceExceptionHandler {
             .also { log.warn("[구독 서비스 예외] ${e.localizedMessage}") }
     }
 
-    @ExceptionHandler(MethodArgumentNotValidException::class)
+    @ExceptionHandler(MethodArgumentNotValidException::class, BindException::class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    fun handleMethodArgumentNotValidException(e: MethodArgumentNotValidException): ApiResponse<ErrorData> {
+    fun handleValidationExceptions(e: Exception): ApiResponse<ErrorData> {
+        require(e is MethodArgumentNotValidException || e is BindException)
         val fieldErrors = ErrorData.FieldError.fromBindingResult(e.bindingResult)
         return ApiResponse.fail(ErrorStatus.BAD_REQUEST, ErrorData.of(e, fieldErrors))
             .also { log.warn("[Validation 오류] ${e.localizedMessage}") }
