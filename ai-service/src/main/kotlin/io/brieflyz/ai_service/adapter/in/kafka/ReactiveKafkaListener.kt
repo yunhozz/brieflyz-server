@@ -1,5 +1,6 @@
 package io.brieflyz.ai_service.adapter.`in`.kafka
 
+import io.brieflyz.ai_service.application.dto.command.CreateStructureCommand
 import io.brieflyz.ai_service.application.port.`in`.GenerateAiStructureUseCase
 import io.brieflyz.core.constants.KafkaTopic
 import io.brieflyz.core.dto.message.DocumentStructureRequestMessage
@@ -31,13 +32,8 @@ class ReactiveKafkaListener(
                 val message = record.value() as DocumentStructureRequestMessage
                 val (aiProvider, documentId, title, content, documentType) = message
 
-                generateAiStructureUseCase.createStructureAndResponse(
-                    aiProvider,
-                    documentId,
-                    documentType,
-                    title,
-                    content
-                )
+                val command = CreateStructureCommand(aiProvider, documentId, documentType, title, content)
+                generateAiStructureUseCase.createStructureAndResponse(command)
             }
             .retryWhen(Retry.backoff(3, Duration.ofSeconds(5)))
             .subscribe()

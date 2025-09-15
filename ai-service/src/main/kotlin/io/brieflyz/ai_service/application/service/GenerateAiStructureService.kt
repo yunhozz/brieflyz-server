@@ -1,8 +1,8 @@
 package io.brieflyz.ai_service.application.service
 
+import io.brieflyz.ai_service.application.dto.command.CreateStructureCommand
 import io.brieflyz.ai_service.application.port.`in`.GenerateAiStructureUseCase
 import io.brieflyz.ai_service.application.port.out.MessagePort
-import io.brieflyz.core.constants.AiProvider
 import io.brieflyz.core.constants.DocumentType
 import io.brieflyz.core.dto.message.DocumentStructureResponseMessage
 import io.brieflyz.core.utils.logger
@@ -17,14 +17,10 @@ class GenerateAiStructureService(
 
     private val log = logger()
 
-    override fun createStructureAndResponse(
-        aiProvider: AiProvider,
-        documentId: String,
-        documentType: DocumentType,
-        title: String,
-        content: String
-    ): Mono<Void> {
+    override fun createStructureAndResponse(command: CreateStructureCommand): Mono<Void> {
+        val (aiProvider, documentId, documentType, title, content) = command
         val aiStructureGeneratorPort = aiStructureGeneratorPortFactory.createByProvider(aiProvider)
+
         return when (documentType) {
             DocumentType.EXCEL -> aiStructureGeneratorPort.generateExcelStructure(title, content)
             DocumentType.POWERPOINT -> aiStructureGeneratorPort.generatePptStructure(title, content)
