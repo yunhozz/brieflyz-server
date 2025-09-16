@@ -4,7 +4,8 @@ import io.brieflyz.core.constants.KafkaTopic
 import io.brieflyz.core.dto.message.DocumentStructureResponseMessage
 import io.brieflyz.core.dto.message.KafkaMessage
 import io.brieflyz.core.utils.logger
-import io.brieflyz.document_service.application.service.DocumentGeneratorPortFactory
+import io.brieflyz.document_service.application.dto.command.DocumentGenerateCommand
+import io.brieflyz.document_service.application.port.`in`.DocumentGenerateUseCase
 import org.springframework.boot.context.event.ApplicationReadyEvent
 import org.springframework.context.event.EventListener
 import org.springframework.kafka.core.reactive.ReactiveKafkaConsumerTemplate
@@ -15,7 +16,7 @@ import java.time.Duration
 @Component
 class ReactiveKafkaListener(
     private val reactiveKafkaConsumerTemplate: ReactiveKafkaConsumerTemplate<String, KafkaMessage>,
-    private val documentGeneratorPortFactory: DocumentGeneratorPortFactory
+    private val documentGenerateUseCase: DocumentGenerateUseCase
 ) {
     private val log = logger()
 
@@ -29,16 +30,15 @@ class ReactiveKafkaListener(
             }
             .flatMap { record ->
                 val message = record.value() as DocumentStructureResponseMessage
-                val (documentId, title, documentType, structure, errMsg) = message
-                val documentGenerator = documentGeneratorPortFactory.createByDocumentType(documentType)
+                val command = DocumentGenerateCommand(
+                    documentId = message.documentId,
+                    title = message.title,
+                    documentType = message.documentType,
+                    structure = message.structure,
+                    errMsg = message.errMsg
+                )
 
-                if (errMsg.isNullOrBlank()) {
-                    log.info("Start generating document. ID=$documentId, title=$title")
-                    documentGenerator.generateDocument(documentId, title, structure)
-                } else {
-                    log.error("Error while generating structure from AI server. Error message=$errMsg")
-                    documentGenerator.updateDocumentFailed(documentId, errMsg)
-                }
+                documentGenerateUseCase.generate(command)
             }
             .retryWhen(Retry.backoff(3, Duration.ofSeconds(5)))
             .subscribe()
