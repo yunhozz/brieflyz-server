@@ -1,7 +1,7 @@
 package io.brieflyz.document_service.adapter.out.kafka
 
 import io.brieflyz.core.constants.KafkaTopic
-import io.brieflyz.core.dto.message.DocumentStructureResponseMessage
+import io.brieflyz.core.dto.message.DocumentStructureRequestMessage
 import io.brieflyz.core.dto.message.FailedKafkaMessage
 import io.brieflyz.core.dto.message.KafkaMessage
 import io.brieflyz.core.utils.logger
@@ -21,8 +21,8 @@ class KafkaMessageAdapter(
     private val log = logger()
 
     override fun sendDocumentStructureRequestMessage(message: Any): Mono<SenderResult<Void>> {
-        require(message is DocumentStructureResponseMessage)
-        return reactiveKafkaProducerTemplate.send(KafkaTopic.DOCUMENT_STRUCTURE_RESPONSE_TOPIC, message)
+        require(message is DocumentStructureRequestMessage)
+        return reactiveKafkaProducerTemplate.send(KafkaTopic.DOCUMENT_STRUCTURE_REQUEST_TOPIC, message)
             .doOnNext { result ->
                 val metadata = result.recordMetadata()
                 log.debug(
