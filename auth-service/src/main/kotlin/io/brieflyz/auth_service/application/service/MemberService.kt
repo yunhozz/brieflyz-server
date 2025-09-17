@@ -95,6 +95,7 @@ class UpdateSubscriptionStatusService(
         val member = memberRepositoryPort.findMemberByEmail(email)
             ?: throw UserNotFoundException("Email=$email")
         member.updateBySubscription(isCreated)
+        memberRepositoryPort.save(member)
     }
 }
 
