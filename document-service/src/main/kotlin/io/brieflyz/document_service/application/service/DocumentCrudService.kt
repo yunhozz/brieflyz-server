@@ -25,7 +25,7 @@ import org.springframework.transaction.annotation.Transactional
 import reactor.core.publisher.Mono
 import java.net.URI
 import java.nio.file.Paths
-import java.util.*
+import java.util.UUID
 
 @Service
 class CreateDocumentWithAiService(
@@ -87,7 +87,7 @@ class UpdateDocumentStatusService(
             .flatMap { document ->
                 val (_, status, errorMessage) = command
                 document.updateStatus(status, errorMessage)
-                documentRepositoryPort.save(document)
+                documentRepositoryPort.updateStatus(document)
             }
             .then()
 }
@@ -106,16 +106,16 @@ class UpdateFileInfoService(
         return documentRepositoryPort.findByDocumentId(documentId)
             .flatMap { document ->
                 document.updateForComplete(fileName, fileUrl, downloadUrl)
-                log.debug("Document info={}", document.toString())
-                documentRepositoryPort.save(document)
+                log.debug("Document info={}", document.toResult())
+                documentRepositoryPort.updateFileInfo(document)
             }
             .doOnSuccess {
                 log.info(
                     "Document update success. " +
-                            "ID=${it.documentId}, " +
-                            "title=${it.title}, " +
-                            "file name=${it.fileName}, " +
-                            "file URL=${it.fileUrl}"
+                            "ID=$documentId, " +
+                            "file name=$fileName, " +
+                            "file URL=$fileUrl, " +
+                            "download URL=$downloadUrl"
                 )
             }
             .onErrorResume { ex ->
@@ -173,7 +173,7 @@ class CreateDocumentResourceService(
 }
 
 private fun Document.toResult() = DocumentResult(
-    documentId = this.documentId,
+    documentId = this.documentId.toString(),
     title = this.title,
     fileName = this.fileName,
     fileUrl = this.fileUrl,

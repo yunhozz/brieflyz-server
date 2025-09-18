@@ -24,6 +24,20 @@ class DocumentR2dbcRepositoryAdapter(
     override fun findAllByUsernameOrderByUpdatedAtDesc(username: String): Flux<Document> =
         documentR2dbcRepository.findAllByUsernameOrderByUpdatedAtDesc(username)
             .map { it.toDomain() }
+
+    override fun updateStatus(updatedDocument: Document): Mono<Void> =
+        documentR2dbcRepository.updateStatus(
+            status = updatedDocument.status,
+            errorMessage = updatedDocument.errorMessage
+        ).then()
+
+    override fun updateFileInfo(updatedDocument: Document): Mono<Void> =
+        documentR2dbcRepository.updateFileInfo(
+            documentId = updatedDocument.documentId,
+            fileName = updatedDocument.fileName,
+            fileUrl = updatedDocument.fileUrl,
+            downloadUrl = updatedDocument.downloadUrl
+        ).then()
 }
 
 private fun Document.toEntity() = DocumentEntity(
@@ -42,5 +56,11 @@ private fun DocumentEntity.toDomain() = Document(
     documentId = this.documentId!!,
     username = this.username,
     title = this.title,
-    type = this.type
+    type = this.type,
+    status = this.status,
+    fileName = this.fileName,
+    fileUrl = this.fileUrl,
+    downloadUrl = this.downloadUrl,
+    errorMessage = this.errorMessage,
+    createdAt = this.createdAt
 )

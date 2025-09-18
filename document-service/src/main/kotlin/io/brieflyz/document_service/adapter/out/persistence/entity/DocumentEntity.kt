@@ -10,26 +10,24 @@ import org.springframework.data.relational.core.mapping.Table
 import java.time.LocalDateTime
 
 @Table(name = "document")
-class DocumentEntity(
+data class DocumentEntity(
     @Id
-    val documentId: String?,
+    var documentId: String? = null,
     val username: String,
     val title: String,
     val type: DocumentType,
-    val status: DocumentStatus,
-    val fileName: String?,
-    val fileUrl: String?,
-    val downloadUrl: String?,
-    val errorMessage: String?
+    var status: DocumentStatus,
+    var fileName: String?,
+    var fileUrl: String?,
+    var downloadUrl: String?,
+    var errorMessage: String?
 ) : Persistable<String> {
 
     @CreatedDate
     var createdAt: LocalDateTime? = null
-        protected set
 
     @LastModifiedDate
     var updatedAt: LocalDateTime? = null
-        protected set
 
     override fun getId(): String? = documentId
 
