@@ -32,8 +32,11 @@ class AuthServiceExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException::class, BindException::class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     fun handleValidationExceptions(e: Exception): ApiResponse<ErrorData> {
-        require(e is MethodArgumentNotValidException || e is BindException)
-        val fieldErrors = ErrorData.FieldError.fromBindingResult(e.bindingResult)
+        val fieldErrors = when (e) {
+            is MethodArgumentNotValidException -> ErrorData.FieldError.fromBindingResult(e.bindingResult)
+            is BindException -> ErrorData.FieldError.fromBindingResult(e.bindingResult)
+            else -> emptyList()
+        }
         return ApiResponse.fail(ErrorStatus.BAD_REQUEST, ErrorData.of(e, fieldErrors))
             .also { log.warn("[Validation 오류] ${e.localizedMessage}") }
     }
