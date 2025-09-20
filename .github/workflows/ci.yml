@@ -93,7 +93,7 @@ jobs:
           total_errors=0
           modules_tested=0
           
-          for module in api-gateway auth-service subscription-service ai-service; do
+          for module in api-gateway auth-service subscription-service ai-service document-service; do
             if [ -d "$module/build/test-results/test" ] && [ "$(ls -A $module/build/test-results/test/*.xml 2>/dev/null)" ]; then
               modules_tested=$((modules_tested + 1))
               echo "### ✅ $module" >> $GITHUB_STEP_SUMMARY
