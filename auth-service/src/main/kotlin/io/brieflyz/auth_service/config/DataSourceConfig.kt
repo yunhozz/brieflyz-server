@@ -16,7 +16,7 @@ import javax.sql.DataSource
 @EnableJpaAuditing
 class DataSourceConfig {
 
-    private enum class DataSourceType {
+    enum class DataSourceType {
         SOURCE,
         REPLICA
     }

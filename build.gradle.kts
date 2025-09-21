@@ -49,6 +49,9 @@ subprojects {
         implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
         // Test
         testImplementation("org.springframework.boot:spring-boot-starter-test")
+        testImplementation("org.mockito:mockito-core")
+        testImplementation("org.mockito.kotlin:mockito-kotlin:5.1.0")
+        testImplementation("io.projectreactor:reactor-test")
         testImplementation("org.springframework.kafka:spring-kafka-test")
         testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
         testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test")

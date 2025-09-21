@@ -9,7 +9,7 @@ env:
   ACTIONS_RUNNER_DEBUG: true
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
-  GCP_REGION: asia-northeast3-a
+  GCP_REGION: asia-northeast3-b
   NAMESPACE: ${{ github.ref == 'refs/heads/master' && 'prod' || 'dev' }}
 
 permissions:

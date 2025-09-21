@@ -1,7 +1,7 @@
 package io.brieflyz.document_service.config
 
 import io.brieflyz.core.constants.KafkaTopic
-import io.brieflyz.core.dto.kafka.KafkaMessage
+import io.brieflyz.core.dto.message.KafkaMessage
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
