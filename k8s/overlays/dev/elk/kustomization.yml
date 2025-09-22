@@ -30,3 +30,6 @@ images:
     newTag: 9.0.2
   - name: kibana
     newTag: 9.0.2
+
+patches:
+  - path: dev-patch.yml
