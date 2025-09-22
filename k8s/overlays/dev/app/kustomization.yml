@@ -26,20 +26,20 @@ replicas:
 
 images:
   - name: brieflyz-api-gateway
-    newName: ghcr.io/yunhozz/brieflyz-api-gateway
+    newName: ghcr.io/yunhozz/brieflyz-server-api-gateway
     newTag: dev-6ccabfc
   - name: brieflyz-auth-service
-    newName: ghcr.io/yunhozz/brieflyz-auth-service
-    newTag: dev-6ccabfc
+    newName: ghcr.io/yunhozz/brieflyz-server-auth-service
+    newTag: dev-70e0307
   - name: brieflyz-subscription-service
-    newName: ghcr.io/yunhozz/brieflyz-subscription-service
-    newTag: dev-6ccabfc
+    newName: ghcr.io/yunhozz/brieflyz-server-subscription-service
+    newTag: dev-70e0307
   - name: brieflyz-ai-service
-    newName: ghcr.io/yunhozz/brieflyz-ai-service
-    newTag: dev-f7bbb42
+    newName: ghcr.io/yunhozz/brieflyz-server-ai-service
+    newTag: dev-70e0307
   - name: brieflyz-document-service
-    newName: ghcr.io/yunhozz/brieflyz-document-service
-    newTag: dev-f7bbb42
+    newName: ghcr.io/yunhozz/brieflyz-server-document-service
+    newTag: dev-70e0307
 
 configMapGenerator:
   - name: app-profile-configmap
