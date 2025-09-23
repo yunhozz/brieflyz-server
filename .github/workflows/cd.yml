@@ -60,6 +60,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Set up Application Properties
+        run: |
+          mkdir -p core/src/main/resources
+          echo "${{ secrets.APPLICATION_PROPERTIES }}" > ./core/src/main/resources/application.properties
+          echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -69,11 +75,6 @@ jobs:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Get Short SHA
-        id: gitsha
-        run: |
-          echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
 
       - name: Extract Docker Metadata
         id: meta
@@ -131,6 +132,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Set up Application Properties
+        run: |
+          mkdir -p core/src/main/resources
+          echo "${{ secrets.APPLICATION_PROPERTIES }}" > ./core/src/main/resources/application.properties
+          echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -140,11 +147,6 @@ jobs:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Get Short SHA
-        id: gitsha
-        run: |
-          echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
 
       - name: Extract Docker Metadata
         id: meta
@@ -202,6 +204,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Set up Application Properties
+        run: |
+          mkdir -p core/src/main/resources
+          echo "${{ secrets.APPLICATION_PROPERTIES }}" > ./core/src/main/resources/application.properties
+          echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -211,11 +219,6 @@ jobs:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Get Short SHA
-        id: gitsha
-        run: |
-          echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
 
       - name: Extract Docker Metadata
         id: meta
@@ -273,6 +276,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Set up Application Properties
+        run: |
+          mkdir -p core/src/main/resources
+          echo "${{ secrets.APPLICATION_PROPERTIES }}" > ./core/src/main/resources/application.properties
+          echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -282,11 +291,6 @@ jobs:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Get Short SHA
-        id: gitsha
-        run: |
-          echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
 
       - name: Extract Docker Metadata
         id: meta
@@ -344,6 +348,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Set up Application Properties
+        run: |
+          mkdir -p core/src/main/resources
+          echo "${{ secrets.APPLICATION_PROPERTIES }}" > ./core/src/main/resources/application.properties
+          echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -353,11 +363,6 @@ jobs:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Get Short SHA
-        id: gitsha
-        run: |
-          echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
 
       - name: Extract Docker Metadata
         id: meta
