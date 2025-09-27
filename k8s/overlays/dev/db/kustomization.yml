@@ -28,5 +28,9 @@ replicas:
   - name: redis
     count: 3
 
+images:
+  - name: postgres
+    newTag: "17.6"
+
 patches:
   - path: dev-patch.yml
