@@ -18,7 +18,7 @@ abstract class AbstractAiStructureGeneratorAdapter(
         const val EXCEL_FORMAT =
             "{ \"Sheet1\": [[\"Column1\", \"Column2\"], [\"Data1\", \"Data2\"]], \"Sheet2\": [[...], [...]] }"
         const val PPT_FORMAT =
-            "{ \"slide1\": {\"title\": \"슬라이드1 제목\", \"content\": \"슬라이드1 내용\", \"notes\": \"슬라이드1 메모\"}, \"slide2\": {...} }"
+            "{ \"slide1\": {\"title\": \"슬라이드1 제목\", \"content\": \"슬라이드1 내용\", \"notes\": \"슬라이드1 메모\", \"image\": \"이미지1 URL\"}, \"slide2\": {...} }"
     }
 
     abstract fun generateContent(prompt: String): Flux<String> // Generate stream of content by AI
@@ -68,9 +68,9 @@ abstract class AbstractAiStructureGeneratorAdapter(
             appendLine("내용: $content")
             appendLine()
             appendLine("위 정보를 기반으로 PPT 프레젠테이션의 슬라이드 구조를 생성해주세요.")
-            appendLine("각 슬라이드에는 제목, 내용, 그리고 선택적으로 메모가 포함될 수 있습니다.")
+            appendLine("각 슬라이드에는 제목, 내용, 그리고 선택적으로 이미지 URL과 메모가 포함될 수 있습니다.")
             appendLine("슬라이드 목록을 JSON 형식으로 반환해주세요.")
-            appendLine("각 슬라이드는 객체여야 하며, 슬라이드 제목, 내용, 메모를 포함합니다.")
+            appendLine("각 슬라이드는 객체여야 하며, 슬라이드 제목, 내용, 이미지 URL, 메모를 포함합니다.")
         }
 
         return generateStructuredContent(prompt, PPT_FORMAT).map { slides ->

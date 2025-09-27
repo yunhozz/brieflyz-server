@@ -11,6 +11,7 @@ import io.brieflyz.document_service.application.port.`in`.UpdateFileInfoUseCase
 import io.brieflyz.document_service.application.port.out.DocumentGeneratorPort
 import io.brieflyz.document_service.common.enums.DocumentStatus
 import io.brieflyz.document_service.config.DocumentServiceProperties
+import org.apache.poi.sl.usermodel.PictureData
 import org.apache.poi.sl.usermodel.TextParagraph
 import org.apache.poi.xslf.usermodel.SlideLayout
 import org.apache.poi.xslf.usermodel.XMLSlideShow
@@ -18,7 +19,9 @@ import org.springframework.stereotype.Component
 import reactor.core.publisher.Mono
 import reactor.core.scheduler.Schedulers
 import java.awt.Color
+import java.awt.Rectangle
 import java.io.FileOutputStream
+import java.net.URI
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
@@ -118,15 +121,20 @@ class PowerPointGeneratorAdapter(
             val slideTitle = slide["title"] ?: ""
             val slideContent = slide["content"] ?: ""
             val slideNotes = slide["notes"] ?: ""
+            val imagePath = slide["image"] ?: ""
+
+            println("imagePath = ${imagePath}")
 
             val titleAndContentLayout = defaultMaster.getLayout(SlideLayout.TITLE_AND_CONTENT)
             val slide = ppt.createSlide(titleAndContentLayout)
-            val titlePlaceholder = slide.getPlaceholder(0)
 
-            titlePlaceholder?.let { title ->
-                title.text = slideTitle
-                title.fillColor = Color(240, 240, 240)
-                title.textParagraphs.firstOrNull()
+            val title = slide.getPlaceholder(0)
+            val content = slide.getPlaceholder(1)
+
+            title?.apply {
+                text = slideTitle
+                fillColor = Color(240, 240, 240)
+                textParagraphs.firstOrNull()
                     ?.textRuns?.firstOrNull()
                     ?.apply {
                         fontSize = 32.0
@@ -136,19 +144,39 @@ class PowerPointGeneratorAdapter(
                     }
             }
 
-            val contentPlaceholder = slide.getPlaceholder(1)
-
-            contentPlaceholder?.let { content ->
-                content.clearText()
+            content?.apply {
+                clearText()
                 val lines = slideContent.split("\n")
 
                 lines.forEach { line ->
-                    val paragraph = content.addNewTextParagraph()
+                    val paragraph = addNewTextParagraph()
                     val run = paragraph.addNewTextRun()
 
                     run.setText(line)
                     run.fontSize = 20.0
                     run.fontFamily = "맑은 고딕"
+                }
+            }
+
+            if (imagePath.isNotBlank()) {
+                try {
+                    val imageBytes = if (imagePath.startsWith("http")) {
+                        URI(imagePath).toURL().openStream().use { it.readAllBytes() }
+                    } else {
+                        Files.readAllBytes(Paths.get(imagePath))
+                    }
+
+                    val pictureData = ppt.addPicture(imageBytes, PictureData.PictureType.PNG)
+                    val pictureShape = slide.createPicture(pictureData)
+
+                    val pageSize = ppt.pageSize
+                    val width = pageSize.width / 2
+                    val height = pageSize.height / 2
+
+                    pictureShape.anchor = Rectangle(width / 2, height / 2, width, height)
+
+                } catch (e: Exception) {
+                    log.error("Failed to add image to slide: $imagePath", e)
                 }
             }
 
