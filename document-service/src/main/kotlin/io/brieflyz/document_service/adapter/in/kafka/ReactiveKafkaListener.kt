@@ -37,7 +37,6 @@ class ReactiveKafkaListener(
                     structure = message.structure,
                     errMsg = message.errMsg
                 )
-
                 documentGenerateUseCase.generate(command)
             }
             .retryWhen(Retry.backoff(3, Duration.ofSeconds(5)))

@@ -61,11 +61,7 @@ class PowerPointGeneratorAdapter(
                     }
                 }.subscribeOn(Schedulers.boundedElastic())
                     .onErrorResume { ex ->
-                        val errorMessage = ex.message
-                        log.error("Failed to generate PPT", ex)
-                        val command = UpdateDocumentCommand(documentId, DocumentStatus.FAILED, errorMessage)
-
-                        updateDocumentStatusUseCase.update(command)
+                        updateDocumentFailed(documentId, ex.localizedMessage)
                             .then(Mono.error(ex))
                     }
                     .then(
@@ -94,7 +90,7 @@ class PowerPointGeneratorAdapter(
     }
 
     override fun updateDocumentFailed(documentId: String, errMsg: String): Mono<Void> {
-        log.warn("Failed to generate PPT. Reason=$errMsg")
+        log.warn("Failed to generate PPT. Reason : $errMsg")
         val command = UpdateDocumentCommand(documentId, DocumentStatus.FAILED, errMsg)
         return updateDocumentStatusUseCase.update(command).then()
     }
@@ -122,8 +118,6 @@ class PowerPointGeneratorAdapter(
             val slideContent = slide["content"] ?: ""
             val slideNotes = slide["notes"] ?: ""
             val imagePath = slide["image"] ?: ""
-
-            println("imagePath = ${imagePath}")
 
             val titleAndContentLayout = defaultMaster.getLayout(SlideLayout.TITLE_AND_CONTENT)
             val slide = ppt.createSlide(titleAndContentLayout)
@@ -159,25 +153,18 @@ class PowerPointGeneratorAdapter(
             }
 
             if (imagePath.isNotBlank()) {
-                try {
-                    val imageBytes = if (imagePath.startsWith("http")) {
-                        URI(imagePath).toURL().openStream().use { it.readAllBytes() }
-                    } else {
-                        Files.readAllBytes(Paths.get(imagePath))
-                    }
+                val imageBytes = imagePath.takeIf { it.startsWith("http") }?.let { path ->
+                    URI(path).toURL().openStream().use { it.readAllBytes() }
+                } ?: Files.readAllBytes(Paths.get(imagePath))
 
-                    val pictureData = ppt.addPicture(imageBytes, PictureData.PictureType.PNG)
-                    val pictureShape = slide.createPicture(pictureData)
+                val pictureData = ppt.addPicture(imageBytes, PictureData.PictureType.PNG)
+                val pictureShape = slide.createPicture(pictureData)
 
-                    val pageSize = ppt.pageSize
-                    val width = pageSize.width / 2
-                    val height = pageSize.height / 2
+                val pageSize = ppt.pageSize
+                val width = pageSize.width / 2
+                val height = pageSize.height / 2
 
-                    pictureShape.anchor = Rectangle(width / 2, height / 2, width, height)
-
-                } catch (e: Exception) {
-                    log.error("Failed to add image to slide: $imagePath", e)
-                }
+                pictureShape.anchor = Rectangle(width / 2, height / 2, width, height)
             }
 
             if (slideNotes.isNotBlank()) {

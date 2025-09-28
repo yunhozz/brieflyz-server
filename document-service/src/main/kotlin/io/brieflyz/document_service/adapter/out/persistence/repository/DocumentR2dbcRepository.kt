@@ -19,7 +19,7 @@ interface DocumentR2dbcRepository : R2dbcRepository<DocumentEntity, String> {
         WHERE document_id = :documentId
     """
     )
-    fun updateStatus(status: DocumentStatus, errorMessage: String?): Mono<Int>
+    fun updateStatus(status: DocumentStatus, errorMessage: String?, documentId: String): Mono<Int>
 
     @Modifying
     @Query(

@@ -81,6 +81,8 @@ class UpdateDocumentStatusService(
     private val documentRepositoryPort: DocumentRepositoryPort
 ) : UpdateDocumentStatusUseCase {
 
+    private val log = logger()
+
     @Transactional
     override fun update(command: UpdateDocumentCommand): Mono<Void> =
         documentRepositoryPort.findByDocumentId(command.documentId)
@@ -89,6 +91,7 @@ class UpdateDocumentStatusService(
                 document.updateStatus(status, errorMessage)
                 documentRepositoryPort.updateStatus(document)
             }
+            .doOnSuccess { log.info("Update document status success. ID=${command.documentId}, status=${command.status}") }
             .then()
 }
 

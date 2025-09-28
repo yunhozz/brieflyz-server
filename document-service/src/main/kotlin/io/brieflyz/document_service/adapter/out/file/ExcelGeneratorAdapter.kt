@@ -61,11 +61,7 @@ class ExcelGeneratorAdapter(
                     }
                 }.subscribeOn(Schedulers.boundedElastic())
                     .onErrorResume { ex ->
-                        val errorMessage = ex.message
-                        log.error("Failed to generate excel", ex)
-                        val command = UpdateDocumentCommand(documentId, DocumentStatus.FAILED, errorMessage)
-
-                        updateDocumentStatusUseCase.update(command)
+                        updateDocumentFailed(documentId, ex.localizedMessage)
                             .then(Mono.error(ex))
                     }
                     .then(
@@ -94,7 +90,7 @@ class ExcelGeneratorAdapter(
     }
 
     override fun updateDocumentFailed(documentId: String, errMsg: String): Mono<Void> {
-        log.warn("Failed to generate excel. Reason=$errMsg")
+        log.warn("Failed to generate excel. Reason : $errMsg")
         val command = UpdateDocumentCommand(documentId, DocumentStatus.FAILED, errMsg)
         return updateDocumentStatusUseCase.update(command).then()
     }
