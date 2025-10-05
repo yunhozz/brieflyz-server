@@ -61,8 +61,8 @@ class ExcelGeneratorAdapter(
                     }
                 }.subscribeOn(Schedulers.boundedElastic())
                     .onErrorResume { ex ->
-                        updateDocumentFailed(documentId, ex.localizedMessage)
-                            .then(Mono.error(ex))
+                        val errorMessage = "${ex::class.qualifiedName} ${ex.localizedMessage}"
+                        updateDocumentFailed(documentId, errorMessage).then(Mono.error(ex))
                     }
                     .then(
                         Mono.defer {
