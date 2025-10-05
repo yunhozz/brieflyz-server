@@ -14,15 +14,15 @@ labels:
 
 replicas:
   - name: api-gateway
-    count: 3
+    count: 5
   - name: auth-service
-    count: 3
+    count: 5
   - name: subscription-service
-    count: 3
+    count: 5
   - name: ai-service
-    count: 3
+    count: 5
   - name: document-service
-    count: 3
+    count: 5
 
 images:
   - name: api-gateway
