@@ -9,7 +9,6 @@ import io.brieflyz.document_service.application.dto.command.UpdateDocumentComman
 import io.brieflyz.document_service.application.dto.command.UpdateFileInfoCommand
 import io.brieflyz.document_service.application.port.`in`.UpdateDocumentStatusUseCase
 import io.brieflyz.document_service.application.port.`in`.UpdateFileInfoUseCase
-import io.brieflyz.document_service.application.port.out.DocumentGeneratorPort
 import io.brieflyz.document_service.common.enums.DocumentStatus
 import io.brieflyz.document_service.config.DocumentServiceProperties
 import org.apache.poi.ss.usermodel.BorderStyle
@@ -26,17 +25,15 @@ import java.io.FileOutputStream
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
-import java.nio.file.Path
-import java.nio.file.Paths
 import kotlin.io.path.name
 
 @Component
 class ExcelGeneratorAdapter(
     private val updateDocumentStatusUseCase: UpdateDocumentStatusUseCase,
     private val updateFileInfoUseCase: UpdateFileInfoUseCase,
-    private val documentServiceProperties: DocumentServiceProperties,
+    private val props: DocumentServiceProperties,
     private val objectMapper: ObjectMapper
-) : DocumentGeneratorPort {
+) : AbstractDocumentGeneratorAdapter(updateDocumentStatusUseCase, props) {
 
     private val log = logger()
 
@@ -69,7 +66,7 @@ class ExcelGeneratorAdapter(
                         Mono.defer {
                             val fileName = filePath.fileName.toString()
                             val fileUrl = URLDecoder.decode(filePath.toUri().toURL().toString(), StandardCharsets.UTF_8)
-                            val downloadUrl = documentServiceProperties.file.downloadUrl
+                            val downloadUrl = props.file.downloadUrl
 
                             val command = UpdateFileInfoCommand(
                                 documentId,
@@ -88,12 +85,6 @@ class ExcelGeneratorAdapter(
                 val command = UpdateDocumentCommand(documentId, DocumentStatus.PROCESSING)
                 updateDocumentStatusUseCase.update(command)
             }
-    }
-
-    override fun updateDocumentFailed(documentId: String, errMsg: String): Mono<Void> {
-        log.warn("Failed to generate excel. Reason : $errMsg")
-        val command = UpdateDocumentCommand(documentId, DocumentStatus.FAILED, errMsg)
-        return updateDocumentStatusUseCase.update(command).then()
     }
 
     private fun createExcel(workbook: XSSFWorkbook, sheetData: Map<String, List<List<String>>>) {
@@ -158,12 +149,5 @@ class ExcelGeneratorAdapter(
                 }
             }
         }
-    }
-
-    private fun createFilePath(title: String): Path {
-        val filePath = documentServiceProperties.file.filePath
-        val titleName = title.replace(Regex("[^a-zA-Z0-9가-힣]"), "_")
-        val timestamp = System.nanoTime()
-        return Paths.get("$filePath/excel", "${titleName}_$timestamp.xlsx")
     }
 }
