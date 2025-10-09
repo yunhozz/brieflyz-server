@@ -50,10 +50,10 @@ class PowerPointGeneratorAdapter(
         log.debug("PPT file path={}", filePath)
 
         return Mono.justOrEmpty(pptStructure)
-            .flatMap { slides ->
+            .flatMap { structure ->
                 Mono.fromCallable {
                     XMLSlideShow().use { ppt ->
-                        createPowerPoint(ppt, title, slides)
+                        createPowerPoint(ppt, title, structure)
                         Files.createDirectories(filePath.parent)
                         FileOutputStream(filePath.toFile()).use { ppt.write(it) }
                         log.info("Create PPT file completed. File path=${filePath.name}")
@@ -88,7 +88,7 @@ class PowerPointGeneratorAdapter(
             }
     }
 
-    private fun createPowerPoint(ppt: XMLSlideShow, title: String, slides: List<Map<String, String>>) {
+    private fun createPowerPoint(ppt: XMLSlideShow, title: String, structure: PowerPointStructure) {
         val defaultMaster = ppt.slideMasters[0]
         val titleLayout = defaultMaster.getLayout(SlideLayout.TITLE)
 
@@ -106,20 +106,16 @@ class PowerPointGeneratorAdapter(
             }
         }
 
-        slides.forEach { slide ->
-            val slideTitle = slide["title"] ?: ""
-            val slideContent = slide["content"] ?: ""
-            val slideNotes = slide["notes"] ?: ""
-            val imagePath = slide["image"] ?: ""
-
+        structure.slides.forEach {
+            val slide = it.values.first()
             val titleAndContentLayout = defaultMaster.getLayout(SlideLayout.TITLE_AND_CONTENT)
-            val slide = ppt.createSlide(titleAndContentLayout)
+            val pptSlide = ppt.createSlide(titleAndContentLayout)
 
-            val title = slide.getPlaceholder(0)
-            val content = slide.getPlaceholder(1)
+            val title = pptSlide.getPlaceholder(0)
+            val content = pptSlide.getPlaceholder(1)
 
             title?.apply {
-                text = slideTitle
+                text = slide.title
                 fillColor = Color(240, 240, 240)
                 textParagraphs.firstOrNull()
                     ?.textRuns?.firstOrNull()
@@ -133,7 +129,7 @@ class PowerPointGeneratorAdapter(
 
             content?.apply {
                 clearText()
-                val lines = slideContent.split("\n")
+                val lines = slide.content.split("\n")
 
                 lines.forEach { line ->
                     val paragraph = addNewTextParagraph()
@@ -145,25 +141,27 @@ class PowerPointGeneratorAdapter(
                 }
             }
 
-            if (imagePath.isNotBlank()) {
-                val imageBytes = imagePath.takeIf { it.startsWith("http") }?.let { path ->
-                    URI(path).toURL().openStream().use { it.readAllBytes() }
-                } ?: Files.readAllBytes(Paths.get(imagePath))
+            val slideNotes = slide.notes
+            if (!slideNotes.isNullOrBlank()) {
+                val notes = ppt.getNotesSlide(pptSlide)
+                val notesShape = notes.getPlaceholder(1)
+                notesShape.text = slideNotes
+            }
+
+            val slideImage = slide.image
+            if (!slideImage.isNullOrBlank()) {
+                val imageBytes = slideImage.takeIf { image -> image.startsWith("http") }?.let { path ->
+                    URI(path).toURL().openStream().use { os -> os.readAllBytes() }
+                } ?: Files.readAllBytes(Paths.get(slideImage))
 
                 val pictureData = ppt.addPicture(imageBytes, PictureData.PictureType.PNG)
-                val pictureShape = slide.createPicture(pictureData)
+                val pictureShape = pptSlide.createPicture(pictureData)
 
                 val pageSize = ppt.pageSize
                 val width = pageSize.width / 2
                 val height = pageSize.height / 2
 
                 pictureShape.anchor = Rectangle(width / 2, height / 2, width, height)
-            }
-
-            if (slideNotes.isNotBlank()) {
-                val notes = ppt.getNotesSlide(slide)
-                val notesShape = notes.getPlaceholder(1)
-                notesShape.text = slideNotes
             }
         }
     }

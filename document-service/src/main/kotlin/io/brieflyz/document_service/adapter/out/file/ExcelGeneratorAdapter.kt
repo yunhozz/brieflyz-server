@@ -49,10 +49,10 @@ class ExcelGeneratorAdapter(
         log.debug("Excel file path={}", filePath)
 
         return Mono.justOrEmpty(excelStructure)
-            .flatMap { sheetData ->
+            .flatMap { structure ->
                 Mono.fromCallable {
                     XSSFWorkbook().use { workbook ->
-                        createExcel(workbook, sheetData)
+                        createExcel(workbook, structure)
                         Files.createDirectories(filePath.parent)
                         FileOutputStream(filePath.toFile()).use { workbook.write(it) }
                         log.info("Create excel file completed. File path=${filePath.name}")
@@ -87,7 +87,7 @@ class ExcelGeneratorAdapter(
             }
     }
 
-    private fun createExcel(workbook: XSSFWorkbook, sheetData: Map<String, List<List<String>>>) {
+    private fun createExcel(workbook: XSSFWorkbook, structure: ExcelStructure) {
         fun createHeaderStyle(): XSSFCellStyle = workbook.createCellStyle().apply {
             alignment = HorizontalAlignment.CENTER
             verticalAlignment = VerticalAlignment.CENTER
@@ -125,20 +125,20 @@ class ExcelGeneratorAdapter(
         val headerStyle = createHeaderStyle()
         val defaultCellStyle = createDefaultCellStyle()
 
-        sheetData.forEach { (sheetName, rows) ->
+        structure.sheets.forEach { (sheetName, rows) ->
             val sheet = workbook.createSheet(sheetName)
 
             rows.forEachIndexed { i, cells ->
                 val row = sheet.createRow(i)
 
-                cells.forEachIndexed { j, cellValue ->
+                cells.data.forEachIndexed { j, cellValue ->
                     val cell = row.createCell(j)
                     cell.setCellValue(cellValue)
                     cell.cellStyle = if (i == 0) headerStyle else defaultCellStyle
                 }
             }
 
-            val columnCount = rows.firstOrNull()?.size ?: 0
+            val columnCount = rows.firstOrNull()?.data?.size ?: 0
 
             for (i in 0 until columnCount) {
                 sheet.autoSizeColumn(i)
