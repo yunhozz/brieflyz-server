@@ -3,6 +3,7 @@ package io.brieflyz.document_service.adapter.out.file
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.brieflyz.core.constants.DocumentType
+import io.brieflyz.core.dto.document.PowerPointStructure
 import io.brieflyz.core.utils.logger
 import io.brieflyz.document_service.application.dto.command.UpdateDocumentCommand
 import io.brieflyz.document_service.application.dto.command.UpdateFileInfoCommand
@@ -45,7 +46,7 @@ class PowerPointGeneratorAdapter(
         val filePath = createFilePath(title)
         val pptStructure = objectMapper.convertValue(
             structure,
-            object : TypeReference<List<Map<String, String>>>() {}
+            object : TypeReference<PowerPointStructure>() {}
         )
 
         log.debug("PPT file path={}", filePath)

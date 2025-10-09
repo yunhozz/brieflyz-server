@@ -3,6 +3,9 @@ package io.brieflyz.ai_service.adapter.out.ai
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.brieflyz.ai_service.application.port.out.AiStructureGeneratorPort
+import io.brieflyz.core.dto.document.ExcelStructure
+import io.brieflyz.core.dto.document.PowerPointStructure
+import io.brieflyz.core.dto.document.WordStructure
 import io.brieflyz.core.utils.logger
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
@@ -23,16 +26,12 @@ abstract class AbstractAiStructureGeneratorAdapter(
 
     abstract fun generateContent(prompt: String): Flux<String> // Generate stream of content by AI
 
-    override fun generateDocumentStructure(title: String, sections: List<String>): Mono<Map<String, String>> {
+    override fun generateWordStructure(title: String, content: String): Mono<WordStructure> {
         val prompt = buildString {
             appendLine("제목: $title")
+            appendLine("내용: $content")
             appendLine()
-            appendLine("다음 섹션으로 구성된 문서의 내용을 생성해주세요:")
-
-            for (section in sections) {
-                appendLine("- $section")
-            }
-            appendLine()
+            appendLine("위 정보를 기반으로 워드 파일의 구조를 생성해주세요.")
             appendLine("각 섹션의 내용을 JSON 형식으로 반환해주세요. 각 섹션은 키가 되며, 값은 해당 섹션의 내용입니다.")
         }
 
@@ -41,7 +40,7 @@ abstract class AbstractAiStructureGeneratorAdapter(
         }
     }
 
-    override fun generateExcelStructure(title: String, content: String): Mono<Map<String, List<List<String>>>> {
+    override fun generateExcelStructure(title: String, content: String): Mono<ExcelStructure> {
         val prompt = buildString {
             appendLine("제목: $title")
             appendLine("내용: $content")
@@ -62,7 +61,7 @@ abstract class AbstractAiStructureGeneratorAdapter(
         }
     }
 
-    override fun generatePptStructure(title: String, content: String): Mono<List<Map<String, String>>> {
+    override fun generatePptStructure(title: String, content: String): Mono<PowerPointStructure> {
         val prompt = buildString {
             appendLine("제목: $title")
             appendLine("내용: $content")

@@ -3,6 +3,7 @@ package io.brieflyz.document_service.adapter.out.file
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.brieflyz.core.constants.DocumentType
+import io.brieflyz.core.dto.document.ExcelStructure
 import io.brieflyz.core.utils.logger
 import io.brieflyz.document_service.application.dto.command.UpdateDocumentCommand
 import io.brieflyz.document_service.application.dto.command.UpdateFileInfoCommand
@@ -45,7 +46,7 @@ class ExcelGeneratorAdapter(
         val filePath = createFilePath(title)
         val excelStructure = objectMapper.convertValue(
             structure,
-            object : TypeReference<Map<String, List<List<String>>>>() {}
+            object : TypeReference<ExcelStructure>() {}
         )
 
         log.debug("Excel file path={}", filePath)
