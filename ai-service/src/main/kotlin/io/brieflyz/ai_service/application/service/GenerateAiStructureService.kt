@@ -22,6 +22,7 @@ class GenerateAiStructureService(
         val aiStructureGeneratorPort = aiStructureGeneratorPortFactory.createByProvider(aiProvider)
 
         return when (documentType) {
+            DocumentType.WORD -> aiStructureGeneratorPort.generateWordStructure(title, content)
             DocumentType.EXCEL -> aiStructureGeneratorPort.generateExcelStructure(title, content)
             DocumentType.POWERPOINT -> aiStructureGeneratorPort.generatePptStructure(title, content)
         }.flatMap { structure ->

@@ -1,5 +1,5 @@
 package io.brieflyz.core.constants
 
 enum class DocumentType {
-    EXCEL, POWERPOINT
+    WORD, EXCEL, POWERPOINT
 }

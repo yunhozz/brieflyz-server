@@ -6,6 +6,7 @@ import io.brieflyz.ai_service.application.port.out.AiStructureGeneratorPort
 import io.brieflyz.core.dto.document.ExcelStructure
 import io.brieflyz.core.dto.document.PowerPointStructure
 import io.brieflyz.core.dto.document.Row
+import io.brieflyz.core.dto.document.Section
 import io.brieflyz.core.dto.document.Slide
 import io.brieflyz.core.dto.document.WordStructure
 import io.brieflyz.core.utils.logger
@@ -23,8 +24,31 @@ abstract class AbstractAiStructureGeneratorAdapter(
     override fun generateWordStructure(title: String, content: String): Mono<WordStructure> {
         val wordPrompt = buildWordRequestPrompt(title, content)
 
-        return generateStructuredContent(wordPrompt, WORD_FORMAT).map { sectionMap ->
-            TODO()
+        fun parseSection(map: Map<*, *>?): Section? {
+            if (map == null) return null
+
+            val subSections = (map["subsections"] as? List<*>)?.mapNotNull { subItem ->
+                parseSection(subItem as? Map<*, *>)
+            } ?: emptyList()
+
+            return Section(
+                heading = map["heading"]?.toString() ?: "",
+                content = map["content"]?.toString() ?: "",
+                subSections = subSections
+            )
+        }
+
+        return generateStructuredContent(wordPrompt, WORD_FORMAT).map { wordMap ->
+            val sections = (wordMap["sections"] as? List<*>)?.mapNotNull { sectionItem ->
+                parseSection(sectionItem as? Map<*, *>)
+            } ?: emptyList()
+
+            WordStructure(
+                title = wordMap["title"]?.toString() ?: "",
+                description = wordMap["description"]?.toString() ?: "",
+                sections = sections,
+                summary = wordMap["summary"]?.toString() ?: ""
+            )
         }
     }
 

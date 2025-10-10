@@ -147,6 +147,7 @@ class CreateDocumentResourceService(
 ) : CreateDocumentResourceUseCase {
 
     companion object {
+        const val WORD_MEDIA_TYPE = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
         const val EXCEL_MEDIA_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         const val PPT_MEDIA_TYPE = "application/vnd.openxmlformats-officedocument.presentationml.presentation"
     }
@@ -157,6 +158,7 @@ class CreateDocumentResourceService(
             .flatMap { document ->
                 if (document.status == DocumentStatus.COMPLETED) {
                     val mediaType = when (document.type) {
+                        DocumentType.WORD -> MediaType.parseMediaType(WORD_MEDIA_TYPE)
                         DocumentType.EXCEL -> MediaType.parseMediaType(EXCEL_MEDIA_TYPE)
                         DocumentType.POWERPOINT -> MediaType.parseMediaType(PPT_MEDIA_TYPE)
                     }
