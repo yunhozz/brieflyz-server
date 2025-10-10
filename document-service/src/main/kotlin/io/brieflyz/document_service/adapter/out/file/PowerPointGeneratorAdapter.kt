@@ -141,15 +141,13 @@ class PowerPointGeneratorAdapter(
                 }
             }
 
-            val slideNotes = slide.notes
-            if (!slideNotes.isNullOrBlank()) {
+            slide.notes?.let { slideNotes ->
                 val notes = ppt.getNotesSlide(pptSlide)
                 val notesShape = notes.getPlaceholder(1)
                 notesShape.text = slideNotes
             }
 
-            val slideImage = slide.image
-            if (!slideImage.isNullOrBlank()) {
+            slide.image?.let { slideImage ->
                 val imageBytes = slideImage.takeIf { image -> image.startsWith("http") }?.let { path ->
                     URI(path).toURL().openStream().use { os -> os.readAllBytes() }
                 } ?: Files.readAllBytes(Paths.get(slideImage))
