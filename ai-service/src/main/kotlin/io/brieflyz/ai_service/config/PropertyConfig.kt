@@ -12,10 +12,16 @@ class PropertyConfig {
 }
 
 data class AiServiceProperties(
-    var kafka: KafkaProperties = KafkaProperties()
+    var kafka: KafkaProperties = KafkaProperties(),
+    var image: ImageProperties = ImageProperties()
 ) {
     data class KafkaProperties(
         var numOfPartitions: Int = 0,
         var replicationFactor: Short = 0
+    )
+
+    data class ImageProperties(
+        var url: String = "",
+        var secret: String = ""
     )
 }
