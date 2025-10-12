@@ -29,5 +29,5 @@ data class Slide(
     val title: String,
     val content: String,
     val notes: String?,
-    val image: String?
+    val imageUrl: String? = null
 )

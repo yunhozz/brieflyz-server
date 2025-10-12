@@ -147,10 +147,10 @@ class PowerPointGeneratorAdapter(
                 notesShape.text = slideNotes
             }
 
-            slide.image?.let { slideImage ->
-                val imageBytes = slideImage.takeIf { image -> image.startsWith("http") }?.let { path ->
+            slide.imageUrl?.let { imageUrl ->
+                val imageBytes = imageUrl.takeIf { url -> url.startsWith("http") }?.let { path ->
                     URI(path).toURL().openStream().use { os -> os.readAllBytes() }
-                } ?: Files.readAllBytes(Paths.get(slideImage))
+                } ?: Files.readAllBytes(Paths.get(imageUrl))
 
                 val pictureData = ppt.addPicture(imageBytes, PictureData.PictureType.PNG)
                 val pictureShape = pptSlide.createPicture(pictureData)

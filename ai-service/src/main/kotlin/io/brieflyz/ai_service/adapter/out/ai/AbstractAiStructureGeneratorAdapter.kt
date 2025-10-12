@@ -10,6 +10,7 @@ import io.brieflyz.core.dto.document.Section
 import io.brieflyz.core.dto.document.Slide
 import io.brieflyz.core.dto.document.WordStructure
 import io.brieflyz.core.utils.logger
+import org.springframework.beans.factory.annotation.Autowired
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 
@@ -17,9 +18,12 @@ abstract class AbstractAiStructureGeneratorAdapter(
     private val objectMapper: ObjectMapper
 ) : AiStructureGeneratorPort {
 
+    @Autowired
+    private lateinit var aiImageGenerator: AiImageGenerator
+
     private val log = logger()
 
-    abstract fun generateContent(prompt: String): Flux<String> // Generate stream of content by AI
+    abstract fun generateContent(prompt: String): Flux<out Any> // Generate stream of content by AI
 
     override fun generateWordStructure(title: String, content: String): Mono<WordStructure> {
         val wordPrompt = buildWordRequestPrompt(title, content)
@@ -71,21 +75,42 @@ abstract class AbstractAiStructureGeneratorAdapter(
     override fun generatePptStructure(title: String, content: String): Mono<PowerPointStructure> {
         val pptPrompt = buildPowerPointRequestPrompt(title, content)
 
-        return generateStructuredContent(pptPrompt, PPT_FORMAT).map { slideMap ->
-            val slides = slideMap.mapNotNull { (slideName, slideData) ->
-                val data = (slideData as? Map<*, *>)?.let { map ->
-                    Slide(
-                        title = map["title"]?.toString() ?: "",
-                        content = map["content"]?.toString() ?: "",
-                        notes = map["notes"]?.toString(),
-                        image = map["image"]?.toString()
-                    )
-                } ?: return@mapNotNull null
-                mapOf(slideName to data)
-            }
+        return generateStructuredContent(pptPrompt, PPT_FORMAT)
+            .flatMap { slideMap ->
+                val slidesMono = slideMap.mapNotNull { (slideName, slideData) ->
+                    val map = slideData as? Map<*, *> ?: return@mapNotNull null
+                    val slideTitle = map["title"]?.toString() ?: ""
+                    val slideContent = map["content"]?.toString() ?: ""
+                    val slideNotes = map["notes"]?.toString()
 
-            PowerPointStructure(slides)
-        }
+                    map["imageUrl"]?.let {
+                        val prompt = map["content"]?.toString() ?: ""
+                        aiImageGenerator.generateImageUrl(prompt).map { imageUrl ->
+                            mapOf(
+                                slideName to Slide(
+                                    title = slideTitle,
+                                    content = slideContent,
+                                    notes = slideNotes,
+                                    imageUrl
+                                )
+                            )
+                        }
+                    } ?: Mono.just(
+                        mapOf(
+                            slideName to Slide(
+                                title = slideTitle,
+                                content = slideContent,
+                                notes = slideNotes
+                            )
+                        )
+                    )
+                }
+
+                Mono.zip(slidesMono) { results ->
+                    val slides = results.map { it as Map<String, Slide> }
+                    PowerPointStructure(slides)
+                }
+            }
     }
 
     private fun generateStructuredContent(prompt: String, outputFormat: String): Mono<Map<String, Any>> {
@@ -145,13 +170,12 @@ abstract class AbstractAiStructureGeneratorAdapter(
                 "title": "슬라이드1 제목",
                 "content": "슬라이드1 내용",
                 "notes": "슬라이드1 메모 (Optional)",
-                "image": "이미지1 URL (Optional)"
+                "imageUrl": "이미지 URL"
             },
             "Slide2": {
                 "title": "슬라이드2 제목",
                 "content": "슬라이드2 내용",
-                "notes": "슬라이드2 메모 (Optional)",
-                "image": "이미지2 URL (Optional)"
+                "notes": "슬라이드2 메모 (Optional)"
             },
             ...
         }
@@ -167,6 +191,7 @@ abstract class AbstractAiStructureGeneratorAdapter(
             appendLine("각 섹션에는 제목(heading)과 본문(content)이 있으며, 필요시 하위 섹션(subsections)을 포함할 수 있음.")
             appendLine("각 content는 주제에 대한 충분한 설명을 포함해야 함.")
             appendLine("문서 끝에는 전체 내용을 요약(summary) 필드에 작성할 것.")
+            appendLine("JSON 형식으로 반환하고 모두 영어로 작성할 것.")
         }
 
         fun buildExcelRequestPrompt(title: String, content: String) = buildString {
@@ -178,7 +203,7 @@ abstract class AbstractAiStructureGeneratorAdapter(
             appendLine("여러 시트로 구성될 수 있으며, 각 시트에는 행과 열로 구성된 데이터를 포함할 것.")
             appendLine("첫 번째 행은 열 제목이어야 함.")
             appendLine("각 시트는 키가 되며, 값은 2차원 배열로 각 행의 데이터일 것.")
-            appendLine("JSON 형식으로 반환할 것.")
+            appendLine("JSON 형식으로 반환하고 모두 영어로 작성할 것.")
         }
 
         fun buildPowerPointRequestPrompt(title: String, content: String) = buildString {
@@ -187,9 +212,9 @@ abstract class AbstractAiStructureGeneratorAdapter(
             appendLine()
             appendLine("위 정보를 기반으로 PPT 프레젠테이션의 슬라이드 구조를 생성해주세요.")
             appendLine()
-            appendLine("각 슬라이드에는 제목, 내용, 그리고 선택적으로 이미지 URL과 메모가 포함될 수 있습니다.")
-            appendLine("슬라이드 목록을 JSON 형식으로 반환해주세요.")
-            appendLine("각 슬라이드는 객체여야 하며, 슬라이드 제목, 내용, 이미지 URL, 메모를 포함합니다.")
+            appendLine("각 슬라이드에는 제목, 내용, 그리고 선택적으로 메모가 포함될 수 있음.")
+            appendLine("첫 번째 슬라이드에만 표지 이미지를 삽입하고 나머지 슬라이드에는 이미지를 넣지 말 것.")
+            appendLine("JSON 형식으로 반환하고 모두 영어로 작성할 것.")
         }
 
         fun buildJsonRequestPrompt(prompt: String, outputFormat: String) = buildString {
