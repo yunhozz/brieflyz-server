@@ -5,6 +5,10 @@ import io.brieflyz.ai_service.application.port.out.AiStructureGeneratorPort
 import io.brieflyz.ai_service.application.port.out.MessagePort
 import io.brieflyz.core.constants.AiProvider
 import io.brieflyz.core.constants.DocumentType
+import io.brieflyz.core.dto.document.ExcelStructure
+import io.brieflyz.core.dto.document.PowerPointStructure
+import io.brieflyz.core.dto.document.Row
+import io.brieflyz.core.dto.document.Slide
 import io.brieflyz.core.dto.message.DocumentStructureResponseMessage
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -44,10 +48,10 @@ class GenerateAiStructureServiceTest {
             content = "some content"
         )
 
-        val generatedStructure = mapOf("sheet1" to listOf(listOf("row1", "row2")))
+        val excelStructure = ExcelStructure(mapOf("sheet1" to listOf(Row(listOf("row1", "row2")))))
 
         whenever(aiStructureGeneratorPort.generateExcelStructure(command.title, command.content))
-            .thenReturn(Mono.just(generatedStructure))
+            .thenReturn(Mono.just(excelStructure))
 
         val result = service.createStructureAndResponse(command)
 
@@ -56,7 +60,7 @@ class GenerateAiStructureServiceTest {
         argumentCaptor<DocumentStructureResponseMessage>().apply {
             verify(messagePort).sendDocumentStructureResponseMessage(capture())
             assert(firstValue.documentId == "test")
-            assert(firstValue.structure == generatedStructure)
+            assert(firstValue.structure == excelStructure)
             assert(firstValue.errMsg == null)
         }
     }
@@ -71,10 +75,10 @@ class GenerateAiStructureServiceTest {
             content = "ppt content"
         )
 
-        val generatedStructure = listOf(mapOf("slide1" to "data1"))
+        val powerPointStructure = PowerPointStructure(listOf(mapOf("slide1" to Slide("title", "content", "notes"))))
 
         whenever(aiStructureGeneratorPort.generatePptStructure(command.title, command.content))
-            .thenReturn(Mono.just(generatedStructure))
+            .thenReturn(Mono.just(powerPointStructure))
 
         val result = service.createStructureAndResponse(command)
 
@@ -84,7 +88,7 @@ class GenerateAiStructureServiceTest {
         argumentCaptor<DocumentStructureResponseMessage>().apply {
             verify(messagePort).sendDocumentStructureResponseMessage(capture())
             assert(firstValue.documentId == "test")
-            assert(firstValue.structure == generatedStructure)
+            assert(firstValue.structure == powerPointStructure)
             assert(firstValue.errMsg == null)
         }
     }
