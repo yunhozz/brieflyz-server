@@ -83,27 +83,22 @@ abstract class AbstractAiStructureGeneratorAdapter(
                     val slideContent = map["content"]?.toString() ?: ""
                     val slideNotes = map["notes"]?.toString()
 
-                    map["imageUrl"]?.let {
-                        val prompt = map["content"]?.toString() ?: ""
-                        aiImageGenerator.generateImageUrl(prompt).map { imageUrl ->
-                            mapOf(
-                                slideName to Slide(
-                                    title = slideTitle,
-                                    content = slideContent,
-                                    notes = slideNotes,
-                                    imageUrl
-                                )
-                            )
-                        }
-                    } ?: Mono.just(
+                    fun createSlide(imageUrl: String? = null) =
                         mapOf(
                             slideName to Slide(
                                 title = slideTitle,
                                 content = slideContent,
-                                notes = slideNotes
+                                notes = slideNotes,
+                                imageUrl
                             )
                         )
-                    )
+
+                    if (map["imageUrl"] == null) {
+                        Mono.just(createSlide())
+                    } else {
+                        aiImageGenerator.generateImageUrl(slideContent)
+                            .map { imageUrl -> createSlide(imageUrl) }
+                    }
                 }
 
                 Mono.zip(slidesMono) { results ->
