@@ -5,9 +5,11 @@ import io.brieflyz.document_service.common.enums.DocumentStatus
 import org.springframework.data.r2dbc.repository.Modifying
 import org.springframework.data.r2dbc.repository.Query
 import org.springframework.data.r2dbc.repository.R2dbcRepository
+import org.springframework.stereotype.Repository
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 
+@Repository
 interface DocumentR2dbcRepository : R2dbcRepository<DocumentEntity, String> {
     fun findAllByUsernameOrderByUpdatedAtDesc(username: String): Flux<DocumentEntity>
 
@@ -19,7 +21,7 @@ interface DocumentR2dbcRepository : R2dbcRepository<DocumentEntity, String> {
         WHERE document_id = :documentId
     """
     )
-    fun updateStatus(status: DocumentStatus, errorMessage: String?): Mono<Int>
+    fun updateStatus(status: DocumentStatus, errorMessage: String?, documentId: String): Mono<Int>
 
     @Modifying
     @Query(

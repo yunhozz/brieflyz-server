@@ -21,7 +21,7 @@ data class DocumentServiceProperties(
     )
 
     data class FileProperties(
-        var filePath: String? = null,
-        var downloadUrl: String? = null
+        var filePath: String = "",
+        var downloadUrl: String = ""
     )
 }

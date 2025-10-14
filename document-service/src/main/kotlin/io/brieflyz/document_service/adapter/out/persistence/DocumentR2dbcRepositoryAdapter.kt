@@ -28,7 +28,8 @@ class DocumentR2dbcRepositoryAdapter(
     override fun updateStatus(updatedDocument: Document): Mono<Void> =
         documentR2dbcRepository.updateStatus(
             status = updatedDocument.status,
-            errorMessage = updatedDocument.errorMessage
+            errorMessage = updatedDocument.errorMessage,
+            documentId = updatedDocument.documentId
         ).then()
 
     override fun updateFileInfo(updatedDocument: Document): Mono<Void> =

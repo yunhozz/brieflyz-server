@@ -3,12 +3,12 @@ package io.brieflyz.document_service.adapter.out.file
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.brieflyz.core.constants.DocumentType
+import io.brieflyz.core.dto.document.ExcelStructure
 import io.brieflyz.core.utils.logger
 import io.brieflyz.document_service.application.dto.command.UpdateDocumentCommand
 import io.brieflyz.document_service.application.dto.command.UpdateFileInfoCommand
 import io.brieflyz.document_service.application.port.`in`.UpdateDocumentStatusUseCase
 import io.brieflyz.document_service.application.port.`in`.UpdateFileInfoUseCase
-import io.brieflyz.document_service.application.port.out.DocumentGeneratorPort
 import io.brieflyz.document_service.common.enums.DocumentStatus
 import io.brieflyz.document_service.config.DocumentServiceProperties
 import org.apache.poi.ss.usermodel.BorderStyle
@@ -25,17 +25,15 @@ import java.io.FileOutputStream
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
-import java.nio.file.Path
-import java.nio.file.Paths
 import kotlin.io.path.name
 
 @Component
 class ExcelGeneratorAdapter(
     private val updateDocumentStatusUseCase: UpdateDocumentStatusUseCase,
     private val updateFileInfoUseCase: UpdateFileInfoUseCase,
-    private val documentServiceProperties: DocumentServiceProperties,
+    private val props: DocumentServiceProperties,
     private val objectMapper: ObjectMapper
-) : DocumentGeneratorPort {
+) : AbstractDocumentGeneratorAdapter(updateDocumentStatusUseCase, props) {
 
     private val log = logger()
 
@@ -45,34 +43,30 @@ class ExcelGeneratorAdapter(
         val filePath = createFilePath(title)
         val excelStructure = objectMapper.convertValue(
             structure,
-            object : TypeReference<Map<String, List<List<String>>>>() {}
+            object : TypeReference<ExcelStructure>() {}
         )
 
         log.debug("Excel file path={}", filePath)
 
         return Mono.justOrEmpty(excelStructure)
-            .flatMap { sheetData ->
+            .flatMap { structure ->
                 Mono.fromCallable {
                     XSSFWorkbook().use { workbook ->
-                        createExcel(workbook, sheetData)
+                        createExcel(workbook, structure)
                         Files.createDirectories(filePath.parent)
                         FileOutputStream(filePath.toFile()).use { workbook.write(it) }
                         log.info("Create excel file completed. File path=${filePath.name}")
                     }
                 }.subscribeOn(Schedulers.boundedElastic())
                     .onErrorResume { ex ->
-                        val errorMessage = ex.message
-                        log.error("Failed to generate excel", ex)
-                        val command = UpdateDocumentCommand(documentId, DocumentStatus.FAILED, errorMessage)
-
-                        updateDocumentStatusUseCase.update(command)
-                            .then(Mono.error(ex))
+                        val errorMessage = "${ex::class.qualifiedName} ${ex.localizedMessage}"
+                        updateDocumentFailed(documentId, errorMessage).then(Mono.error(ex))
                     }
                     .then(
                         Mono.defer {
                             val fileName = filePath.fileName.toString()
                             val fileUrl = URLDecoder.decode(filePath.toUri().toURL().toString(), StandardCharsets.UTF_8)
-                            val downloadUrl = documentServiceProperties.file.downloadUrl
+                            val downloadUrl = props.file.downloadUrl
 
                             val command = UpdateFileInfoCommand(
                                 documentId,
@@ -93,13 +87,7 @@ class ExcelGeneratorAdapter(
             }
     }
 
-    override fun updateDocumentFailed(documentId: String, errMsg: String): Mono<Void> {
-        log.warn("Failed to generate excel. Reason=$errMsg")
-        val command = UpdateDocumentCommand(documentId, DocumentStatus.FAILED, errMsg)
-        return updateDocumentStatusUseCase.update(command).then()
-    }
-
-    private fun createExcel(workbook: XSSFWorkbook, sheetData: Map<String, List<List<String>>>) {
+    private fun createExcel(workbook: XSSFWorkbook, structure: ExcelStructure) {
         fun createHeaderStyle(): XSSFCellStyle = workbook.createCellStyle().apply {
             alignment = HorizontalAlignment.CENTER
             verticalAlignment = VerticalAlignment.CENTER
@@ -137,20 +125,20 @@ class ExcelGeneratorAdapter(
         val headerStyle = createHeaderStyle()
         val defaultCellStyle = createDefaultCellStyle()
 
-        sheetData.forEach { (sheetName, rows) ->
+        structure.sheets.forEach { (sheetName, rows) ->
             val sheet = workbook.createSheet(sheetName)
 
             rows.forEachIndexed { i, cells ->
                 val row = sheet.createRow(i)
 
-                cells.forEachIndexed { j, cellValue ->
+                cells.data.forEachIndexed { j, cellValue ->
                     val cell = row.createCell(j)
                     cell.setCellValue(cellValue)
                     cell.cellStyle = if (i == 0) headerStyle else defaultCellStyle
                 }
             }
 
-            val columnCount = rows.firstOrNull()?.size ?: 0
+            val columnCount = rows.firstOrNull()?.data?.size ?: 0
 
             for (i in 0 until columnCount) {
                 sheet.autoSizeColumn(i)
@@ -161,12 +149,5 @@ class ExcelGeneratorAdapter(
                 }
             }
         }
-    }
-
-    private fun createFilePath(title: String): Path {
-        val filePath = documentServiceProperties.file.filePath
-        val titleName = title.replace(Regex("[^a-zA-Z0-9가-힣]"), "_")
-        val timestamp = System.nanoTime()
-        return Paths.get("$filePath/excel", "${titleName}_$timestamp.xlsx")
     }
 }

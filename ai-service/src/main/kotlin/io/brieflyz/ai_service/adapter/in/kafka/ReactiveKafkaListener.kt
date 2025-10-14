@@ -30,9 +30,13 @@ class ReactiveKafkaListener(
             }
             .flatMap { record ->
                 val message = record.value() as DocumentStructureRequestMessage
-                val (aiProvider, documentId, title, content, documentType) = message
-
-                val command = CreateStructureCommand(aiProvider, documentId, documentType, title, content)
+                val command = CreateStructureCommand(
+                    message.aiProvider,
+                    message.documentId,
+                    message.documentType,
+                    message.title,
+                    message.content
+                )
                 generateAiStructureUseCase.createStructureAndResponse(command)
             }
             .retryWhen(Retry.backoff(3, Duration.ofSeconds(5)))
