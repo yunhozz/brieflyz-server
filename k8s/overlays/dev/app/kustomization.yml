@@ -36,10 +36,10 @@ images:
     newTag: dev-70e0307
   - name: brieflyz-ai-service
     newName: ghcr.io/yunhozz/brieflyz-server-ai-service
-    newTag: dev-70e0307
+    newTag: dev-3fc4df0
   - name: brieflyz-document-service
     newName: ghcr.io/yunhozz/brieflyz-server-document-service
-    newTag: dev-70e0307
+    newTag: dev-3fc4df0
 
 configMapGenerator:
   - name: app-profile-configmap
