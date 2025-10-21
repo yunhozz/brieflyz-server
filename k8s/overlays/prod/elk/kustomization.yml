@@ -1,0 +1,35 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../../base/elk
+
+namespace: prod
+
+labels:
+  - pairs:
+      role: elk
+    includeSelectors: true
+    includeTemplates: true
+
+replicas:
+  - name: elasticsearch
+    count: 1
+  - name: logstash
+    count: 1
+  - name: kibana
+    count: 1
+
+images:
+  - name: elasticsearch
+    newTag: 9.0.2
+  - name: filebeat
+    newName: elastic/filebeat
+    newTag: 9.0.2
+  - name: logstash
+    newTag: 9.0.2
+  - name: kibana
+    newTag: 9.0.2
+
+patches:
+  - path: prod-patch.yml

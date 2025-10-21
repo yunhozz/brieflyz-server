@@ -9,7 +9,6 @@ env:
   ACTIONS_RUNNER_DEBUG: true
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
-  GCP_REGION: asia-northeast3-b
   NAMESPACE: ${{ github.ref == 'refs/heads/master' && 'prod' || 'dev' }}
 
 permissions:
@@ -108,7 +107,7 @@ jobs:
         uses: google-github-actions/get-gke-credentials@v2
         with:
           cluster_name: ${{ secrets.GKE_CLUSTER_NAME }}
-          location: ${{ env.GCP_REGION }}
+          location: ${{ secrets.GCP_REGION }}
 
       - name: Deploy to GKE
         env:
@@ -180,7 +179,7 @@ jobs:
         uses: google-github-actions/get-gke-credentials@v2
         with:
           cluster_name: ${{ secrets.GKE_CLUSTER_NAME }}
-          location: ${{ env.GCP_REGION }}
+          location: ${{ secrets.GCP_REGION }}
 
       - name: Deploy to GKE
         env:
@@ -252,7 +251,7 @@ jobs:
         uses: google-github-actions/get-gke-credentials@v2
         with:
           cluster_name: ${{ secrets.GKE_CLUSTER_NAME }}
-          location: ${{ env.GCP_REGION }}
+          location: ${{ secrets.GCP_REGION }}
 
       - name: Deploy to GKE
         env:
@@ -324,7 +323,7 @@ jobs:
         uses: google-github-actions/get-gke-credentials@v2
         with:
           cluster_name: ${{ secrets.GKE_CLUSTER_NAME }}
-          location: ${{ env.GCP_REGION }}
+          location: ${{ secrets.GCP_REGION }}
 
       - name: Deploy to GKE
         env:
@@ -396,7 +395,7 @@ jobs:
         uses: google-github-actions/get-gke-credentials@v2
         with:
           cluster_name: ${{ secrets.GKE_CLUSTER_NAME }}
-          location: ${{ env.GCP_REGION }}
+          location: ${{ secrets.GCP_REGION }}
 
       - name: Deploy to GKE
         env:

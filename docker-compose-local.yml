@@ -244,7 +244,7 @@ services:
       - local
 
   pg-source:
-    image: postgres:latest
+    image: postgres:17.6
     container_name: pg-source
     ports:
       - "15432:5432"
@@ -263,7 +263,7 @@ services:
       - local
 
   pg-replica:
-    image: postgres:latest
+    image: postgres:17.6
     container_name: pg-replica
     ports:
       - "25432:5432"

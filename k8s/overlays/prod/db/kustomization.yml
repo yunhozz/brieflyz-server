@@ -4,7 +4,7 @@ kind: Kustomization
 resources:
   - ../../../base/db
 
-namespace: dev
+namespace: prod
 
 labels:
   - pairs:
@@ -16,21 +16,24 @@ replicas:
   - name: mysql-auth-source
     count: 1
   - name: mysql-auth-replica
-    count: 3
+    count: 5
   - name: mysql-subscription-source
     count: 1
   - name: mysql-subscription-replica
-    count: 3
-  - name: pg-document-source
+    count: 5
+  - name: pg-ai-source
     count: 1
-  - name: pg-document-replica
-    count: 3
+  - name: pg-ai-replica
+    count: 5
   - name: redis
-    count: 3
+    count: 5
 
-images:
-  - name: postgres
-    newTag: "17.6"
+configMapGenerator:
+  - name: mysql-configmap
+    literals:
+      - TZ=Asia/Seoul
+      - MYSQL_CHARSET=utf8mb4
+      - MYSQL_COLLATION=utf8mb4_general_ci
 
 patches:
-  - path: dev-patch.yml
+  - path: prod-patch.yml
