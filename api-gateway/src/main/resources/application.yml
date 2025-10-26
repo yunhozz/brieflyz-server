@@ -1,0 +1,31 @@
+server:
+  port: 8000
+spring:
+  application:
+    name: api-gateway
+  profiles:
+    active: ${APPLICATION_PROFILE:local}
+
+---
+
+spring:
+  config:
+    activate:
+      on-profile: dev
+    import: configserver:http://config-server:8888/
+  cloud:
+    config:
+      name: api-gateway
+      profile: dev
+
+---
+
+spring:
+  config:
+    activate:
+      on-profile: prod
+    import: configserver:http://config-server:8888/
+  cloud:
+    config:
+      name: api-gateway
+      profile: prod

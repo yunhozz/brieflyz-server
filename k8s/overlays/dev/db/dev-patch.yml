@@ -1,0 +1,151 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mysql-auth-source
+spec:
+  template:
+    spec:
+      containers:
+        - name: mysql-auth-source
+  volumeClaimTemplates:
+    - metadata:
+        name: mysql-auth-source-volume
+      spec:
+        storageClassName: standard-rwo
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
+
+---
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mysql-subscription-source
+spec:
+  template:
+    spec:
+      containers:
+        - name: mysql-subscription-source
+  volumeClaimTemplates:
+    - metadata:
+        name: mysql-subscription-source-volume
+      spec:
+        storageClassName: standard-rwo
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
+
+---
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mysql-auth-replica
+spec:
+  template:
+    spec:
+      containers:
+        - name: mysql-auth-replica
+  volumeClaimTemplates:
+    - metadata:
+        name: mysql-auth-replica-volume
+      spec:
+        storageClassName: standard-rwo
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
+
+---
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mysql-subscription-replica
+spec:
+  template:
+    spec:
+      containers:
+        - name: mysql-subscription-replica
+  volumeClaimTemplates:
+    - metadata:
+        name: mysql-subscription-replica-volume
+      spec:
+        storageClassName: standard-rwo
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
+
+---
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: pg-document-source
+spec:
+  template:
+    spec:
+      containers:
+        - name: pg-document-source
+  volumeClaimTemplates:
+    - metadata:
+        name: pg-document-source-volume
+      spec:
+        storageClassName: standard-rwo
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
+
+---
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: pg-document-replica
+spec:
+  template:
+    spec:
+      containers:
+        - name: pg-document-replica
+  volumeClaimTemplates:
+    - metadata:
+        name: pg-document-replica-volume
+      spec:
+        storageClassName: standard-rwo
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
+
+---
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: redis
+spec:
+  template:
+    spec:
+      containers:
+        - name: redis
+  volumeClaimTemplates:
+    - metadata:
+        name: redis-volume
+      spec:
+        storageClassName: standard-rwo
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi

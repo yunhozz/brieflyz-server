@@ -1,0 +1,152 @@
+name: CI - Run Unit & Integration Tests
+
+on:
+  pull_request:
+    branches: [ develop ]
+
+env:
+  ACTIONS_STEP_DEBUG: true
+  ACTIONS_RUNNER_DEBUG: true
+  SERVICES_DB: mysql-source mysql-replica pg-source pg-replica redis redis-0 redis-1 redis-2
+  SERVICES_MESSAGE: zookeeper-0 zookeeper-1 zookeeper-2 kafka-0 kafka-1 kafka-2
+
+jobs:
+  tests:
+    name: Run Unit & Integration Tests
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      checks: write
+      pull-requests: write
+      statuses: write
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Set up Configurations
+        run: |
+          echo "${{ secrets.ENV }}" > .env
+          
+          mkdir -p core/src/main/resources
+          echo "${{ secrets.APPLICATION_PROPERTIES }}" > ./core/src/main/resources/application.properties
+          
+          echo "${{ secrets.APPLICATION_YML_API }}" | base64 --decode > ./api-gateway/src/main/resources/application-local.yml
+          echo "${{ secrets.APPLICATION_YML_AUTH }}" | base64 --decode > ./auth-service/src/main/resources/application-local.yml
+          echo "${{ secrets.APPLICATION_OAUTH_YML }}" | base64 --decode > ./auth-service/src/main/resources/application-oauth.yml
+          echo "${{ secrets.APPLICATION_YML_SUB }}" | base64 --decode > ./subscription-service/src/main/resources/application-local.yml
+          echo "${{ secrets.APPLICATION_YML_AI }}" | base64 --decode > ./ai-service/src/main/resources/application-local.yml
+          echo "${{ secrets.APPLICATION_YML_DOC }}" | base64 --decode > ./document-service/src/main/resources/application-local.yml
+          
+          mkdir -p conf/mysql
+          echo "${{ secrets.MY_SOURCE_CNF }}" > ./conf/mysql/my-source.cnf
+          echo "${{ secrets.MY_REPLICA_CNF }}" > ./conf/mysql/my-replica.cnf
+          
+          mkdir -p conf/redis
+          echo "${{ secrets.REDIS_CONF }}" > ./conf/redis/redis-0.conf
+          echo "${{ secrets.REDIS_CONF }}" > ./conf/redis/redis-1.conf
+          echo "${{ secrets.REDIS_CONF }}" > ./conf/redis/redis-2.conf
+          
+          mkdir -p conf/postgres
+          echo "${{ secrets.POSTGRES_CONF }}" > ./conf/postgres/postgres.conf
+          echo "${{ secrets.PG_HBA_CONF }}" > ./conf/postgres/pg_hba.conf
+
+      - name: Set up Docker Containers
+        run: |
+          docker compose -f docker-compose-local.yml --env-file .env up -d ${{ env.SERVICES_DB }} ${{ env.SERVICES_MESSAGE }}
+          sleep 10
+          docker ps
+          
+          printf "%s" "${{ secrets.INIT_PG_SQL }}" | docker exec -i pg-source psql -U postgres
+
+      - name: Build with Gradle
+        run: ./gradlew build
+
+      - name: Upload Test Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: |
+            **/build/reports/tests/test/
+            **/build/test-results/test/
+          retention-days: 1
+
+      - name: Generate Test Summary
+        if: always()
+        run: |
+          echo "## 🧪 Test Results Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # 각 모듈별 테스트 결과 확인
+          total_tests=0
+          total_failures=0
+          total_errors=0
+          modules_tested=0
+          
+          for module in api-gateway auth-service subscription-service ai-service document-service; do
+            if [ -d "$module/build/test-results/test" ] && [ "$(ls -A $module/build/test-results/test/*.xml 2>/dev/null)" ]; then
+              modules_tested=$((modules_tested + 1))
+              echo "### ✅ $module" >> $GITHUB_STEP_SUMMARY
+          
+              # XML 파일에서 테스트 결과 파싱
+              for xml_file in $module/build/test-results/test/TEST-*.xml; do
+                if [ -f "$xml_file" ]; then
+                  raw_name=$(grep -oP '(?<=<testsuite name=")[^"]+' "$xml_file" | head -n 1)
+                  name=$(basename "$raw_name" | sed 's/.*\.//')
+                  count=$(grep -o 'tests="[0-9]*"' "$xml_file" | cut -d'"' -f2 || echo "0")
+                  failures=$(grep -o 'failures="[0-9]*"' "$xml_file" | cut -d'"' -f2 || echo "0")
+                  errors=$(grep -o 'errors="[0-9]*"' "$xml_file" | cut -d'"' -f2 || echo "0")
+          
+                  total_tests=$((total_tests + count))
+                  total_failures=$((total_failures + failures))
+                  total_errors=$((total_errors + errors))
+          
+                  echo "  - Name: $name, Count: $count, Failures: $failures, Errors: $errors" >> $GITHUB_STEP_SUMMARY
+                fi
+              done
+              echo "" >> $GITHUB_STEP_SUMMARY
+            fi
+          done
+          
+          # 전체 요약
+          echo "### 📊 Overall Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- **Modules Tested**: $modules_tested" >> $GITHUB_STEP_SUMMARY
+          echo "- **Total Tests**: $total_tests" >> $GITHUB_STEP_SUMMARY
+          echo "- **Failures**: $total_failures" >> $GITHUB_STEP_SUMMARY
+          echo "- **Errors**: $total_errors" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ $total_failures -eq 0 ] && [ $total_errors -eq 0 ] && [ $total_tests -gt 0 ]; then
+            echo "🎉 **All tests passed successfully!**" >> $GITHUB_STEP_SUMMARY
+          elif [ $total_tests -eq 0 ]; then
+            echo "⚠️ **No tests were found or executed.**" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Some tests failed. Please check the detailed reports.**" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  dependency-submission:
+    name: Run Dependency Submission
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Generate and submit dependency graph
+        uses: gradle/actions/dependency-submission@v4

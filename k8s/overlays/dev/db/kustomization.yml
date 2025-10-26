@@ -1,0 +1,36 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../../base/db
+
+namespace: dev
+
+labels:
+  - pairs:
+      role: db
+    includeSelectors: true
+    includeTemplates: true
+
+replicas:
+  - name: mysql-auth-source
+    count: 1
+  - name: mysql-auth-replica
+    count: 3
+  - name: mysql-subscription-source
+    count: 1
+  - name: mysql-subscription-replica
+    count: 3
+  - name: pg-document-source
+    count: 1
+  - name: pg-document-replica
+    count: 3
+  - name: redis
+    count: 3
+
+images:
+  - name: postgres
+    newTag: "17.6"
+
+patches:
+  - path: dev-patch.yml

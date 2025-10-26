@@ -1,0 +1,31 @@
+server:
+  port: 8999
+spring:
+  application:
+    name: ai-service
+  profiles:
+    active: ${APPLICATION_PROFILE:local}
+
+---
+
+spring:
+  config:
+    activate:
+      on-profile: dev
+    import: configserver:http://config-server:8888/
+  cloud:
+    config:
+      name: ai-service
+      profile: dev
+
+---
+
+spring:
+  config:
+    activate:
+      on-profile: prod
+    import: configserver:http://config-server:8888/
+  cloud:
+    config:
+      name: ai-service
+      profile: prod

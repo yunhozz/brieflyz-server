@@ -1,0 +1,32 @@
+server:
+  port: 8090
+spring:
+  application:
+    name: auth-service
+  profiles:
+    active: ${APPLICATION_PROFILE:local}
+    include: oauth
+
+---
+
+spring:
+  config:
+    activate:
+      on-profile: dev
+    import: configserver:http://config-server:8888/
+  cloud:
+    config:
+      name: auth-service
+      profile: dev, oauth
+
+---
+
+spring:
+  config:
+    activate:
+      on-profile: prod
+    import: configserver:http://config-server:8888/
+  cloud:
+    config:
+      name: auth-service
+      profile: prod, oauth

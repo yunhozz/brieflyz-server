@@ -1,0 +1,39 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../../base/db
+
+namespace: prod
+
+labels:
+  - pairs:
+      role: db
+    includeSelectors: true
+    includeTemplates: true
+
+replicas:
+  - name: mysql-auth-source
+    count: 1
+  - name: mysql-auth-replica
+    count: 5
+  - name: mysql-subscription-source
+    count: 1
+  - name: mysql-subscription-replica
+    count: 5
+  - name: pg-ai-source
+    count: 1
+  - name: pg-ai-replica
+    count: 5
+  - name: redis
+    count: 5
+
+configMapGenerator:
+  - name: mysql-configmap
+    literals:
+      - TZ=Asia/Seoul
+      - MYSQL_CHARSET=utf8mb4
+      - MYSQL_COLLATION=utf8mb4_general_ci
+
+patches:
+  - path: prod-patch.yml

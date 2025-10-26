@@ -1,0 +1,308 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-auth-source
+  labels:
+    app: mysql-auth-source
+spec:
+  selector:
+    app: mysql-auth-source
+  clusterIP: None
+  ports:
+    - port: 3306
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-subscription-source
+  labels:
+    app: mysql-subscription-source
+spec:
+  selector:
+    app: mysql-subscription-source
+  clusterIP: None
+  ports:
+    - port: 3306
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-auth-replica
+  labels:
+    app: mysql-auth-replica
+spec:
+  selector:
+    app: mysql-auth-replica
+  clusterIP: None
+  ports:
+    - port: 3306
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-subscription-replica
+  labels:
+    app: mysql-subscription-replica
+spec:
+  selector:
+    app: mysql-subscription-replica
+  clusterIP: None
+  ports:
+    - port: 3306
+
+---
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mysql-auth-source
+  labels:
+    app: mysql-auth-source
+spec:
+  serviceName: mysql-auth-source
+  selector:
+    matchLabels:
+      app: mysql-auth-source
+  template:
+    metadata:
+      labels:
+        app: mysql-auth-source
+    spec:
+      containers:
+        - name: mysql-auth-source
+          image: mysql:latest
+          ports:
+            - containerPort: 3306
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: mysql-password
+          envFrom:
+            - configMapRef:
+                name: mysql-configmap
+          volumeMounts:
+            - name: mysql-auth-source-volume
+              mountPath: /var/lib/mysql
+            - name: mysql-auth-source-configmap-volume
+              mountPath: /etc/mysql/conf.d
+              readOnly: true
+      volumes:
+        - name: mysql-auth-source-configmap-volume
+          configMap:
+            name: mysql-auth-source-configmap
+  volumeClaimTemplates:
+    - metadata:
+        name: mysql-auth-source-volume
+      spec:
+        storageClassName: local-path
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
+
+---
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mysql-subscription-source
+  labels:
+    app: mysql-subscription-source
+spec:
+  serviceName: mysql-subscription-source
+  selector:
+    matchLabels:
+      app: mysql-subscription-source
+  template:
+    metadata:
+      labels:
+        app: mysql-subscription-source
+    spec:
+      containers:
+        - name: mysql-subscription-source
+          image: mysql:latest
+          ports:
+            - containerPort: 3306
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: mysql-password
+          envFrom:
+            - configMapRef:
+                name: mysql-configmap
+          volumeMounts:
+            - name: mysql-subscription-source-volume
+              mountPath: /var/lib/mysql
+            - name: mysql-subscription-source-configmap-volume
+              mountPath: /etc/mysql/conf.d
+              readOnly: true
+      volumes:
+        - name: mysql-subscription-source-configmap-volume
+          configMap:
+            name: mysql-subscription-source-configmap
+  volumeClaimTemplates:
+    - metadata:
+        name: mysql-subscription-source-volume
+      spec:
+        storageClassName: local-path
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
+
+---
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mysql-auth-replica
+  labels:
+    app: mysql-auth-replica
+spec:
+  serviceName: mysql-auth-replica
+  selector:
+    matchLabels:
+      app: mysql-auth-replica
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        app: mysql-auth-replica
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - podAffinityTerm:
+                topologyKey: kubernetes.io/hostname
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - mysql-auth-source
+                        - mysql-auth-replica
+              weight: 100
+      containers:
+        - name: mysql-auth-replica
+          image: mysql:latest
+          ports:
+            - containerPort: 3306
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: mysql-password
+          envFrom:
+            - configMapRef:
+                name: mysql-configmap
+          volumeMounts:
+            - name: mysql-auth-replica-volume
+              mountPath: /var/lib/mysql
+            - name: mysql-auth-replica-configmap-volume
+              mountPath: /etc/mysql/conf.d
+              readOnly: true
+      volumes:
+        - name: mysql-auth-replica-configmap-volume
+          configMap:
+            name: mysql-auth-replica-configmap
+  volumeClaimTemplates:
+    - metadata:
+        name: mysql-auth-replica-volume
+      spec:
+        storageClassName: local-path
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
+
+---
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mysql-subscription-replica
+  labels:
+    app: mysql-subscription-replica
+spec:
+  serviceName: mysql-subscription-replica
+  selector:
+    matchLabels:
+      app: mysql-subscription-replica
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        app: mysql-subscription-replica
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - podAffinityTerm:
+                topologyKey: kubernetes.io/hostname
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - mysql-subscription-source
+                        - mysql-subscription-replica
+              weight: 100
+      containers:
+        - name: mysql-subscription-replica
+          image: mysql:latest
+          ports:
+            - containerPort: 3306
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: mysql-password
+          envFrom:
+            - configMapRef:
+                name: mysql-configmap
+          volumeMounts:
+            - name: mysql-subscription-replica-volume
+              mountPath: /var/lib/mysql
+            - name: mysql-subscription-replica-configmap-volume
+              mountPath: /etc/mysql/conf.d
+              readOnly: true
+      volumes:
+        - name: mysql-subscription-replica-configmap-volume
+          configMap:
+            name: mysql-subscription-replica-configmap
+  volumeClaimTemplates:
+    - metadata:
+        name: mysql-subscription-replica-volume
+      spec:
+        storageClassName: local-path
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
+
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-configmap
+data:
+  TZ: Asia/Seoul
+  MYSQL_CHARSET: utf8mb4
+  MYSQL_COLLATION: utf8mb4_general_ci

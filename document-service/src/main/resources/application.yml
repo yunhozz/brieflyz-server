@@ -1,0 +1,31 @@
+server:
+  port: 8060
+spring:
+  application:
+    name: document-service
+  profiles:
+    active: ${APPLICATION_PROFILE:local}
+
+---
+
+spring:
+  config:
+    activate:
+      on-profile: dev
+    import: configserver:http://config-server:8888/
+  cloud:
+    config:
+      name: document-service
+      profile: dev
+
+---
+
+spring:
+  config:
+    activate:
+      on-profile: prod
+    import: configserver:http://config-server:8888/
+  cloud:
+    config:
+      name: document-service
+      profile: prod

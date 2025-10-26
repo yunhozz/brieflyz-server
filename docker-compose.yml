@@ -1,0 +1,45 @@
+services:
+  api-gateway:
+    image: ghcr.io/yunhozz/brieflyz-server-api-gateway:${IMAGE_TAG}
+    build:
+      dockerfile: api-gateway/Dockerfile
+      context: .
+      platforms:
+        - linux/amd64
+        - linux/arm64
+
+  auth-service:
+    image: ghcr.io/yunhozz/brieflyz-server-auth-service:${IMAGE_TAG}
+    build:
+      dockerfile: auth-service/Dockerfile
+      context: .
+      platforms:
+        - linux/amd64
+        - linux/arm64
+
+  subscription-service:
+    image: ghcr.io/yunhozz/brieflyz-server-subscription-service:${IMAGE_TAG}
+    build:
+      dockerfile: subscription-service/Dockerfile
+      context: .
+      platforms:
+        - linux/amd64
+        - linux/arm64
+
+  ai-service:
+    image: ghcr.io/yunhozz/brieflyz-server-ai-service:${IMAGE_TAG}
+    build:
+      dockerfile: ai-service/Dockerfile
+      context: .
+      platforms:
+        - linux/amd64
+        - linux/arm64
+
+  document-service:
+    image: ghcr.io/yunhozz/brieflyz-server-document-service:${IMAGE_TAG}
+    build:
+      dockerfile: document-service/Dockerfile
+      context: .
+      platforms:
+        - linux/amd64
+        - linux/arm64

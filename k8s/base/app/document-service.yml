@@ -1,0 +1,71 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: document-service
+  labels:
+    app: document-service
+spec:
+  selector:
+    app: document-service
+  ports:
+    - port: 8060
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: document-service
+  labels:
+    app: document-service
+spec:
+  selector:
+    matchLabels:
+      app: document-service
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        app: document-service
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8060"
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - podAffinityTerm:
+                topologyKey: kubernetes.io/hostname
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - document-service
+              weight: 100
+      containers:
+        - name: document-service
+          image: brieflyz-document-service:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8060
+          env:
+            - name: APPLICATION_PROFILE
+              value: dev
+          volumeMounts:
+            - name: nfs-logs-pvc-volume
+              mountPath: /app/logs
+            - name: nfs-documents-pvc-volume
+              mountPath: /app/documents
+      volumes:
+        - name: nfs-logs-pvc-volume
+          persistentVolumeClaim:
+            claimName: nfs-logs-pvc
+        - name: nfs-documents-pvc-volume
+          persistentVolumeClaim:
+            claimName: nfs-documents-pvc
